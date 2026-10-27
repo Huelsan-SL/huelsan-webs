@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Huelsan Automoción</title>
+<meta name="description" content="Huelsan Automoción: coches de ocasión en stock y búsqueda por encargo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1B1D20">
+<meta property="og:title" content="Huelsan Automoción">
+<meta property="og:description" content="Coches de ocasión en stock y búsqueda por encargo, con transporte y papeles resueltos.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_ES">
+<style>
+/* Layout: cabecera grafito fija con menú; portada en banda oscura con el coche destacado; secciones a ancho completo con contenido a 1180 px; ficha del coche en ventana superpuesta; páginas legales como vista propia. */
+:root{
+  --bg:#F3F2EF; --surface:#FFFFFF; --sunk:#E8E6E1; --line:#D9D6D0;
+  --ink:#1B1D20; --muted:#5C6168; --accent:#8C6E44; --accent-ink:#FFFFFF; --accent-soft:#EEE6D9;
+  --band:#1B1D20; --band-ink:#F0EFED; --band-muted:#A9ADB3; --champ:#B8976A;
+  --ok:#2F7A4F;
+  --f-brand:"Syncopate","Arial Black",sans-serif; --f-body:"Hanken Grotesk","Segoe UI",system-ui,sans-serif;
+  --shadow:0 1px 2px rgba(20,22,25,.06),0 10px 30px rgba(20,22,25,.08);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121315; --surface:#1B1D20; --sunk:#25282C; --line:#33373C;
+  --ink:#ECEBE8; --muted:#A2A6AC; --accent:#CDB084; --accent-ink:#1B1D20; --accent-soft:#352D22;
+  --band:#0D0E10; --band-ink:#ECEBE8; --band-muted:#9A9EA4; --champ:#CDB084; --ok:#6CC592;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121315; --surface:#1B1D20; --sunk:#25282C; --line:#33373C;
+  --ink:#ECEBE8; --muted:#A2A6AC; --accent:#CDB084; --accent-ink:#1B1D20; --accent-soft:#352D22;
+  --band:#0D0E10; --band-ink:#ECEBE8; --band-muted:#9A9EA4; --champ:#CDB084; --ok:#6CC592;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35); color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:calc(env(safe-area-inset-top,0px) + 76px)}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 var(--f-body)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--band)}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--champ);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.tnum{font-variant-numeric:tabular-nums}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.2}
+h2{font-size:clamp(26px,3.4vw,36px);font-weight:700;letter-spacing:-.01em}
+h3{font-size:19px;font-weight:650}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--accent)}
+.lead{color:var(--muted);max-width:62ch;margin:10px 0 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:11px 18px;border-radius:8px;font-weight:600;cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--champ);border-color:var(--champ);color:#1B1D20}
+.btn.primary:hover{filter:brightness(1.05)}
+.btn.ghost{background:transparent;color:inherit;border-color:rgba(240,239,237,.35)}
+
+/* cabecera */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--band);color:var(--band-ink)}
+.top-in{display:flex;align-items:center;gap:14px 28px;flex-wrap:wrap;padding-block:12px}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit}
+.logo-sym{width:38px;height:auto;flex:none;display:block}
+.lgs{stroke:var(--champ)} .lgf{fill:var(--champ)}
+.brand b{display:block;font:700 17px/1 var(--f-brand);letter-spacing:.14em}
+.brand small{display:block;margin-top:6px;font:500 10px/1 var(--f-body);letter-spacing:.5em;text-transform:uppercase;color:var(--champ)}
+nav.menu{display:flex;gap:4px 18px;flex-wrap:wrap;margin-left:auto}
+nav.menu a{color:var(--band-ink);opacity:.8;text-decoration:none;font-weight:500;font-size:15px;padding:4px 0;border-bottom:2px solid transparent}
+nav.menu a:hover{opacity:1;border-color:var(--champ)}
+@media (max-width:720px){nav.menu{margin-left:0;width:100%;gap:4px 16px}nav.menu a{font-size:14px}}
+
+/* portada */
+.hero{background:var(--band);color:var(--band-ink);padding-block:44px 56px}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:36px;align-items:center}
+@media (max-width:860px){.hero-grid{grid-template-columns:minmax(0,1fr)}}
+.hero h1{font:700 clamp(28px,4.6vw,50px)/1.12 var(--f-body);letter-spacing:-.02em}
+.hero h1 em{font-style:normal;color:var(--champ)}
+.hero p{color:var(--band-muted);max-width:52ch;font-size:17px;margin:16px 0 24px}
+.hero .ctas{display:flex;gap:10px;flex-wrap:wrap}
+.hero-car{position:relative;border-radius:14px;overflow:hidden;background:#24272B;aspect-ratio:16/10;max-width:100%}
+.hero-car img{width:100%;height:100%;object-fit:cover;display:block}
+.hero-car figcaption{position:absolute;left:12px;bottom:12px;right:12px;display:flex;justify-content:space-between;gap:10px;align-items:end;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.6);font-size:14px}
+.hero-car figcaption b{font-size:17px;display:block}
+.facts{display:flex;gap:10px 28px;flex-wrap:wrap;margin-top:28px;color:var(--band-muted);font-size:14px}
+.facts b{display:block;color:var(--band-ink);font-size:16px}
+
+section{padding-block:64px}
+section.alt{background:var(--surface)}
+.sec-head{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:end;justify-content:space-between;margin-bottom:24px}
+
+/* coches */
+.filtros{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:20px}
+.filtros label{display:grid;gap:4px;font-size:12.5px;font-weight:600;color:var(--muted);flex:1 1 150px;max-width:220px;min-width:0}
+.filtros select{width:100%;padding:9px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);min-width:0}
+.cars{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px}
+.car{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr;width:100%;align-content:start;cursor:pointer;text-align:left;padding:0;transition:transform .15s,box-shadow .15s}
+.car:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.car .ph{position:relative;aspect-ratio:16/10;background:var(--sunk);max-width:100%}
+.car .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.badge{position:absolute;top:10px;left:10px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:5px;background:#1B1D20;color:#F0EFED}
+.badge.encargo{background:var(--champ);color:#1B1D20}
+.nfotos{position:absolute;right:10px;bottom:10px;font-size:12px;font-weight:600;background:rgba(15,16,18,.7);color:#fff;padding:2px 8px;border-radius:999px}
+.car .b{padding:14px 16px 16px;display:grid;gap:6px}
+.car .t{font-size:18px;font-weight:700;line-height:1.25}
+.car .v{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.car .sp{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:14px}
+.car .p{font-size:20px;font-weight:700;margin-top:4px}
+.empty{border:1px dashed var(--line);border-radius:14px;padding:32px;text-align:center;color:var(--muted);grid-column:1/-1}
+.empty strong{display:block;color:var(--ink);font-size:18px;margin-bottom:4px}
+
+/* qué hacemos */
+.services{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+@media (max-width:860px){.services{grid-template-columns:minmax(0,1fr)}}
+.svc{border-top:3px solid var(--champ);padding-top:16px;display:grid;gap:8px;align-content:start}
+.svc p{margin:0;color:var(--muted)}
+.steps{list-style:none;padding:0;margin:36px 0 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;counter-reset:paso}
+@media (max-width:860px){.steps{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+@media (max-width:520px){.steps{grid-template-columns:minmax(0,1fr)}}
+.steps li{counter-increment:paso;background:var(--bg);border-radius:12px;padding:16px;display:grid;gap:6px;align-content:start}
+.steps li::before{content:counter(paso);font:700 15px/1 var(--f-brand);color:var(--accent)}
+.steps li p{margin:0;color:var(--muted);font-size:15px}
+
+/* quiénes somos */
+.about{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:36px;align-items:start}
+@media (max-width:860px){.about{grid-template-columns:minmax(0,1fr)}}
+.about p{margin:0 0 14px;max-width:62ch}
+.values{display:grid;gap:12px}
+.values div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.values b{display:block}
+.values span{color:var(--muted);font-size:15px}
+
+/* contacto */
+.contact{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:36px}
+@media (max-width:860px){.contact{grid-template-columns:minmax(0,1fr)}}
+.cdata{display:grid;gap:14px;align-content:start}
+.cdata div{display:grid;gap:2px}
+.cdata dt{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.cdata dd{margin:0;font-size:18px;font-weight:600;overflow-wrap:anywhere}
+.pend{color:var(--muted);font-weight:500;font-style:italic}
+form.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:grid;gap:14px}
+.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:520px){.fgrid{grid-template-columns:minmax(0,1fr)}}
+.fgrid label,.fwide{display:grid;gap:4px;font-size:13px;font-weight:600;color:var(--muted);min-width:0}
+.fwide{grid-column:1/-1}
+input,select,textarea{width:100%;padding:10px 11px;border-radius:8px;border:1px solid var(--line);background:var(--bg);min-width:0}
+textarea{min-height:96px;resize:vertical}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--muted)}
+.chk input{width:auto;margin-top:4px;accent-color:var(--accent)}
+.out{background:var(--bg);border-radius:10px;padding:12px 14px;font-size:14px;white-space:pre-wrap;border:1px solid var(--line)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.small{font-size:13px;color:var(--muted)}
+
+/* pie */
+footer{background:var(--band);color:var(--band-muted);padding-block:36px 40px;font-size:14px}
+.foot{display:flex;flex-wrap:wrap;gap:20px 40px;justify-content:space-between;align-items:start}
+.foot nav{display:flex;flex-wrap:wrap;gap:8px 20px}
+.foot a{color:var(--band-ink);opacity:.85;text-decoration:none}
+.foot a:hover{opacity:1;text-decoration:underline}
+
+/* ficha */
+.scrim{position:fixed;inset:0;background:rgba(10,11,13,.55);z-index:40}
+.ficha{position:fixed;inset:0;z-index:41;overflow:auto;display:grid;place-items:start center;padding:calc(env(safe-area-inset-top,0px) + 20px) max(12px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 20px) max(12px,env(safe-area-inset-left,0px))}
+.ficha-in{background:var(--bg);border-radius:16px;width:min(980px,100%);box-shadow:var(--shadow);overflow:hidden}
+.fh{display:flex;justify-content:space-between;gap:12px;align-items:start;padding:18px 20px 12px}
+.fh h3{font-size:24px}
+.fbody{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px;padding:0 20px 22px}
+@media (max-width:820px){.fbody{grid-template-columns:minmax(0,1fr)}}
+.gal-main{position:relative;border-radius:12px;overflow:hidden;background:var(--sunk);aspect-ratio:16/10;max-width:100%;cursor:zoom-in;border:0;padding:0;width:100%;display:block}
+.gal-main img{width:100%;height:100%;object-fit:cover;display:block}
+.wm{position:absolute;right:12px;top:10px;font:700 11px/1 var(--f-brand);letter-spacing:.2em;color:rgba(255,255,255,.75);text-shadow:0 1px 6px rgba(0,0,0,.5);pointer-events:none}
+.thumbs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.thumbs button{padding:0;border:2px solid transparent;border-radius:6px;background:none;cursor:pointer;opacity:.7}
+.thumbs button[aria-current="true"]{border-color:var(--champ);opacity:1}
+.thumbs img{width:76px;height:48px;object-fit:cover;border-radius:4px;display:block}
+.legalfoto{font-size:12px;color:var(--muted);margin:8px 0 0}
+dl.kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px;margin:0}
+dl.kv div{display:grid;gap:1px;min-width:0}
+dl.kv dt{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+dl.kv dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.fside{display:grid;gap:14px;align-content:start}
+.fprice{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.fprice b{font-size:24px}
+.tag{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:5px;background:var(--accent-soft);color:var(--accent)}
+.tag.stock{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.equip{font-size:14px;color:var(--muted)}
+
+/* visor */
+.visor{position:fixed;inset:0;z-index:60;background:rgba(10,11,13,.95);color:#F0EFED;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 10px) max(12px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 10px) max(12px,env(safe-area-inset-left,0px))}
+.visor .vtop{display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.visor .vstage{position:relative;display:grid;place-items:center;min-height:0}
+.visor .vstage img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
+.vbtn{background:rgba(255,255,255,.14);color:#F0EFED;border:0;border-radius:999px;width:42px;height:42px;font-size:22px;line-height:1;cursor:pointer;display:grid;place-items:center}
+.vbtn:hover{background:rgba(255,255,255,.24)}
+.vnav{position:absolute;top:50%;transform:translateY(-50%)}
+#vprev{left:4px}#vnext{right:4px}
+.vstrip{display:flex;gap:6px;overflow-x:auto}
+.vstrip button{flex:none;padding:0;border:2px solid transparent;border-radius:6px;background:none;cursor:pointer;opacity:.6}
+.vstrip button[aria-current="true"]{border-color:#B8976A;opacity:1}
+.vstrip img{width:72px;height:46px;object-fit:cover;border-radius:4px;display:block}
+
+/* páginas legales */
+.legal{padding-block:40px 64px}
+.legal article{max-width:760px}
+.legal h2{margin-bottom:6px}
+.legal h3{margin:26px 0 6px;font-size:18px}
+.legal p,.legal li{color:var(--ink)}
+.legal .meta{color:var(--muted);font-size:14px}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;z-index:70;font-size:14px;max-width:calc(100% - 32px)}
+</style>
+
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="#inicio" aria-label="Huelsan Automoción, inicio"><svg class="logo-sym" viewBox="3 3 58 49" aria-hidden="true"><path d="M8.6 49.5 A27 27 0 1 1 55.4 49.5" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><path d="M55.4 22.5 A27 27 0 0 1 56.47 43.41" fill="none" class="lgs" stroke-width="4.5" stroke-linecap="round"/><path d="M13.340 45.510 L16.660 50.490 L17.500 49.874 L17.500 42.998 Z" class="lgf"/><path d="M28.500 41.806 L35.500 36.672 L35.500 32.130 L28.500 36.357 Z" class="lgf"/><path d="M46.500 28.604 L48.960 26.800 L47.640 24.800 L46.500 25.488 Z" class="lgf"/><rect x="19" y="22" width="8" height="28" fill="currentColor"/><rect x="37" y="22" width="8" height="28" fill="currentColor"/><circle cx="15" cy="48" r="3.0" fill="currentColor"/></svg><span><b>HUELSAN</b><small>Automoción</small></span></a>
+    <nav class="menu" aria-label="Secciones">
+      <a href="#coches">Coches</a><a href="#que-hacemos">Qué hacemos</a><a href="#quienes-somos">Quiénes somos</a><a href="#contacto">Contacto</a>
+    </nav>
+  </div>
+</header>
+
+<main id="principal">
+  <div class="hero" id="inicio">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="eyebrow" style="color:var(--champ)">Compraventa de vehículos de ocasión</div>
+        <h1 style="margin-top:12px">Buscamos en Europa.<br><em>Respondemos aquí.</em></h1>
+        <p>Coches revisados en stock, listos para entregar, y búsqueda por encargo del coche que necesitas, con transporte y papeles resueltos.</p>
+        <div class="ctas"><a class="btn primary" href="#coches">Ver coches disponibles</a><a class="btn ghost" href="#contacto">Cuéntanos qué buscas</a></div>
+        <div class="facts" id="facts"></div>
+      </div>
+      <figure class="hero-car" id="herocar" style="margin:0" hidden></figure>
+    </div>
+  </div>
+
+  <section id="coches">
+    <div class="wrap">
+      <div class="sec-head"><div><div class="eyebrow">Coches</div><h2>Disponibles ahora</h2><p class="lead">«En stock» son coches nuestros, listos para entregar. «Por encargo» son coches que podemos conseguirte en los próximos días: pregúntanos antes de que se vayan.</p></div></div>
+      <div class="filtros" role="group" aria-label="Filtrar coches">
+        <label>Disponibilidad<select id="f-disp"><option value="">Todos</option><option value="stock">En stock</option><option value="encargo">Por encargo</option></select></label>
+        <label>Tipo<select id="f-tipo"><option value="">Todos</option></select></label>
+        <label>Combustible<select id="f-comb"><option value="">Todos</option></select></label>
+        <label>Año desde<select id="f-anio"><option value="">Cualquiera</option></select></label>
+      </div>
+      <div class="cars" id="cars"></div>
+    </div>
+  </section>
+
+  <section id="que-hacemos" class="alt">
+    <div class="wrap">
+      <div class="sec-head"><div><div class="eyebrow">Qué hacemos</div><h2>Del anuncio a tu garaje, sin sorpresas</h2></div></div>
+      <div class="services">
+        <div class="svc"><h3>Coches en stock</h3><p>Vehículos de ocasión que ya son nuestros: revisados, con la documentación en regla y listos para entregar.</p></div>
+        <div class="svc"><h3>Búsqueda por encargo</h3><p>Nos dices qué coche quieres y tu presupuesto. Lo buscamos en canales de venta profesional de España y Europa y te enseñamos las opciones antes de comprar.</p></div>
+        <div class="svc"><h3>Gestión completa</h3><p>Nos encargamos del transporte, la transferencia en Tráfico y la puesta a punto. Tú solo recoges el coche.</p></div>
+      </div>
+      <ol class="steps" aria-label="Cómo funciona la búsqueda por encargo">
+        <li><h3>Nos cuentas</h3><p>Qué coche buscas, para qué lo vas a usar y cuánto quieres gastar.</p></li>
+        <li><h3>Te proponemos</h3><p>Opciones reales con fotos, kilómetros, historial y precio final estimado.</p></li>
+        <li><h3>Compramos</h3><p>Cuando das el visto bueno, cerramos la compra y lo traemos.</p></li>
+        <li><h3>Te lo entregamos</h3><p>Preparado, con la transferencia hecha y la garantía legal.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="quienes-somos">
+    <div class="wrap about">
+      <div>
+        <div class="eyebrow">Quiénes somos</div>
+        <h2 style="margin:6px 0 16px">Huelsan Automoción</h2>
+        <p>Somos una empresa de compraventa de vehículos de ocasión. Compramos en los mismos canales en los que compran los concesionarios y trasladamos ese precio a nuestros clientes, sin intermediarios de más.</p>
+        <p>Antes de proponerte un coche revisamos sus datos, su estado y sus kilómetros, y te contamos lo que vemos, también lo que no nos convence.</p>
+        <p id="zona-txt"></p>
+      </div>
+      <div class="values">
+        <div><b>Transparencia</b><span>Precio final claro y el estado real del coche, con sus fotos.</span></div>
+        <div><b>Revisión</b><span>Comprobamos kilómetros, historial y daños antes de recomendar un coche.</span></div>
+        <div><b>Garantía legal</b><span>Todos los coches que vendemos a particulares incluyen la garantía que marca la ley.</span></div>
+        <div><b>Trato directo</b><span>Hablas siempre con nosotros, de principio a fin.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contacto" class="alt">
+    <div class="wrap contact">
+      <div>
+        <div class="eyebrow">Contacto</div>
+        <h2 style="margin:6px 0 16px">Hablemos de tu próximo coche</h2>
+        <dl class="cdata" id="cdata"></dl>
+      </div>
+      <form class="card" id="form" novalidate>
+        <h3>Cuéntanos qué buscas</h3>
+        <div class="fgrid">
+          <label>Nombre<input id="c-nombre" autocomplete="name" required></label>
+          <label>Teléfono<input id="c-tel" type="tel" autocomplete="tel"></label>
+          <label>Tipo de coche<select id="c-tipo"><option value="">Me da igual</option></select></label>
+          <label>Presupuesto máximo (€)<input id="c-pres" type="number" step="500" min="0" inputmode="numeric"></label>
+          <label class="fwide">Mensaje<textarea id="c-msg" placeholder="Ej.: familiar diésel automático, del 2019 en adelante, para viajes"></textarea></label>
+        </div>
+        <label class="chk"><input type="checkbox" id="c-rgpd"><span>He leído la <a href="#privacidad">política de privacidad</a> y acepto que Huelsan Automoción use estos datos para responder a mi consulta.</span></label>
+        <div class="row" id="c-acciones"></div>
+        <div class="out" id="c-out" hidden></div>
+        <p class="small" style="margin:0">Esta web no guarda los datos del formulario: el mensaje se envía desde tu WhatsApp o tu correo.</p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<div class="legal" id="vista-legal" hidden><div class="wrap"><article id="legal-txt"></article></div></div>
+
+<footer>
+  <div class="wrap foot">
+    <div><b style="color:var(--band-ink);font:700 14px var(--f-brand);letter-spacing:.14em">HUELSAN</b><div style="margin-top:6px" id="pie-emp"></div></div>
+    <nav aria-label="Información legal"><a href="#aviso-legal">Aviso legal</a><a href="#privacidad">Privacidad</a><a href="#cookies">Cookies</a><a href="#fotos-info">Fotos e información de los coches</a></nav>
+  </div>
+</footer>
+
+<script>
+"use strict";
+/* ---------- Datos de la empresa: rellenar los pendientes ---------- */
+const EMPRESA={
+  nombre:"Huelsan Automoción",
+  razonSocial:"", nif:"", domicilio:"", registro:"",
+  email:"", telefono:"", whatsapp:"",   // whatsapp: número con prefijo, solo dígitos, p. ej. 34600000000
+  zona:"",                              // p. ej. "Huelva y Murcia"
+  actualizado:"20/10/2026"
+};
+const PEND=t=>`<span class="pend">[${t} pendiente]</span>`;
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num=n=>n==null?"—":new Intl.NumberFormat("es-ES").format(n);
+const eur=n=>new Intl.NumberFormat("es-ES",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(n);
+let toastT;function toast(m){let t=$("#toast");if(!t){t=document.createElement("div");t.id="toast";t.className="toast";t.setAttribute("role","status");document.body.appendChild(t)}t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,3000)}
+
+/* Los coches se leen de la base de datos (solo la vista pública «coches_web»: nada de datos de subasta) */
+const SB_URL="https://ajxdzchffqaphkmetswx.supabase.co";
+const SB_KEY="sb_publishable_8n9P6btJois-b7B3-kNTTQ_YG6D4S1X";
+const FOTOS_WEB=SB_URL+"/storage/v1/object/public/fotos-web/";
+let COCHES=[];
+async function cargarCoches(){
+  const r=await fetch(SB_URL+"/rest/v1/coches_web?select=*",{headers:{apikey:SB_KEY,Accept:"application/json"}});
+  if(!r.ok)throw new Error("HTTP "+r.status);
+  const filas=await r.json();
+  /* Los coches por encargo dejan de mostrarse solos cuando caducan */
+  COCHES=filas.map(c=>({...c,fotos:(Array.isArray(c.fotos)?c.fotos:[]).map(f=>/^https?:/.test(f)?f:FOTOS_WEB+String(f).replace(/^\/+/,""))}))
+    .filter(c=>!c.caduca||new Date(c.caduca).getTime()>Date.now())
+    .sort((a,b)=>(a.disponibilidad==="stock"?0:1)-(b.disponibilidad==="stock"?0:1));
+}
+const titulo=c=>[c.marca,c.modelo].filter(Boolean).join(" ");
+const DISP={stock:"En stock",encargo:"Por encargo"};
+
+/* ---------- portada ---------- */
+function portada(){
+  const d=COCHES.find(c=>c.disponibilidad==="stock"&&c.fotos.length)||COCHES.find(c=>c.fotos.length);
+  if(d){const h=$("#herocar");h.hidden=false;h.innerHTML=`<img src="${esc(d.fotos[0])}" alt="${esc(titulo(d))}"><figcaption><span><b>${esc(titulo(d))}</b>${[d.anio,d.km!=null?num(d.km)+" km":null,d.combustible].filter(Boolean).map(esc).join(" · ")}</span><span class="badge ${d.disponibilidad}" style="position:static">${DISP[d.disponibilidad]}</span></figcaption>`;h.style.cursor="pointer";h.onclick=()=>abrirFicha(d.id)}
+  const s=COCHES.filter(c=>c.disponibilidad==="stock").length,e=COCHES.length-s;
+  $("#facts").innerHTML=`<span><b class="tnum">${s}</b>en stock</span><span><b class="tnum">${e}</b>por encargo</span><span><b>Transporte y papeles</b>incluidos en la gestión</span>`;
+  $("#zona-txt").innerHTML=EMPRESA.zona?`Trabajamos desde ${esc(EMPRESA.zona)} y entregamos en toda España.`:"";
+}
+
+/* ---------- listado ---------- */
+const opts=(sel,vals)=>{const s=$(sel);vals.forEach(v=>{const o=document.createElement("option");o.textContent=v;s.appendChild(o)})};
+function opcionesFiltros(){
+opts("#f-tipo",[...new Set(COCHES.map(c=>c.tipo).filter(Boolean))].sort());
+opts("#f-comb",[...new Set(COCHES.map(c=>c.combustible).filter(Boolean))].sort());
+opts("#f-anio",[...new Set(COCHES.map(c=>c.anio).filter(Boolean))].sort((a,b)=>b-a).map(String));
+}
+opts("#c-tipo",["Utilitario","Compacto","Berlina","Familiar","Monovolumen","SUV","4x4","Furgoneta","Comercial"]);
+function pintarCoches(){
+  const disp=$("#f-disp").value,tipo=$("#f-tipo").value,comb=$("#f-comb").value,anio=+$("#f-anio").value||0;
+  const lista=COCHES.filter(c=>(!disp||c.disponibilidad===disp)&&(!tipo||c.tipo===tipo)&&(!comb||c.combustible===comb)&&(!anio||(c.anio||0)>=anio));
+  $("#cars").innerHTML=lista.length?lista.map(c=>`<button type="button" class="car" data-ficha="${esc(c.id)}" aria-label="Ver ${esc(titulo(c))}">
+    <div class="ph">${c.fotos[0]?`<img src="${esc(c.fotos[0])}" alt="" loading="lazy">`:""}<span class="badge ${c.disponibilidad}">${DISP[c.disponibilidad]}</span>${c.fotos.length>1?`<span class="nfotos">${c.fotos.length} fotos</span>`:""}</div>
+    <div class="b"><div class="t">${esc(titulo(c))}</div>${c.version?`<div class="v">${esc(c.version)}</div>`:""}
+      <div class="sp tnum">${[c.anio,c.km!=null?num(c.km)+" km":null,c.combustible,c.cv?c.cv+" CV":null].filter(Boolean).map(x=>`<span>${esc(x)}</span>`).join("")}</div>
+      <div class="p tnum">${c.precio?eur(c.precio):"Consultar precio"}</div></div></button>`).join("")
+    :`<div class="empty"><strong>${COCHES.length?"Ningún coche con estos filtros":"Estamos preparando nuevos coches"}</strong>${COCHES.length?"Prueba con otros filtros o cuéntanos qué buscas.":"Cuéntanos qué buscas y te avisamos en cuanto tengamos opciones."}</div>`}
+["#f-disp","#f-tipo","#f-comb","#f-anio"].forEach(s=>$(s).addEventListener("change",pintarCoches));
+$("#cars").innerHTML=`<div class="empty"><strong>Cargando coches…</strong></div>`;
+cargarCoches().catch(e=>{console.warn("No se pudieron cargar los coches",e)}).finally(()=>{portada();opcionesFiltros();pintarCoches()});
+
+/* ---------- ficha y visor ---------- */
+let ficha=null,fotoI=0;
+function abrirFicha(id){const c=COCHES.find(x=>x.id===id);if(!c)return;ficha=c;fotoI=0;pintarFicha()}
+function cerrarFicha(){ficha=null;cerrarVisor();["#fscrim","#ficha"].forEach(s=>{const e=$(s);e&&e.remove()});document.body.style.overflow=""}
+function pintarFicha(){
+  const c=ficha;let sc=$("#fscrim"),f=$("#ficha");
+  if(!sc){sc=document.createElement("div");sc.id="fscrim";sc.className="scrim";document.body.appendChild(sc)}
+  if(!f){f=document.createElement("div");f.id="ficha";f.className="ficha";f.setAttribute("role","dialog");f.setAttribute("aria-modal","true");document.body.appendChild(f)}
+  document.body.style.overflow="hidden";
+  const datos=[["Marca",c.marca],["Modelo",c.modelo],["Versión",c.version],["Año",c.anio],["Kilómetros",c.km!=null?num(c.km)+" km":null],["Combustible",c.combustible],["Potencia",c.cv?c.cv+" CV":null],["Motor",c.motor?String(c.motor).replace(".",",")+" l":null],["Cambio",c.cambio],["Tipo",c.tipo],["Plazas",c.plazas],["Color",c.color]].filter(([,v])=>v!=null&&v!=="");
+  f.innerHTML=`<div class="ficha-in"><div class="fh"><div><span class="tag ${c.disponibilidad}">${DISP[c.disponibilidad]}</span><h3 style="margin-top:8px">${esc(titulo(c))}</h3></div><button class="vbtn" style="background:var(--sunk);color:var(--ink)" id="fclose" aria-label="Cerrar">✕</button></div>
+    <div class="fbody"><div>${c.fotos.length?`<button type="button" class="gal-main" id="galmain" aria-label="Ver fotos a pantalla completa"><img src="${esc(c.fotos[fotoI])}" alt="${esc(titulo(c))}, foto ${fotoI+1}"><span class="wm">HUELSAN</span>${c.fotos.length>1?`<span class="nfotos">${fotoI+1} / ${c.fotos.length}</span>`:""}</button>
+      ${c.fotos.length>1?`<div class="thumbs">${c.fotos.map((u,i)=>`<button type="button" data-foto="${i}" aria-label="Foto ${i+1}" ${i===fotoI?'aria-current="true"':""}><img src="${esc(u)}" alt=""></button>`).join("")}</div>`:""}
+      <p class="legalfoto">Fotos del propio vehículo. Matrículas ocultadas por protección de datos. Imágenes y datos orientativos, sin valor contractual. <a href="#fotos-info">Más información</a>.</p>`:`<div class="empty">Fotos disponibles bajo petición.</div>`}</div>
+    <div class="fside"><div class="fprice"><b class="tnum">${c.precio?eur(c.precio):"Consultar precio"}</b></div>
+      <dl class="kv tnum">${datos.map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
+      ${c.equipamiento?`<div class="equip"><b style="color:var(--ink)">Equipamiento:</b> ${esc(c.equipamiento)}</div>`:""}
+      ${c.disponibilidad==="encargo"?`<p class="small" style="margin:0">Coche disponible por encargo durante pocos días. El precio final te lo confirmamos al consultarnos.</p>`:""}
+      <button class="btn primary" type="button" id="finteres">Me interesa este coche</button></div></div></div>`;
+  $("#fclose").focus({preventScroll:true})}
+const VIS={on:false};
+function abrirVisor(){VIS.on=true;pintarVisor()}
+function cerrarVisor(){VIS.on=false;const v=$("#visor");v&&v.remove()}
+function pintarVisor(){if(!ficha||!VIS.on)return;let v=$("#visor");const fs=ficha.fotos,n=fs.length;
+  if(!v){v=document.createElement("div");v.id="visor";v.className="visor";v.setAttribute("role","dialog");v.setAttribute("aria-modal","true");v.setAttribute("aria-label","Fotos");document.body.appendChild(v);
+    let x0=null;v.addEventListener("touchstart",e=>{x0=e.touches[0].clientX},{passive:true});v.addEventListener("touchend",e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>50)mover(dx<0?1:-1)})}
+  v.innerHTML=`<div class="vtop"><span class="tnum">${fotoI+1} / ${n} · ${esc(titulo(ficha))}</span><button class="vbtn" id="vclose" aria-label="Cerrar">✕</button></div>
+   <div class="vstage">${n>1?`<button class="vbtn vnav" id="vprev" aria-label="Foto anterior">‹</button>`:""}<img src="${esc(fs[fotoI])}" alt="${esc(titulo(ficha))}, foto ${fotoI+1}">${n>1?`<button class="vbtn vnav" id="vnext" aria-label="Foto siguiente">›</button>`:""}</div>
+   ${n>1?`<div class="vstrip">${fs.map((u,i)=>`<button data-vfoto="${i}" aria-label="Foto ${i+1}" ${i===fotoI?'aria-current="true"':""}><img src="${esc(u)}" alt=""></button>`).join("")}</div>`:""}`;
+  const cur=v.querySelector('.vstrip [aria-current="true"]');cur&&cur.scrollIntoView({block:"nearest",inline:"center"})}
+function mover(d){if(!ficha)return;const n=ficha.fotos.length;fotoI=(fotoI+d+n)%n;pintarFicha();if(VIS.on)pintarVisor()}
+
+document.addEventListener("click",e=>{const t=e.target;
+  if(t.closest("#visor")){if(t.closest("#vclose")||t.id==="visor"||t.classList.contains("vstage"))cerrarVisor();else if(t.closest("#vprev"))mover(-1);else if(t.closest("#vnext"))mover(1);else{const k=t.closest("[data-vfoto]");if(k){fotoI=+k.dataset.vfoto;pintarFicha();pintarVisor()}}return}
+  const fc=t.closest("[data-ficha]");if(fc){abrirFicha(fc.dataset.ficha);return}
+  if(t.id==="fscrim"||t.closest("#fclose")||(t.id==="ficha")){cerrarFicha();return}
+  if(t.closest("#galmain")){abrirVisor();return}
+  const th=t.closest("[data-foto]");if(th){fotoI=+th.dataset.foto;pintarFicha();return}
+  if(t.closest("#finteres")&&ficha){const c=ficha;const m=$("#c-msg");m.value=`Me interesa el ${titulo(c)}${c.anio?" de "+c.anio:""}${c.km!=null?" ("+num(c.km)+" km)":""}. `;cerrarFicha();location.hash="contacto";setTimeout(()=>m.focus({preventScroll:true}),450);return}
+  if(t.closest("#c-copiar")){copiar();return}
+  if(t.closest(".ficha a[href^='#']")){cerrarFicha()}
+});
+document.addEventListener("keydown",e=>{
+  if(VIS.on){if(e.key==="Escape"){cerrarVisor();return}if(e.key==="ArrowRight"){mover(1);return}if(e.key==="ArrowLeft"){mover(-1);return}}
+  if(ficha){if(e.key==="Escape")cerrarFicha();else if(e.key==="ArrowRight")mover(1);else if(e.key==="ArrowLeft")mover(-1)}});
+
+/* ---------- contacto ---------- */
+(function contacto(){
+  const d=[["Teléfono",EMPRESA.telefono||null],["WhatsApp",EMPRESA.whatsapp?"+"+EMPRESA.whatsapp:null],["Correo",EMPRESA.email||null],["Dónde estamos",EMPRESA.zona||null]];
+  $("#cdata").innerHTML=d.map(([k,v])=>`<div><dt>${k}</dt><dd>${v?esc(v):PEND(k.toLowerCase())}</dd></div>`).join("");
+  const a=[];
+  if(EMPRESA.whatsapp)a.push(`<button class="btn primary" type="submit" data-via="wa">Enviar por WhatsApp</button>`);
+  if(EMPRESA.email)a.push(`<button class="btn" type="submit" data-via="mail">Enviar por correo</button>`);
+  a.push(`<button class="btn" type="submit" data-via="copia">Copiar mensaje</button>`);
+  $("#c-acciones").innerHTML=a.join("");
+  $("#pie-emp").innerHTML=[EMPRESA.razonSocial||EMPRESA.nombre,EMPRESA.nif?"NIF "+EMPRESA.nif:null,EMPRESA.domicilio].filter(Boolean).map(esc).join(" · ");
+})();
+function mensaje(){const n=$("#c-nombre").value.trim(),tel=$("#c-tel").value.trim(),tipo=$("#c-tipo").value,p=$("#c-pres").value,m=$("#c-msg").value.trim();
+  return[`Hola, soy ${n}.`,m,tipo?`Tipo de coche: ${tipo}.`:"",p?`Presupuesto máximo: ${eur(+p)}.`:"",tel?`Mi teléfono: ${tel}.`:""].filter(Boolean).join("\n")}
+async function copiar(){const txt=$("#c-out").textContent;try{await navigator.clipboard.writeText(txt);toast("Mensaje copiado")}catch(e){const r=document.createRange();r.selectNodeContents($("#c-out"));const s=getSelection();s.removeAllRanges();s.addRange(r);toast("Selecciona y copia el texto")}}
+$("#form").addEventListener("submit",e=>{e.preventDefault();const via=(e.submitter&&e.submitter.dataset.via)||"copia";
+  if(!$("#c-nombre").value.trim()){toast("Escribe tu nombre");$("#c-nombre").focus();return}
+  if(!$("#c-rgpd").checked){toast("Acepta la política de privacidad para continuar");$("#c-rgpd").focus();return}
+  const txt=mensaje();const out=$("#c-out");out.hidden=false;out.textContent=txt;
+  if(via==="wa"){const a=document.createElement("a");a.href="https://wa.me/"+EMPRESA.whatsapp+"?text="+encodeURIComponent(txt);a.target="_blank";a.rel="noopener";a.click()}
+  else if(via==="mail"){location.href="mailto:"+EMPRESA.email+"?subject="+encodeURIComponent("Consulta desde la web")+"&body="+encodeURIComponent(txt)}
+  else copiar()});
+
+/* ---------- páginas legales ---------- */
+const E=k=>EMPRESA[k]?esc(EMPRESA[k]):PEND({razonSocial:"razón social",nif:"NIF",domicilio:"domicilio",registro:"datos registrales",email:"correo"}[k]||k);
+const LEGAL={
+"aviso-legal":()=>`<h2>Aviso legal</h2><p class="meta">Última actualización: ${esc(EMPRESA.actualizado)}</p>
+<h3>Titular del sitio web</h3><p>En cumplimiento del artículo 10 de la Ley 34/2002, de Servicios de la Sociedad de la Información y de Comercio Electrónico (LSSI-CE), se informa de que este sitio web pertenece a:</p>
+<ul><li>Titular: ${E("razonSocial")}, que opera con el nombre comercial ${esc(EMPRESA.nombre)}</li><li>NIF: ${E("nif")}</li><li>Domicilio: ${E("domicilio")}</li><li>Correo electrónico: ${E("email")}</li><li>Datos registrales: ${E("registro")}</li></ul>
+<h3>Objeto</h3><p>Este sitio web informa de la actividad de compraventa de vehículos de ocasión de ${esc(EMPRESA.nombre)} y de los vehículos que tiene disponibles en cada momento. La información publicada no constituye una oferta vinculante: la disponibilidad, el precio y las condiciones de cada vehículo se confirman siempre por escrito antes de cualquier compra.</p>
+<h3>Propiedad intelectual</h3><p>Los textos, el logotipo, el diseño y las fotografías de este sitio son propiedad de ${esc(EMPRESA.nombre)} o se usan con autorización. No está permitido reproducirlos, distribuirlos ni modificarlos sin permiso por escrito.</p>
+<h3>Responsabilidad</h3><p>Ponemos cuidado en que los datos de los vehículos sean correctos, pero pueden contener errores u omisiones. Lo que prevalece es la documentación del vehículo y el contrato de compraventa.</p>
+<h3>Legislación aplicable</h3><p>Este aviso se rige por la legislación española. Si eres consumidor, para cualquier controversia serán competentes los juzgados de tu domicilio.</p>`,
+"privacidad":()=>`<h2>Política de privacidad</h2><p class="meta">Última actualización: ${esc(EMPRESA.actualizado)}</p>
+<h3>Responsable del tratamiento</h3><p>${E("razonSocial")} (${esc(EMPRESA.nombre)}), NIF ${E("nif")}, con domicilio en ${E("domicilio")}. Contacto: ${E("email")}.</p>
+<h3>Qué datos tratamos</h3><p>Esta web no tiene formularios que guarden datos ni cuentas de usuario. Solo tratamos los datos que tú nos envías por WhatsApp, correo electrónico o teléfono al consultarnos: nombre, teléfono, correo y lo que nos cuentes sobre el coche que buscas.</p>
+<h3>Para qué los usamos</h3><ul><li>Responder a tu consulta y enviarte propuestas de vehículos que encajen con lo que buscas.</li><li>Preparar el presupuesto y, si compras, el contrato y los trámites de transferencia.</li></ul>
+<h3>Base legal</h3><p>Tu consentimiento al enviarnos la consulta y la aplicación de medidas precontractuales a petición tuya (artículo 6.1, letras a y b, del Reglamento (UE) 2016/679, RGPD). Si compras un vehículo, también el cumplimiento del contrato y de nuestras obligaciones legales, como las fiscales y las de Tráfico.</p>
+<h3>Cuánto tiempo los guardamos</h3><p>Mientras gestionamos tu solicitud y, como máximo, un año después de nuestro último contacto si no llegas a comprar. Si compras, durante los plazos que exige la ley.</p>
+<h3>A quién se comunican</h3><p>No vendemos ni cedemos tus datos. Solo se comunican cuando la ley lo exige (por ejemplo, a la Dirección General de Tráfico al tramitar una transferencia) o a los proveedores que necesitamos para prestar el servicio, como la gestoría o la empresa de transporte. Si nos escribes por WhatsApp, ese servicio trata los datos según sus propias condiciones.</p>
+<h3>Alojamiento de la web</h3><p>Esta web está alojada en Netlify, Inc., que actúa como encargado del tratamiento y puede registrar datos técnicos de la conexión (como la dirección IP) para servir la página y protegerla frente a ataques. Netlify tiene servidores fuera del Espacio Económico Europeo; las transferencias se hacen con las garantías que exige el RGPD.</p>
+<h3>Tus derechos</h3><p>Puedes pedir el acceso, la rectificación o la supresión de tus datos, oponerte a su tratamiento, solicitar su limitación o su portabilidad y retirar tu consentimiento escribiendo a ${E("email")}. Si crees que no hemos atendido bien tu petición, puedes reclamar ante la Agencia Española de Protección de Datos (www.aepd.es).</p>`,
+"cookies":()=>`<h2>Política de cookies</h2><p class="meta">Última actualización: ${esc(EMPRESA.actualizado)}</p>
+<p>Esta web no instala cookies propias ni de terceros con fines analíticos, publicitarios o de seguimiento, y no guarda información en tu navegador.</p>
+<p>Por eso no mostramos ningún aviso de aceptación de cookies: no hay nada que aceptar.</p>
+<p>Los tipos de letra se cargan desde Google Fonts, lo que supone que tu navegador se conecta a servidores de Google para descargarlos.</p>`,
+"fotos-info":()=>`<h2>Fotos e información de los vehículos</h2><p class="meta">Última actualización: ${esc(EMPRESA.actualizado)}</p>
+<h3>Fotografías</h3><p>Las fotografías corresponden al propio vehículo anunciado. Las matrículas aparecen difuminadas para proteger los datos de los anteriores titulares. Pueden existir diferencias de color o de iluminación respecto al vehículo real.</p>
+<p>Las fotos son propiedad de ${esc(EMPRESA.nombre)} o se usan con autorización. No pueden reproducirse ni utilizarse en otros anuncios sin permiso por escrito.</p>
+<h3>Datos de los vehículos</h3><p>Kilómetros, equipamiento, potencia y demás datos son orientativos y no tienen valor contractual. Te confirmamos por escrito el estado, el kilometraje y el precio final antes de cualquier compra.</p>
+<h3>Coches por encargo</h3><p>Los vehículos marcados «Por encargo» todavía no son de nuestra propiedad: son coches que podemos adquirir para ti en canales de venta profesional durante un plazo limitado. Su disponibilidad y su precio final dependen de que podamos cerrar la compra.</p>
+<h3>Garantía</h3><p>Los vehículos de ocasión que vendemos a consumidores incluyen la garantía legal establecida en el Real Decreto Legislativo 1/2007 (Ley General para la Defensa de los Consumidores y Usuarios), cuyo plazo mínimo para bienes de segunda mano es de un año.</p>`};
+function ruta(){const h=decodeURIComponent(location.hash.slice(1));const legal=LEGAL[h];
+  $("#principal").hidden=!!legal;$("#vista-legal").hidden=!legal;
+  if(legal){$("#legal-txt").innerHTML=legal()+`<p style="margin-top:28px"><a class="btn" href="#inicio">Volver al inicio</a></p>`;scrollTo(0,0);requestAnimationFrame(()=>scrollTo(0,0))}
+  else if(h){const el=document.getElementById(h);if(el)requestAnimationFrame(()=>el.scrollIntoView())}}
+addEventListener("hashchange",ruta);ruta();
+</script>
+
+</body>
+</html>
