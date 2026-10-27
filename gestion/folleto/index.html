@@ -247,7 +247,7 @@ function placa(c,x,y,w,h){c.save();const r=Math.min(h*.18,w*.05);
 $("#ed-fondo").onclick=async()=>{
   const b=$("#ed-fondo");b.disabled=true;
   try{edMsg("Preparando el recorte (la primera vez descarga el modelo, unos 40 MB; después va más rápido)…");
-    const rb=await import("https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm");
+    const rb=await import("https://esm.sh/@imgly/background-removal@1.4.5?bundle");
     const blob=await new Promise(r=>ED.orig.toBlob(r,"image/png"));
     const out=await rb.removeBackground(blob,{publicPath:"https://staticimgly.com/@imgly/background-removal-data/1.4.5/dist/",model:"medium",output:{format:"image/png"},
       progress:(k,c,t)=>{if(t)edMsg(`Recortando… ${Math.round(c/t*100)} %`)}});

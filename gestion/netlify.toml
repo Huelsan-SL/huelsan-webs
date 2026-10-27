@@ -5,7 +5,7 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https://ajxdzchffqaphkmetswx.supabase.co wss://ajxdzchffqaphkmetswx.supabase.co https://cdn.jsdelivr.net https://staticimgly.com; worker-src 'self' blob: https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https://ajxdzchffqaphkmetswx.supabase.co wss://ajxdzchffqaphkmetswx.supabase.co https://cdn.jsdelivr.net https://esm.sh https://staticimgly.com; worker-src 'self' blob: https://cdn.jsdelivr.net https://esm.sh; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
     X-Robots-Tag = "noindex, nofollow"
     X-Content-Type-Options = "nosniff"
     X-Frame-Options = "DENY"
