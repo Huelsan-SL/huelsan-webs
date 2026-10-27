@@ -749,26 +749,39 @@ function renderInteresantes(){
 }
 /* Descarga en un ZIP todas las fotos de los coches en stock: una carpeta por coche (fotos, daños y fotos de la web) */
 function cargarJSZip(){return window.JSZip?Promise.resolve(window.JSZip):new Promise((res,rej)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";sc.onload=()=>res(window.JSZip);sc.onerror=()=>rej(new Error("No se pudo cargar el compresor ZIP"));document.head.appendChild(sc)})}
-async function descargarFotosStock(btn){
-  const coches=[...S.lots.values()].filter(l=>isOwned(l)&&l.estado!=="vendido");
+const nFotos=l=>(l.fotos||[]).length+(l.fotosDanos||[]).length+((window.HUELSAN&&window.HUELSAN.FOTOS_WEB)?(l.fotosWeb||[]).length:0);
+// Fecha de la última descarga de cada coche en este navegador, para no bajar dos veces lo mismo
+function descargadas(){try{return JSON.parse(localStorage.getItem("huelsan-fotos-descargadas")||"{}")}catch(e){return{}}}
+function marcarDescargadas(ids){try{const h=descargadas();const f=new Date().toISOString();ids.forEach(id=>h[id]=f);localStorage.setItem("huelsan-fotos-descargadas",JSON.stringify(h))}catch(e){}}
+function panelDescarga(inv){
+  const cs=inv.filter(l=>nFotos(l));if(!cs.length)return"";
+  const h=descargadas();if(!S.dlSel)S.dlSel=new Set(cs.filter(l=>!h[l.id]).map(l=>l.id));
+  return`<details class="card" style="margin-top:14px" ${S.dlOpen?"open":""} ontoggle="S.dlOpen=this.open"><summary style="cursor:pointer;font-weight:650">Descargar fotos del stock</summary>
+    <div class="muted" style="font-size:12.5px;margin:8px 0">Elige los coches. Se marcan solos los que aún no has descargado en este ordenador. Cada coche va en su carpeta (fotos, daños y fotos de la web).</div>
+    <div style="display:grid;gap:6px;margin:8px 0">${cs.map(l=>`<label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" data-dlsel="${esc(l.id)}" ${S.dlSel.has(l.id)?"checked":""}> <span>${esc(titleOf(l))}${l.matricula?" · "+esc(l.matricula):""} · ${nFotos(l)} fotos${h[l.id]?` · <span class="muted">descargadas el ${fdate(h[l.id])}</span>`:""}</span></label>`).join("")}</div>
+    <div class="row"><button class="btn sm ghost" id="dl-nuevos">Solo no descargados</button><button class="btn sm ghost" id="dl-todos">Todos</button><button class="btn sm ghost" id="dl-ninguno">Ninguno</button>
+    <button class="btn sm primary" id="dl-fotos-sel" ${S.dlSel.size?"":"disabled"}>Descargar seleccionados (${S.dlSel.size})</button></div></details>`}
+async function descargarFotos(btn,coches){
   const limpio=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^\w .-]+/g,"").trim().slice(0,60)||"coche";
-  const tareas=[];
-  for(const l of coches){const dir=limpio([titleOf(l),l.matricula].filter(Boolean).join(" "));
+  const tareas=[],uno=coches.length===1;
+  for(const l of coches){const dir=uno?"":limpio([titleOf(l),l.matricula].filter(Boolean).join(" "))+"/";
     (l.fotos||[]).forEach((id,i)=>tareas.push({dir,nombre:`${String(i+1).padStart(2,"0")}.jpg`,url:BLOB+id}));
-    (l.fotosDanos||[]).forEach((id,i)=>tareas.push({dir:dir+"/danos",nombre:`danos-${String(i+1).padStart(2,"0")}.jpg`,url:BLOB+id}));
-    if(window.HUELSAN&&window.HUELSAN.FOTOS_WEB)(l.fotosWeb||[]).forEach((n,i)=>tareas.push({dir:dir+"/web",nombre:`web-${String(i+1).padStart(2,"0")}.jpg`,url:/^https?:/.test(n)?n:window.HUELSAN.FOTOS_WEB+n}))}
-  if(!tareas.length){toast("Los coches en stock no tienen fotos todavía");return}
+    (l.fotosDanos||[]).forEach((id,i)=>tareas.push({dir:dir+"danos/",nombre:`danos-${String(i+1).padStart(2,"0")}.jpg`,url:BLOB+id}));
+    if(window.HUELSAN&&window.HUELSAN.FOTOS_WEB)(l.fotosWeb||[]).forEach((n,i)=>tareas.push({dir:dir+"web/",nombre:`web-${String(i+1).padStart(2,"0")}.jpg`,url:/^https?:/.test(n)?n:window.HUELSAN.FOTOS_WEB+n}))}
+  if(!tareas.length){toast("No hay fotos que descargar");return}
   const txt=btn.textContent;btn.disabled=true;let hechas=0,fallos=0;
   try{const JSZip=await cargarJSZip();const zip=new JSZip();
     const cola=[...tareas];await Promise.all(Array.from({length:4},async()=>{while(cola.length){const t=cola.shift();
-      try{const r=await fetch(t.url);if(!r.ok)throw 0;const b=await r.blob();zip.file(t.dir+"/"+(b.type==="image/png"?t.nombre.replace(/jpg$/,"png"):t.nombre),b)}catch(e){fallos++}
-      hechas++;btn.textContent=`Descargando fotos… ${hechas} de ${tareas.length}`}}));
+      try{const r=await fetch(t.url);if(!r.ok)throw 0;const b=await r.blob();zip.file(t.dir+(b.type==="image/png"?t.nombre.replace(/jpg$/,"png"):t.nombre),b)}catch(e){fallos++}
+      hechas++;btn.textContent=`Descargando… ${hechas} de ${tareas.length}`}}));
     btn.textContent="Comprimiendo…";
     const out=await zip.generateAsync({type:"blob"});const a=document.createElement("a");a.href=URL.createObjectURL(out);
-    a.download=`fotos-stock-${new Date().toISOString().slice(0,10)}.zip`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),10000);
-    toast(`${tareas.length-fallos} fotos de ${coches.length} coches descargadas`+(fallos?` (${fallos} no se pudieron leer)`:""))}
+    a.download=uno?`fotos-${limpio([titleOf(coches[0]),coches[0].matricula].filter(Boolean).join("-")).replace(/ +/g,"-")}.zip`:`fotos-stock-${new Date().toISOString().slice(0,10)}.zip`;
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),10000);
+    marcarDescargadas(coches.map(l=>l.id));if(!uno&&S.dlSel)S.dlSel=new Set();
+    toast(`${tareas.length-fallos} fotos descargadas`+(uno?"":` de ${coches.length} coches`)+(fallos?` (${fallos} no se pudieron leer)`:""))}
   catch(e){toast("No se ha podido preparar el ZIP: "+e.message)}
-  finally{btn.disabled=false;btn.textContent=txt}}
+  finally{btn.disabled=false;btn.textContent=txt;if(S.tab==="stock"&&!uno)render()}}
 function renderStock(){
   const owned=[...S.lots.values()].filter(l=>isOwned(l)).sort((a,b)=>(a.estado==="vendido")-(b.estado==="vendido"));
   const inv=owned.filter(l=>l.estado!=="vendido");
@@ -776,7 +789,7 @@ function renderStock(){
   $("#main").innerHTML=`<div class="pagehead"><div><h1>Stock</h1><p>Coches comprados. Marca un lote como «Comprado» o «En stock» desde su ficha para que aparezca aquí; ponle precio de venta, fotos y actívalo para la web.</p></div>
     <div class="row tnum"><span class="card"><h3>En stock</h3><b style="font:700 20px var(--f-display)">${inv.length}</b></span><span class="card"><h3>Invertido (compra + gastos)</h3><b style="font:700 20px var(--f-display)">${eur(capital)}</b></span><span class="card"><h3>PVP total</h3><b style="font:700 20px var(--f-display)">${eur(pv)}</b></span></div></div>
     <div class="lots">${owned.length?owned.map(lotRow).join(""):`<div class="empty"><strong>Aún no hay coches en stock</strong>Cuando compres un lote, ábrelo y márcalo como «Comprado». También puedes dar de alta un coche comprado fuera de subasta.</div>`}</div>
-    <div class="row" style="margin-top:14px"><button class="btn primary" id="imp-stock">Importar ficha de compra (PDF de inspección o Excel de BCA)</button><button class="btn" id="add-manual">Añadir coche a mano</button>${inv.length?`<button class="btn" id="dl-fotos-stock">Descargar todas las fotos del stock (ZIP)</button>`:""}</div>
+    <div class="row" style="margin-top:14px"><button class="btn primary" id="imp-stock">Importar ficha de compra (PDF de inspección o Excel de BCA)</button><button class="btn" id="add-manual">Añadir coche a mano</button></div>${panelDescarga(inv)}
     <div class="muted" style="font-size:12.5px;margin-top:6px">Para coches comprados fuera de subasta: sube el informe de inspección en PDF (se leen los datos, las fotos y los daños) o el Excel de lotes de BCA, revisa los datos y añádelos al stock.</div>
     ${comparativaGastos(owned)}`}
 
@@ -1031,7 +1044,7 @@ function renderDrawer(){
     ${l.informePdf?`<div class="links"><a href="${BLOB}${esc(l.informePdf)}" target="_blank" rel="noopener">Informe de inspección (PDF)${l.informeNum?" · "+esc(l.informeNum):""} ↗</a></div>`:""}
     ${(l.fotosDanos||[]).length?`<div><h3 style="margin-bottom:6px">Fotos de daños (${l.fotosDanos.length})</h3><div class="photos">${l.fotosDanos.map(id=>`<a href="${BLOB}${esc(id)}" target="_blank" rel="noopener"><img src="${BLOB}${esc(id)}" alt="Daño"></a>`).join("")}</div></div>`:""}
     <div><div class="photos">${(l.fotos||[]).map(id=>`<img src="${BLOB}${esc(id)}" alt="">`).join("")}</div>
-    ${S.assets?`<label class="btn sm" style="margin-top:8px">Añadir fotos<input type="file" id="e-fotos" accept="image/*" multiple hidden></label>`:`<div class="muted" style="font-size:12.5px">La subida de fotos solo está disponible para quien edita la aplicación.</div>`}</div></div>`:""}
+    ${nFotos(l)?`<button class="btn sm" style="margin-top:8px;margin-right:6px" data-dlfotos="${esc(l.id)}">Descargar fotos de este coche (${nFotos(l)})</button>`:""}${S.assets?`<label class="btn sm" style="margin-top:8px">Añadir fotos<input type="file" id="e-fotos" accept="image/*" multiple hidden></label>`:`<div class="muted" style="font-size:12.5px">La subida de fotos solo está disponible para quien edita la aplicación.</div>`}</div></div>`:""}
   <div class="dsec"><h3>Notas internas</h3><textarea id="e-notas" data-e="notas" data-kind="text">${esc(l.notas??"")}</textarea></div>`;
   dr.scrollTop=st;hydrateThumbs();
   $("#dclose").onclick=()=>{S.open=null;renderDrawer()};
@@ -1356,7 +1369,11 @@ document.addEventListener("click",async e=>{const t=e.target;
   if(t.closest("#g-add")){addGasto();return}
   const gd=t.closest("[data-gdel]");if(gd){delGasto(gd.dataset.gdel,gd);return}
   if(t.closest("#imp-stock")){$("#file-stock").click();return}
-  if(t.closest("#dl-fotos-stock")){descargarFotosStock(t.closest("#dl-fotos-stock"));return}
+  const dlu=t.closest("[data-dlfotos]");if(dlu){const l=S.lots.get(dlu.dataset.dlfotos);if(l)descargarFotos(dlu,[l]);return}
+  if(t.closest("#dl-todos")||t.closest("#dl-ninguno")||t.closest("#dl-nuevos")){const inv=[...S.lots.values()].filter(l=>isOwned(l)&&l.estado!=="vendido"&&nFotos(l));const h=descargadas();
+    S.dlSel=new Set(t.closest("#dl-todos")?inv.map(l=>l.id):t.closest("#dl-nuevos")?inv.filter(l=>!h[l.id]).map(l=>l.id):[]);render();return}
+  const dck=t.closest("[data-dlsel]");if(dck){S.dlSel=S.dlSel||new Set();dck.checked?S.dlSel.add(dck.dataset.dlsel):S.dlSel.delete(dck.dataset.dlsel);const b=$("#dl-fotos-sel");if(b){b.textContent=`Descargar seleccionados (${S.dlSel.size})`;b.disabled=!S.dlSel.size}return}
+  if(t.closest("#dl-fotos-sel")){const sel=[...(S.dlSel||[])].map(id=>S.lots.get(id)).filter(Boolean);if(sel.length)descargarFotos(t.closest("#dl-fotos-sel"),sel);return}
   if(t.closest("#imp-save")){guardarImport();return}
   if(t.closest("#imp")||t.closest("#impscrim"))return;
   if(t.closest("#add-manual")){const id="man-"+Date.now().toString(36);const doc={id,fuente:"Compra directa",subasta:null,subastaId:null,marca:"Nuevo coche",modelo:"",estado:"stock",publico:false,importadoEn:new Date().toISOString()};
