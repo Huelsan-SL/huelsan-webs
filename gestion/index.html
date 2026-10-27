@@ -621,29 +621,32 @@ function recPanel(){
       <button class="btn" id="rec-login" ${REC.busy?"disabled":""}>${REC.busy==="login"?"Abriendo…":"1 · Abrir BCA para iniciar sesión"}</button>
       <button class="btn primary" id="rec-run" ${REC.busy||act?"disabled":""}>${REC.busy==="run"?"Lanzando…":"2 · Lanzar recogida"}</button>
     </div>
-    <div class="recmsg">${REC.msg?`<span style="color:var(${REC.msgKind==="bad"?"--bad":REC.msgKind==="ok"?"--good":"--muted"})">${esc(REC.msg)}</span><br>`:""}Los dos botones funcionan desde cualquier sitio (web, móvil u ordenador): el trabajo se hace en el ordenador de la oficina, que debe estar encendido con la app de escritorio de Claude abierta. «Abrir BCA» abre BCA en el navegador integrado de esa app para que inicies sesión allí; después, «Lanzar recogida» (15–25 min). Si la sesión ha caducado, la recogida se detiene sin cargar nada y te avisa.</div></section>`}
+    <div class="recmsg">${REC.msg?`<span style="color:var(${REC.msgKind==="bad"?"--bad":REC.msgKind==="ok"?"--good":"--muted"})">${esc(REC.msg)}</span><br>`:""}Funciona en el ordenador donde esté instalada la extensión «Huelsan · Recogida BCA» (Chrome o Edge). «Lanzar recogida» abre BCA en una ventana: si no tienes la sesión iniciada, entra ahí y la recogida empieza sola (15–25 min). Los lotes aparecen aquí al terminar. En la extensión puedes activar una recogida automática diaria.</div></section>`}
 function recErr(e,host){const c=e&&e.code;
   if(host&&(c==="server_not_connected"||c==="capability_disabled"||c==="not_granted"))return"El navegador integrado solo se abre desde la app de escritorio de Claude (Cowork). Ábrela allí, o entra en BCA desde el navegador integrado a mano.";
-  if(c==="capability_disabled")return"Desde la web todavía no se pueden lanzar recogidas: de momento se siguen haciendo con Claude. Pronto: extensión del navegador para lanzarlas desde aquí.";
+  if(c==="no_ext")return"Para lanzar recogidas desde la web instala en este ordenador la extensión «Huelsan · Recogida BCA» (Chrome o Edge) y entra en ella con tu usuario.";
+  if(c==="ext")return e.message||"La extensión no ha podido lanzar la recogida.";
   return({not_granted:"La app no tiene permiso para usar conectores. Revísalo en el menú Permisos del artifact.",capability_disabled:"Los conectores no están disponibles en esta vista.",server_not_connected:"El conector «Claude Code Remote» no está disponible para tu cuenta.",needs_reauth:"Vuelve a conectar «Claude Code Remote» en Ajustes → Conectores.",not_in_manifest:"No se ha dado permiso para esta acción. Puedes activarlo en el menú Permisos del artifact.",approval_required:"Hace falta tu aprobación para lanzar la recogida: vuelve a pulsar y acepta.",cancelled:"Cancelado.",blocked_by_policy:"La política de tu organización no permite esta acción.",tool_error:"Claude no ha aceptado la petición: "+(e.message||"")}[c])||"No se ha podido completar ahora"+(e&&e.message?": "+e.message:".")+" Vuelve a intentarlo."}
-async function fireTrigger(id){return S.mcp.callTool("Claude Code Remote","fire_trigger",{trigger_id:id})}
+const hayExt=()=>!!document.documentElement.dataset.huelsanExt;
+function extPedir(tipo){return new Promise((res,rej)=>{const id=Math.random().toString(36).slice(2);const fin=()=>{window.removeEventListener("message",h);clearTimeout(t)};const h=e=>{if(e.source===window&&e.data&&e.data.respuesta&&e.data.id===id){fin();e.data.ok?res(e.data):rej(Object.assign(new Error(e.data.msg||"Error"),{code:"ext"}))}};const t=setTimeout(()=>{fin();rej(Object.assign(new Error("La extensión no responde. Recarga la página."),{code:"ext"}))},20000);window.addEventListener("message",h);window.postMessage({huelsanExt:tipo,id},location.origin)})}
+async function fireTrigger(id){if(hayExt())return extPedir(id===LOGIN_TRIGGER?"abrir-bca":"recoger");if(S.mcp)return S.mcp.callTool("Claude Code Remote","fire_trigger",{trigger_id:id});throw Object.assign(new Error(""),{code:"no_ext"})}
 async function recLogin(){
-  if(!S.mcp){REC.msg=recErr({code:"capability_disabled"});REC.msgKind="bad";render();return}
+  if(!S.mcp&&!hayExt()){REC.msg=recErr({code:"no_ext"});REC.msgKind="bad";render();return}
   REC.busy="login";REC.msg="";render();
   try{await fireTrigger(LOGIN_TRIGGER);
     const doc={estado:"abriendo",comprobada:new Date().toISOString(),mensaje:"Abriendo BCA en el navegador integrado del ordenador…"};
     S.sesion=doc;if(S.db){try{await S.db.doc("recogida/sesion").set(doc)}catch(e){}}
-    REC.msg="En menos de un minuto se abrirá BCA en el navegador integrado de la app de escritorio de Claude, en el ordenador. Inicia sesión ahí con tu usuario: la app detecta sola cuándo estás dentro (durante unos 8 minutos).";REC.msgKind="ok"}
+    REC.msg="Se ha abierto BCA en una ventana nueva: inicia sesión ahí con tu usuario.";REC.msgKind="ok"}
   catch(e){REC.msg=recErr(e);REC.msgKind="bad"}
   finally{REC.busy="";render()}}
 async function recRun(){
-  if(!S.mcp){REC.msg=recErr({code:"capability_disabled"});REC.msgKind="bad";render();return}
+  if(!S.mcp&&!hayExt()){REC.msg=recErr({code:"no_ext"});REC.msgKind="bad";render();return}
   if(recActiva(S.recogida))return;
   REC.busy="run";REC.msg="";render();
   try{await fireTrigger(REC_TRIGGER);
-    const doc={estado:"solicitada",solicitada:new Date().toISOString(),mensaje:"Esperando a que Claude empiece…"};
+    const doc={estado:"solicitada",solicitada:new Date().toISOString(),mensaje:"Abriendo BCA…"};
     S.recogida=doc;if(S.db){try{await S.db.doc("recogida/actual").set(doc)}catch(e){}}
-    REC.msg="Recogida lanzada. Puedes cerrar la app: al terminar te llegará un aviso.";REC.msgKind="ok"}
+    REC.msg="Recogida lanzada en una ventana de BCA. Si no tienes la sesión iniciada, entra en esa ventana y empezará sola. Tarda 15–25 min: no cierres esa ventana; puedes cerrar esta página.";REC.msgKind="ok"}
   catch(e){REC.msg=recErr(e);REC.msgKind="bad"}
   finally{REC.busy="";render()}}
 /* ---------- archivar subastas ---------- */

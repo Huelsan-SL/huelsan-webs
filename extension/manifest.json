@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Huelsan · Recogida BCA",
+  "short_name": "Huelsan BCA",
+  "version": "1.0.0",
+  "description": "Recoge las subastas y lotes de BCA con tu sesión y los guarda en la app de gestión de Huelsan Automoción.",
+  "minimum_chrome_version": "116",
+  "permissions": ["storage", "alarms", "tabs", "notifications"],
+  "host_permissions": [
+    "https://es.bca-europe.com/*",
+    "https://www1.bcaimage.com/*",
+    "https://ajxdzchffqaphkmetswx.supabase.co/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["https://gestion.huelsanautomocion.com/*", "https://huelsan-gestion.netlify.app/*"],
+      "js": ["gestion.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://es.bca-europe.com/*"],
+      "js": ["colector.js", "bca.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": { "default_popup": "popup.html", "default_title": "Huelsan · Recogida BCA" },
+  "icons": { "128": "icono128.png", "48": "icono48.png" }
+}

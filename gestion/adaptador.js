@@ -35,7 +35,8 @@ async function api(path,opt={}){
   const t=await token();
   const r=await fetch(SB_URL+path,{...opt,headers:{apikey:SB_KEY,Authorization:"Bearer "+t,"Content-Type":"application/json",...(opt.headers||{})}});
   if(!r.ok){const tx=await r.text().catch(()=>"");throw Object.assign(new Error(tx||("HTTP "+r.status)),{code:r.status===401?"unauthenticated":"http_"+r.status})}
-  const ct=r.headers.get("content-type")||"";return ct.includes("json")?r.json():r.text();
+  const tx=await r.text();if(!tx)return null;
+  const ct=r.headers.get("content-type")||"";if(ct.includes("json")){try{return JSON.parse(tx)}catch(e){return null}}return tx;
 }
 
 /* ---------------- rutas: colección/documento → tabla + id ---------------- */

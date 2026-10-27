@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Huelsan · Recogida BCA</title>
+<style>
+:root{color-scheme:light dark;--line:#d0d0d0;--accent:#1f4e79}
+body{margin:0;width:300px;font:14px/1.45 system-ui,sans-serif;padding:14px;display:grid;gap:10px}
+h1{font-size:15px;margin:0}p{margin:0}.muted{opacity:.7;font-size:12px}
+input{font:inherit;padding:8px;border:1px solid var(--line);border-radius:6px;width:100%;box-sizing:border-box;background:transparent;color:inherit}
+button{font:inherit;font-weight:600;padding:9px;border:0;border-radius:6px;background:var(--accent);color:#fff;cursor:pointer;width:100%}
+button.sec{background:transparent;color:inherit;border:1px solid var(--line);font-weight:500}
+label.row{display:flex;gap:8px;align-items:center}label.row input[type=time]{width:auto}
+#msg{min-height:1.2em;font-size:12px}
+[hidden]{display:none!important}
+</style></head><body>
+<h1>Huelsan · Recogida BCA</h1>
+<section id="v-login" hidden>
+  <p class="muted">Entra una vez con el mismo usuario de la app de gestión.</p>
+  <form id="f-login" style="display:grid;gap:8px;margin-top:8px">
+    <input id="email" type="email" placeholder="Correo" autocomplete="username" required>
+    <input id="pass" type="password" placeholder="Contraseña" autocomplete="current-password" required>
+    <button type="submit">Entrar</button>
+  </form>
+</section>
+<section id="v-main" hidden style="display:grid;gap:10px">
+  <p class="muted" id="quien"></p>
+  <button id="b-recoger">Recoger ahora</button>
+  <button id="b-bca" class="sec">Abrir BCA para iniciar sesión</button>
+  <label class="row"><input type="checkbox" id="auto"> Recogida diaria a las <input type="time" id="hora" value="08:45"></label>
+  <p class="muted">La recogida automática solo funciona si el navegador está abierto a esa hora.</p>
+  <button id="b-salir" class="sec">Salir</button>
+</section>
+<p id="msg" role="status"></p>
+<script src="popup.js"></script>
+</body></html>
