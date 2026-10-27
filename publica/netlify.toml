@@ -1,6 +1,9 @@
 # Configuración de Netlify para la web pública de Huelsan Automoción (sitio estático, sin compilación)
 [build]
   publish = "."
+  # Cada publicación cuesta créditos de Netlify (plan gratis: 300 al mes, 15 por publicación).
+  # Solo se publica si el mensaje del commit contiene [publicar]; el resto de commits se ignoran sin gastar.
+  ignore = "git log -1 --pretty=%B | grep -qF '[publicar]' && exit 1 || exit 0"
 
 [[headers]]
   for = "/*"
