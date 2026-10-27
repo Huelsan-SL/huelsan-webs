@@ -5,7 +5,6 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https://ajxdzchffqaphkmetswx.supabase.co wss://ajxdzchffqaphkmetswx.supabase.co https://cdn.jsdelivr.net https://esm.sh https://staticimgly.com; worker-src 'self' blob: https://cdn.jsdelivr.net https://esm.sh; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
     X-Robots-Tag = "noindex, nofollow"
     X-Content-Type-Options = "nosniff"
     X-Frame-Options = "DENY"
@@ -13,3 +12,29 @@
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
     Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https://ajxdzchffqaphkmetswx.supabase.co wss://ajxdzchffqaphkmetswx.supabase.co; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https://ajxdzchffqaphkmetswx.supabase.co wss://ajxdzchffqaphkmetswx.supabase.co; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+
+[[headers]]
+  for = "/empresa/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https://ajxdzchffqaphkmetswx.supabase.co wss://ajxdzchffqaphkmetswx.supabase.co; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+
+[[headers]]
+  for = "/migracion/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https://ajxdzchffqaphkmetswx.supabase.co wss://ajxdzchffqaphkmetswx.supabase.co; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+
+# El estudio de folletos recorta fondos con IA en el navegador (onnxruntime necesita eval y wasm)
+[[headers]]
+  for = "/folleto/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https://ajxdzchffqaphkmetswx.supabase.co wss://ajxdzchffqaphkmetswx.supabase.co https://cdn.jsdelivr.net https://esm.sh https://staticimgly.com; worker-src 'self' blob: https://cdn.jsdelivr.net https://esm.sh; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
