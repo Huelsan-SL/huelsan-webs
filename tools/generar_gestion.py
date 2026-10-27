@@ -29,6 +29,9 @@ s = s.replace("https://claude.ai/artifact/KfiJ9cEvT8971YQqNibYTr", "https://huel
 # estudio de folletos: acceso desde la ficha de cada coche
 rep('''<button data-state="${k}" aria-pressed="${(l.estado||"nuevo")===k}">${v}</button>`).join("")}</div>''',
     '''<button data-state="${k}" aria-pressed="${(l.estado||"nuevo")===k}">${v}</button>`).join("")}</div><div style="margin-top:10px"><a class="btn sm" href="folleto/?id=${encodeURIComponent(l.id)}" style="text-decoration:none">Crear folleto y fotos de estudio</a></div>''')
+# estimaciones: en la web las hace Gemini (función «estimar» de Supabase), no Claude
+s = s.replace("Estimación orientativa de Claude","Estimación orientativa (IA)").replace("Volver a estimar con Claude","Volver a estimar").replace("Estimar con Claude","Estimar precio")
+s = s.replace("con Claude…","con IA…").replace("Claude no está disponible para esta cuenta.","Las estimaciones no están configuradas (falta la clave de Gemini en Supabase).")
 # recogidas: la web habla con la extensión «Huelsan · Recogida BCA» (Chrome/Edge)
 rep('return({not_granted:', 'if(c==="no_ext")return"Para lanzar recogidas desde la web instala en este ordenador la extensión «Huelsan · Recogida BCA» (Chrome o Edge) y entra en ella con tu usuario.";\n  if(c==="ext")return e.message||"La extensión no ha podido lanzar la recogida.";\n  return({not_granted:')
 rep('async function fireTrigger(id){return S.mcp.callTool("Claude Code Remote","fire_trigger",{trigger_id:id})}',

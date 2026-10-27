@@ -154,6 +154,16 @@ async function subir(bucket,blob,nombre){
   return{id,url:SB_URL+"/storage/v1/object/public/"+bucket+"/"+id};
 }
 const assets={upload:blob=>subir("fotos",blob)};
+/* ---------------- estimaciones (Gemini, a través de la función «estimar» de Supabase) ---------------- */
+const sample={async json(prompt,opt={}){
+  const t=await token();
+  let r;try{r=await fetch(SB_URL+"/functions/v1/estimar",{method:"POST",signal:opt.signal,headers:{apikey:SB_KEY,Authorization:"Bearer "+t,"Content-Type":"application/json"},
+    body:JSON.stringify({prompt,calidad:opt.modelTier==="default"?"alta":"rapida"})})}
+  catch(e){if(e&&e.name==="AbortError")throw Object.assign(new Error("Cancelado"),{code:"cancelled"});throw Object.assign(new Error("Sin conexión"),{code:"network"})}
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){const c=r.status===429?"rate_limited":r.status===401?"session_expired":j.error==="invalid_json"?"invalid_json":j.error==="sin_clave"?"sampling_disabled":"error";
+    throw Object.assign(new Error(j.msg||j.error||("HTTP "+r.status)),{code:c})}
+  return j.data}};
 // Para páginas propias de la app (estudio de folletos, datos de empresa)
 window.HUELSAN={rest:(path,opt)=>listo.then(()=>api(path,opt)),subir:(bucket,blob,nombre)=>listo.then(()=>subir(bucket,blob,nombre)),SB_URL,FOTOS_WEB:SB_URL+"/storage/v1/object/public/fotos-web/"};
 
@@ -163,7 +173,8 @@ window.claude={use(n){
   if(n==="db")return listo.then(()=>db);
   if(n==="assets")return listo.then(()=>assets);
   if(n==="user")return listo.then(()=>({email:ses&&ses.email}));
-  return noDisp(n);   // «sample» (estimaciones) y «mcp» (recogidas) llegarán en la siguiente fase
+  if(n==="sample")return listo.then(()=>sample);
+  return noDisp(n);   // «mcp» no existe en la web: las recogidas van por la extensión
 }};
 
 /* ---------------- pantalla de acceso ---------------- */

@@ -724,7 +724,7 @@ function renderSubastas(){
     </aside>
     <section style="min-width:0">
       <div class="listbar"><span class="sum"><b class="tnum">${shown.length}</b> de ${est.length} lotes pasan los filtros</span><span id="fpend" class="estprog" role="status">${filT?"Actualizando en 2,5 s…":""}</span>
-        ${S.sample?(EST.running?`<span class="estprog tnum">${EST.auto?"Estimando automáticamente todos los lotes…":"Estimando precios…"} ${EST.done} de ${EST.total}</span><button class="btn sm" id="est-stop">Detener</button>`:(()=>{const n=shown.filter(l=>l.mercado==null).length;return n?`<button class="btn sm primary" id="est-run" title="Estimación orientativa de Claude según modelo, año, km, combustible y potencia">Estimar precio de mercado (${n})</button>`:""})()):""}
+        ${S.sample?(EST.running?`<span class="estprog tnum">${EST.auto?"Estimando automáticamente todos los lotes…":"Estimando precios…"} ${EST.done} de ${EST.total}</span><button class="btn sm" id="est-stop">Detener</button>`:(()=>{const n=shown.filter(l=>l.mercado==null).length;return n?`<button class="btn sm primary" id="est-run" title="Estimación orientativa (IA) según modelo, año, km, combustible y potencia">Estimar precio de mercado (${n})</button>`:""})()):""}
         ${shown.length?`<button class="btn sm" id="bulk-int">Marcar visibles como interesantes</button>`:""}
         ${(()=>{const n=shown.filter(l=>l.estado==="interesante").length;return n?`<button class="btn sm" id="bulk-noint">Desmarcar visibles como interesantes (${n})</button>`:""})()}
         ${est.length-shown.length>0?`<button class="btn sm" id="bulk-desc">Descartar los ${est.length-shown.length} filtrados</button>`:""}</div>
@@ -894,10 +894,10 @@ async function guardarEstimaciones(res){
   const fecha=new Date().toISOString();let n=0;
   for(const e of res){const l=S.lots.get(String(e.id));const p=Math.round(+e.precio);if(!l||!(p>0))continue;
     if(l.manual&&l.manual.mercado)continue;
-    const patch={mercado:p,mercadoMin:+e.min>0?Math.round(+e.min):null,mercadoMax:+e.max>0?Math.round(+e.max):null,mercadoConf:["alta","media","baja"].includes(e.confianza)?e.confianza:null,mercadoNota:e.nota?String(e.nota).slice(0,120):null,mercadoFuente:"Estimación orientativa de Claude",mercadoFecha:fecha};
+    const patch={mercado:p,mercadoMin:+e.min>0?Math.round(+e.min):null,mercadoMax:+e.max>0?Math.round(+e.max):null,mercadoConf:["alta","media","baja"].includes(e.confianza)?e.confianza:null,mercadoNota:e.nota?String(e.nota).slice(0,120):null,mercadoFuente:"Estimación orientativa (IA)",mercadoFecha:fecha};
     S.lots.set(l.id,{...l,...patch});if(S.db){try{await S.db.doc("lotes/"+l.id).update(patch)}catch(err){}}n++}
   return n}
-const errTxt=c=>({not_granted:"No se ha dado permiso para usar Claude desde la app.",rate_limited:"Demasiadas consultas seguidas o límite de uso alcanzado. Prueba más tarde.",invalid_json:"La respuesta no vino en el formato esperado. Vuelve a intentarlo.",sampling_disabled:"Claude no está disponible para esta cuenta.",session_expired:"Tu sesión ha caducado: vuelve a iniciar sesión."}[c]||"No se ha podido estimar ahora. Vuelve a intentarlo.");
+const errTxt=c=>({not_granted:"No se ha dado permiso para usar Claude desde la app.",rate_limited:"Demasiadas consultas seguidas o límite de uso alcanzado. Prueba más tarde.",invalid_json:"La respuesta no vino en el formato esperado. Vuelve a intentarlo.",sampling_disabled:"Las estimaciones no están configuradas (falta la clave de Gemini en Supabase).",session_expired:"Tu sesión ha caducado: vuelve a iniciar sesión."}[c]||"No se ha podido estimar ahora. Vuelve a intentarlo.");
 async function estimarVarios(lots,auto){
   if(!S.sample||EST.running||!lots.length)return;
   EST.running=true;EST.auto=!!auto;EST.ctl=new AbortController();EST.done=0;EST.total=lots.length;EST.msg="";render();
@@ -976,7 +976,7 @@ function renderDrawer(){
   ${kmSuspect(l)==="revisar"?`<div class="note">Hace ${num(ky)} km/año de media: poco para su edad. Comprueba ITV e historial de mantenimiento antes de pujar.</div>`:""}</div>
   <div class="dsec"><h3>Precio de mercado</h3>
     ${l.mercadoFuente&&!(l.manual&&l.manual.mercado)?`<div class="note tnum">${esc(l.mercadoFuente)}: <b>${eur(l.mercado)}</b>${l.mercadoMin&&l.mercadoMax?` (rango habitual ${eur(l.mercadoMin)} – ${eur(l.mercadoMax)})`:""}${l.mercadoConf?` · confianza ${esc(l.mercadoConf)}`:""}${l.mercadoNota?` · ${esc(l.mercadoNota)}`:""}${l.mercadoFecha?` · ${fdate(l.mercadoFecha)}`:""}. Es una referencia sin consultar anuncios en directo: compruébala con los enlaces de abajo antes de pujar.</div>`:""}
-    ${S.sample?`<div class="row">${EST.running?`<span class="estprog">Estimando…</span>`:`<button class="btn sm" id="est-one">${l.mercado!=null?"Volver a estimar con Claude":"Estimar con Claude"}</button>`}</div>`:""}
+    ${S.sample?`<div class="row">${EST.running?`<span class="estprog">Estimando…</span>`:`<button class="btn sm" id="est-one">${l.mercado!=null?"Volver a estimar":"Estimar precio"}</button>`}</div>`:""}
     <div class="form"><label>Precio de mercado estimado (€)<input type="number" id="e-mercado" data-e="mercado" step="100" value="${esc(l.mercado??"")}"></label>
     <label>Puja máxima (€)<input type="number" id="e-pujaMax" data-e="pujaMax" step="100" placeholder="${pujaMaxEst(l)!=null?"sugerida "+pujaMaxEst(l):""}" value="${esc(l.pujaMax??"")}"></label>
     ${isPast(l)?`<label>Precio de remate (€)<input type="number" id="e-precioRemate" data-e="precioRemate" step="100" value="${esc(l.precioRemate??"")}"></label>`:""}</div>
@@ -1085,7 +1085,7 @@ async function importarStock(files){
     try{
       if(/\.pdf$/i.test(file.name)){IMP.msg=`Leyendo ${file.name}…`;renderImp();
         const buf=await file.arrayBuffer();const r=await leerPdf(buf.slice(0));
-        IMP.msg=S.sample?`Interpretando ${file.name} con Claude…`:`Interpretando ${file.name}…`;renderImp();
+        IMP.msg=S.sample?`Interpretando ${file.name} con IA…`:`Interpretando ${file.name}…`;renderImp();
         const base=parsePdfBasico(r.pages);const ai=await parsePdfClaude(r.pages);
         const d=lotFromPdf(ai,base);
         IMP.items.push({kind:"pdf",file,d,imgs:r.imgs,sel:true,precio:"",dest:"nuevo",origen:d.proveedor?`Compra directa · ${d.proveedor}`:"Compra directa",ia:!!ai})}
