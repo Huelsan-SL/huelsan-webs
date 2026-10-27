@@ -14,7 +14,12 @@ def rep(old, new, count=1):
     global s
     assert old in s, "no encontrado: " + old[:80]
     s = s.replace(old, new, count)
-rep("<title>Huelsan Lotes</title>", '<title>Huelsan · Gestión</title>\n<meta name="robots" content="noindex,nofollow">\n<link rel="icon" href="favicon.svg">\n<script src="adaptador.js"></script>')
+rep("</style>", """.hmenu{position:relative;margin-left:10px}.hmenu summary{list-style:none;color:var(--ink)}.hmenu summary::-webkit-details-marker{display:none}
+.hmenu nav{position:absolute;right:0;top:calc(100% + 6px);z-index:50;min-width:250px;display:grid;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:6px}
+.hmenu nav a,.hmenu nav button{display:block;text-align:left;padding:10px 12px;border-radius:6px;color:inherit;text-decoration:none;font:inherit;background:none;border:0;cursor:pointer}
+.hmenu nav a:hover,.hmenu nav button:hover{background:var(--bg)}.hmenu nav [hidden]{display:none}
+</style>""")
+rep("<title>Huelsan Lotes</title>", '<title>Huelsan · Gestión</title>\n<meta name="robots" content="noindex,nofollow">\n<link rel="icon" href="favicon.svg">\n<link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">\n<link rel="apple-touch-icon" href="iconos/apple-touch-icon.png">\n<meta name="theme-color" content="#1B1D20">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-title" content="Huelsan">\n<script src="adaptador.js"></script>')
 # fotos y PDF: /_blob/ID → URL pública del almacén
 n = s.count('"/_blob/${'); s = s.replace('"/_blob/${', '"${BLOB}${')
 assert n == 7, n
@@ -23,7 +28,7 @@ assert "_blob" not in s
 rep("<script>\n", '<script>\nconst BLOB=window.HUELSAN_BLOB||"/_blob/";\n', 1)
 # botón salir junto al estado
 rep('<div class="status" id="status">Conectando…</div>',
-    '<div class="status" id="status">Conectando…</div><a class="btn" href="folleto/" style="margin-left:8px;text-decoration:none">Estudio</a><a class="btn" href="empresa/" style="margin-left:8px;text-decoration:none">Datos de empresa</a><button type="button" class="btn" id="salir" style="margin-left:8px" onclick="HUELSAN_SALIR()">Salir</button>')
+    '<div class="status" id="status">Conectando…</div><details class="hmenu"><summary class="btn">Menú ▾</summary><nav><a href="folleto/">Estudio de fotos y folletos</a><a href="anuncios/">Anuncios en portales</a><a href="textos/">Textos de la web</a><a href="empresa/">Datos de empresa</a><a href="https://huelsanautomocion.com" target="_blank" rel="noopener">Ver la web pública</a><button type="button" data-instalar hidden onclick="HUELSAN_INSTALAR()">Instalar app en este dispositivo</button><button type="button" id="salir" onclick="HUELSAN_SALIR()">Salir</button></nav></details>')
 # enlace a la web pública
 s = s.replace("https://claude.ai/artifact/KfiJ9cEvT8971YQqNibYTr", "https://huelsanautomocion.com")
 # estudio de folletos: acceso desde la ficha de cada coche

@@ -1,7 +1,17 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.hmenu{position:relative;margin-left:10px}.hmenu summary{list-style:none;color:var(--ink)}.hmenu summary::-webkit-details-marker{display:none}
+.hmenu nav{position:absolute;right:0;top:calc(100% + 6px);z-index:50;min-width:250px;display:grid;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:6px}
+.hmenu nav a,.hmenu nav button{display:block;text-align:left;padding:10px 12px;border-radius:6px;color:inherit;text-decoration:none;font:inherit;background:none;border:0;cursor:pointer}
+.hmenu nav a:hover,.hmenu nav button:hover{background:var(--bg)}.hmenu nav [hidden]{display:none}
+</style></head><body>
 <title>Huelsan · Gestión</title>
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="favicon.svg">
+<link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
+<link rel="apple-touch-icon" href="iconos/apple-touch-icon.png">
+<meta name="theme-color" content="#1B1D20">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Huelsan">
 <script src="adaptador.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
@@ -281,7 +291,7 @@ tbody tr:hover{background:var(--sunk)}
 <header class="top">
   <div class="top-in">
     <div class="brand"><svg class="logo-sym" viewBox="3 3 58 49" aria-hidden="true"><path d="M8.6 49.5 A27 27 0 1 1 55.4 49.5" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><path d="M55.4 22.5 A27 27 0 0 1 56.47 43.41" fill="none" class="lgs" stroke-width="4.5" stroke-linecap="round"/><path d="M13.340 45.510 L16.660 50.490 L17.500 49.874 L17.500 42.998 Z" class="lgf"/><path d="M28.500 41.806 L35.500 36.672 L35.500 32.130 L28.500 36.357 Z" class="lgf"/><path d="M46.500 28.604 L48.960 26.800 L47.640 24.800 L46.500 25.488 Z" class="lgf"/><rect x="19" y="22" width="8" height="28" fill="currentColor"/><rect x="37" y="22" width="8" height="28" fill="currentColor"/><circle cx="15" cy="48" r="3.0" fill="currentColor"/></svg><span class="brand-txt">HUELSAN <small>Automoción</small></span></div>
-    <div class="status" id="status">Conectando…</div><a class="btn" href="folleto/" style="margin-left:8px;text-decoration:none">Estudio</a><a class="btn" href="empresa/" style="margin-left:8px;text-decoration:none">Datos de empresa</a><button type="button" class="btn" id="salir" style="margin-left:8px" onclick="HUELSAN_SALIR()">Salir</button>
+    <div class="status" id="status">Conectando…</div><details class="hmenu"><summary class="btn">Menú ▾</summary><nav><a href="folleto/">Estudio de fotos y folletos</a><a href="anuncios/">Anuncios en portales</a><a href="textos/">Textos de la web</a><a href="empresa/">Datos de empresa</a><a href="https://huelsanautomocion.com" target="_blank" rel="noopener">Ver la web pública</a><button type="button" data-instalar hidden onclick="HUELSAN_INSTALAR()">Instalar app en este dispositivo</button><button type="button" id="salir" onclick="HUELSAN_SALIR()">Salir</button></nav></details>
   </div>
   <nav class="tabs" role="tablist" id="tabs">
     <button role="tab" data-tab="subastas" aria-selected="true">Subastas<span class="count" id="c-subastas"></span></button>

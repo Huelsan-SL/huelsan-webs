@@ -244,4 +244,11 @@ function arrancar(){
   else mostrarLogin();
 }
 document.readyState==="loading"?document.addEventListener("DOMContentLoaded",arrancar):arrancar();
+/* App instalable en el móvil (PWA): copia de seguridad sin conexión y botón «Instalar app» cuando el navegador lo permite */
+if("serviceWorker" in navigator&&location.protocol==="https:")addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));
+let avisoInstalar=null;
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();avisoInstalar=e;document.querySelectorAll("[data-instalar]").forEach(b=>b.hidden=false)});
+addEventListener("appinstalled",()=>{avisoInstalar=null;document.querySelectorAll("[data-instalar]").forEach(b=>b.hidden=true)});
+document.addEventListener("click",e=>{document.querySelectorAll("details.hmenu[open]").forEach(d=>{if(!d.contains(e.target)||e.target.closest("nav a"))d.open=false})});
+window.HUELSAN_INSTALAR=async()=>{if(!avisoInstalar)return;avisoInstalar.prompt();await avisoInstalar.userChoice.catch(()=>{});avisoInstalar=null;document.querySelectorAll("[data-instalar]").forEach(b=>b.hidden=true)};
 })();

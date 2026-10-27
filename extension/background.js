@@ -58,6 +58,7 @@ function aviso(titulo, texto) {
   try { chrome.notifications.create({ type: "basic", iconUrl: "icono128.png", title: titulo, message: texto }); } catch (e) {}
 }
 let ultimoProgreso = 0;
+const PORTALES = ["wallapop.com", "milanuncios.com", "facebook.com", "coches.net", "autoscout24.es", "autocasion.com", "coches.com"];
 
 chrome.runtime.onMessage.addListener((m, sender, responder) => {
   (async () => {
@@ -80,6 +81,18 @@ chrome.runtime.onMessage.addListener((m, sender, responder) => {
           await ajuste("recogida/actual", { estado: "en curso", inicio: new Date(j ? j.inicio : Date.now()).toISOString(), mensaje: m.mensaje }).catch(() => {}); }
         return { ok: true };
       }
+      case "anuncio": {
+        // Anuncio preparado en gestion.huelsanautomocion.com/anuncios: se guarda y se abre el portal; allí lo muestra portales.js
+        const org = sender.url ? new URL(sender.url).origin : "";
+        if (!/^https:\/\/(gestion\.huelsanautomocion\.com|(?:[\w-]+--)?huelsan-gestion\.netlify\.app)$/.test(org)) throw new Error("origen no permitido");
+        const u = new URL(String(m.url || ""));
+        if (u.protocol !== "https:" || !PORTALES.some(h => u.hostname === h || u.hostname.endsWith("." + h))) throw new Error("portal no permitido");
+        await chrome.storage.local.set({ anuncio: { ...(m.anuncio || {}), guardado: Date.now() } });
+        await chrome.tabs.create({ url: u.href });
+        return { ok: true };
+      }
+      case "anuncio?": { const { anuncio } = await chrome.storage.local.get("anuncio"); return { anuncio: anuncio && Date.now() - anuncio.guardado < 12 * 3600e3 ? anuncio : null }; }
+      case "anuncio-borrar": await chrome.storage.local.remove("anuncio"); return { ok: true };
       case "foto-bca": {
         // Foto de BCA a buen tamaño para el estudio de folletos (la web no puede leer bcaimage directamente)
         const id = String(m.docId || "").replace(/\D/g, ""); if (!id) throw new Error("Falta el id de la foto");

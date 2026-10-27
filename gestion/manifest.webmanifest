@@ -1,0 +1,22 @@
+{
+  "name": "Huelsan · Gestión",
+  "short_name": "Huelsan",
+  "description": "Subastas, lotes, stock y estudio de fotos de Huelsan Automoción.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "lang": "es",
+  "background_color": "#1B1D20",
+  "theme_color": "#1B1D20",
+  "icons": [
+    { "src": "iconos/icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "iconos/icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "iconos/icono-mascara-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Estudio de fotos", "url": "/folleto/", "icons": [{ "src": "iconos/icono-192.png", "sizes": "192x192" }] },
+    { "name": "Textos de la web", "url": "/textos/", "icons": [{ "src": "iconos/icono-192.png", "sizes": "192x192" }] }
+  ]
+}

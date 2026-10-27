@@ -213,7 +213,7 @@ dl.kv dd{margin:0;font-weight:600;overflow-wrap:anywhere}
   <div class="wrap top-in">
     <a class="brand" href="#inicio" aria-label="Huelsan Automoción, inicio"><svg class="logo-sym" viewBox="3 3 58 49" aria-hidden="true"><path d="M8.6 49.5 A27 27 0 1 1 55.4 49.5" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><path d="M55.4 22.5 A27 27 0 0 1 56.47 43.41" fill="none" class="lgs" stroke-width="4.5" stroke-linecap="round"/><path d="M13.340 45.510 L16.660 50.490 L17.500 49.874 L17.500 42.998 Z" class="lgf"/><path d="M28.500 41.806 L35.500 36.672 L35.500 32.130 L28.500 36.357 Z" class="lgf"/><path d="M46.500 28.604 L48.960 26.800 L47.640 24.800 L46.500 25.488 Z" class="lgf"/><rect x="19" y="22" width="8" height="28" fill="currentColor"/><rect x="37" y="22" width="8" height="28" fill="currentColor"/><circle cx="15" cy="48" r="3.0" fill="currentColor"/></svg><span><b>HUELSAN</b><small>Automoción</small></span></a>
     <nav class="menu" aria-label="Secciones">
-      <a href="#coches">Coches</a><a href="#que-hacemos">Qué hacemos</a><a href="#quienes-somos">Quiénes somos</a><a href="#contacto">Contacto</a>
+      <a href="#coches" data-t="menu.coches">Coches</a><a href="#que-hacemos" data-t="menu.que">Qué hacemos</a><a href="#quienes-somos" data-t="menu.quienes">Quiénes somos</a><a href="#contacto" data-t="menu.contacto">Contacto</a>
     </nav>
   </div>
 </header>
@@ -222,10 +222,10 @@ dl.kv dd{margin:0;font-weight:600;overflow-wrap:anywhere}
   <div class="hero" id="inicio">
     <div class="wrap hero-grid">
       <div>
-        <div class="eyebrow" style="color:var(--champ)">Compraventa de vehículos de ocasión</div>
+        <div class="eyebrow" style="color:var(--champ)" data-t="portada.antetitulo">Compraventa de vehículos de ocasión</div>
         <h1 style="margin-top:12px" id="h-tit">Buscamos en Europa.<br><em>Respondemos aquí.</em></h1>
         <p id="h-sub">Coches revisados en stock, listos para entregar, y búsqueda por encargo del coche que necesitas, con transporte y papeles resueltos.</p>
-        <div class="ctas"><a class="btn primary" href="#coches">Ver coches disponibles</a><a class="btn ghost" href="#contacto">Cuéntanos qué buscas</a></div>
+        <div class="ctas"><a class="btn primary" href="#coches" data-t="portada.boton1">Ver coches disponibles</a><a class="btn ghost" href="#contacto" data-t="portada.boton2">Cuéntanos qué buscas</a></div>
         <div class="facts" id="facts"></div>
       </div>
       <figure class="hero-car" id="herocar" style="margin:0" hidden></figure>
@@ -234,12 +234,12 @@ dl.kv dd{margin:0;font-weight:600;overflow-wrap:anywhere}
 
   <section id="coches">
     <div class="wrap">
-      <div class="sec-head"><div><div class="eyebrow">Coches</div><h2>Disponibles ahora</h2><p class="lead">«En stock» son coches nuestros, listos para entregar. «Por encargo» son coches que podemos conseguirte en los próximos días: pregúntanos antes de que se vayan.</p></div></div>
+      <div class="sec-head"><div><div class="eyebrow" data-t="coches.antetitulo">Coches</div><h2 data-t="coches.titulo">Disponibles ahora</h2><p class="lead" data-t="coches.intro">«En stock» son coches nuestros, listos para entregar. «Por encargo» son coches que podemos conseguirte en los próximos días: pregúntanos antes de que se vayan.</p></div></div>
       <div class="filtros" role="group" aria-label="Filtrar coches">
-        <label>Disponibilidad<select id="f-disp"><option value="">Todos</option><option value="stock">En stock</option><option value="encargo">Por encargo</option></select></label>
-        <label>Tipo<select id="f-tipo"><option value="">Todos</option></select></label>
-        <label>Combustible<select id="f-comb"><option value="">Todos</option></select></label>
-        <label>Año desde<select id="f-anio"><option value="">Cualquiera</option></select></label>
+        <label><span data-t="filtros.disponibilidad">Disponibilidad</span><select id="f-disp"><option value="" data-t="filtros.todos">Todos</option><option value="stock" data-t="estado.stock">En stock</option><option value="encargo" data-t="estado.encargo">Por encargo</option></select></label>
+        <label><span data-t="filtros.tipo">Tipo</span><select id="f-tipo"><option value="" data-t="filtros.todos">Todos</option></select></label>
+        <label><span data-t="filtros.combustible">Combustible</span><select id="f-comb"><option value="" data-t="filtros.todos">Todos</option></select></label>
+        <label><span data-t="filtros.anio">Año desde</span><select id="f-anio"><option value="" data-t="filtros.cualquiera">Cualquiera</option></select></label>
       </div>
       <div class="cars" id="cars"></div>
     </div>
@@ -247,17 +247,17 @@ dl.kv dd{margin:0;font-weight:600;overflow-wrap:anywhere}
 
   <section id="que-hacemos" class="alt">
     <div class="wrap">
-      <div class="sec-head"><div><div class="eyebrow">Qué hacemos</div><h2>Del anuncio a tu garaje, sin sorpresas</h2></div></div>
+      <div class="sec-head"><div><div class="eyebrow" data-t="que.antetitulo">Qué hacemos</div><h2 data-t="que.titulo">Del anuncio a tu garaje, sin sorpresas</h2></div></div>
       <div class="services">
-        <div class="svc"><h3>Coches en stock</h3><p>Vehículos de ocasión que ya son nuestros: revisados, con la documentación en regla y listos para entregar.</p></div>
-        <div class="svc"><h3>Búsqueda por encargo</h3><p>Nos dices qué coche quieres y tu presupuesto. Lo buscamos en canales de venta profesional de España y Europa y te enseñamos las opciones antes de comprar.</p></div>
-        <div class="svc"><h3>Gestión completa</h3><p>Nos encargamos del transporte, la transferencia en Tráfico y la puesta a punto. Tú solo recoges el coche.</p></div>
+        <div class="svc"><h3 data-t="que.servicio1.titulo">Coches en stock</h3><p data-t="que.servicio1.texto">Vehículos de ocasión que ya son nuestros: revisados, con la documentación en regla y listos para entregar.</p></div>
+        <div class="svc"><h3 data-t="que.servicio2.titulo">Búsqueda por encargo</h3><p data-t="que.servicio2.texto">Nos dices qué coche quieres y tu presupuesto. Lo buscamos en canales de venta profesional de España y Europa y te enseñamos las opciones antes de comprar.</p></div>
+        <div class="svc"><h3 data-t="que.servicio3.titulo">Gestión completa</h3><p data-t="que.servicio3.texto">Nos encargamos del transporte, la transferencia en Tráfico y la puesta a punto. Tú solo recoges el coche.</p></div>
       </div>
       <ol class="steps" aria-label="Cómo funciona la búsqueda por encargo">
-        <li><h3>Nos cuentas</h3><p>Qué coche buscas, para qué lo vas a usar y cuánto quieres gastar.</p></li>
-        <li><h3>Te proponemos</h3><p>Opciones reales con fotos, kilómetros, historial y precio final estimado.</p></li>
-        <li><h3>Compramos</h3><p>Cuando das el visto bueno, cerramos la compra y lo traemos.</p></li>
-        <li><h3>Te lo entregamos</h3><p>Preparado, con la transferencia hecha y la garantía legal.</p></li>
+        <li><h3 data-t="que.paso1.titulo">Nos cuentas</h3><p data-t="que.paso1.texto">Qué coche buscas, para qué lo vas a usar y cuánto quieres gastar.</p></li>
+        <li><h3 data-t="que.paso2.titulo">Te proponemos</h3><p data-t="que.paso2.texto">Opciones reales con fotos, kilómetros, historial y precio final estimado.</p></li>
+        <li><h3 data-t="que.paso3.titulo">Compramos</h3><p data-t="que.paso3.texto">Cuando das el visto bueno, cerramos la compra y lo traemos.</p></li>
+        <li><h3 data-t="que.paso4.titulo">Te lo entregamos</h3><p data-t="que.paso4.texto">Preparado, con la transferencia hecha y la garantía legal.</p></li>
       </ol>
     </div>
   </section>
@@ -265,17 +265,17 @@ dl.kv dd{margin:0;font-weight:600;overflow-wrap:anywhere}
   <section id="quienes-somos">
     <div class="wrap about">
       <div>
-        <div class="eyebrow">Quiénes somos</div>
+        <div class="eyebrow" data-t="quienes.antetitulo">Quiénes somos</div>
         <h2 style="margin:6px 0 16px" id="q-tit">Huelsan Automoción</h2>
         <div id="q-txt"><p>Somos una empresa de compraventa de vehículos de ocasión. Compramos en los mismos canales en los que compran los concesionarios y trasladamos ese precio a nuestros clientes, sin intermediarios de más.</p>
         <p>Antes de proponerte un coche revisamos sus datos, su estado y sus kilómetros, y te contamos lo que vemos, también lo que no nos convence.</p></div>
         <p id="zona-txt"></p>
       </div>
       <div class="values">
-        <div><b>Transparencia</b><span>Precio final claro y el estado real del coche, con sus fotos.</span></div>
-        <div><b>Revisión</b><span>Comprobamos kilómetros, historial y daños antes de recomendar un coche.</span></div>
-        <div><b>Garantía legal</b><span>Todos los coches que vendemos a particulares incluyen la garantía que marca la ley.</span></div>
-        <div><b>Trato directo</b><span>Hablas siempre con nosotros, de principio a fin.</span></div>
+        <div><b data-t="quienes.valor1.titulo">Transparencia</b><span data-t="quienes.valor1.texto">Precio final claro y el estado real del coche, con sus fotos.</span></div>
+        <div><b data-t="quienes.valor2.titulo">Revisión</b><span data-t="quienes.valor2.texto">Comprobamos kilómetros, historial y daños antes de recomendar un coche.</span></div>
+        <div><b data-t="quienes.valor3.titulo">Garantía legal</b><span data-t="quienes.valor3.texto">Todos los coches que vendemos a particulares incluyen la garantía que marca la ley.</span></div>
+        <div><b data-t="quienes.valor4.titulo">Trato directo</b><span data-t="quienes.valor4.texto">Hablas siempre con nosotros, de principio a fin.</span></div>
       </div>
     </div>
   </section>
@@ -283,23 +283,23 @@ dl.kv dd{margin:0;font-weight:600;overflow-wrap:anywhere}
   <section id="contacto" class="alt">
     <div class="wrap contact">
       <div>
-        <div class="eyebrow">Contacto</div>
-        <h2 style="margin:6px 0 16px">Hablemos de tu próximo coche</h2>
+        <div class="eyebrow" data-t="contacto.antetitulo">Contacto</div>
+        <h2 style="margin:6px 0 16px" data-t="contacto.titulo">Hablemos de tu próximo coche</h2>
         <dl class="cdata" id="cdata"></dl>
       </div>
       <form class="card" id="form" novalidate>
-        <h3>Cuéntanos qué buscas</h3>
+        <h3 data-t="contacto.form.titulo">Cuéntanos qué buscas</h3>
         <div class="fgrid">
-          <label>Nombre<input id="c-nombre" autocomplete="name" required></label>
-          <label>Teléfono<input id="c-tel" type="tel" autocomplete="tel"></label>
-          <label>Tipo de coche<select id="c-tipo"><option value="">Me da igual</option></select></label>
-          <label>Presupuesto máximo (€)<input id="c-pres" type="number" step="500" min="0" inputmode="numeric"></label>
-          <label class="fwide">Mensaje<textarea id="c-msg" placeholder="Ej.: familiar diésel automático, del 2019 en adelante, para viajes"></textarea></label>
+          <label><span data-t="contacto.form.nombre">Nombre</span><input id="c-nombre" autocomplete="name" required></label>
+          <label><span data-t="contacto.form.telefono">Teléfono</span><input id="c-tel" type="tel" autocomplete="tel"></label>
+          <label><span data-t="contacto.form.tipo">Tipo de coche</span><select id="c-tipo"><option value="" data-t="contacto.form.tipo.igual">Me da igual</option></select></label>
+          <label><span data-t="contacto.form.presupuesto">Presupuesto máximo (€)</span><input id="c-pres" type="number" step="500" min="0" inputmode="numeric"></label>
+          <label class="fwide"><span data-t="contacto.form.mensaje">Mensaje</span><textarea id="c-msg" data-t-ph="contacto.form.ejemplo" placeholder="Ej.: familiar diésel automático, del 2019 en adelante, para viajes"></textarea></label>
         </div>
-        <label class="chk"><input type="checkbox" id="c-rgpd"><span>He leído la <a href="#privacidad">política de privacidad</a> y acepto que Huelsan Automoción use estos datos para responder a mi consulta.</span></label>
+        <label class="chk"><input type="checkbox" id="c-rgpd"><span data-t="contacto.form.rgpd" data-t-enlace="#privacidad">He leído la <a href="#privacidad">política de privacidad</a> y acepto que Huelsan Automoción use estos datos para responder a mi consulta.</span></label>
         <div class="row" id="c-acciones"></div>
         <div class="out" id="c-out" hidden></div>
-        <p class="small" style="margin:0">Esta web no guarda los datos del formulario: el mensaje se envía desde tu WhatsApp o tu correo.</p>
+        <p class="small" style="margin:0" data-t="contacto.form.nota">Esta web no guarda los datos del formulario: el mensaje se envía desde tu WhatsApp o tu correo.</p>
       </form>
     </div>
   </section>
@@ -310,7 +310,7 @@ dl.kv dd{margin:0;font-weight:600;overflow-wrap:anywhere}
 <footer>
   <div class="wrap foot">
     <div><b style="color:var(--band-ink);font:700 14px var(--f-brand);letter-spacing:.14em">HUELSAN</b><div style="margin-top:6px" id="pie-emp"></div></div>
-    <nav aria-label="Información legal"><a href="#aviso-legal">Aviso legal</a><a href="#privacidad">Privacidad</a><a href="#cookies">Cookies</a><a href="#fotos-info">Fotos e información de los coches</a></nav>
+    <nav aria-label="Información legal"><a href="#aviso-legal" data-t="pie.aviso">Aviso legal</a><a href="#privacidad" data-t="pie.privacidad">Privacidad</a><a href="#cookies" data-t="pie.cookies">Cookies</a><a href="#fotos-info" data-t="pie.fotos">Fotos e información de los coches</a></nav>
   </div>
 </footer>
 
@@ -324,13 +324,14 @@ const EMPRESA={
   zona:"",                              // p. ej. "Huelva y Murcia"
   contactos:[],                         // [{nombre, telefono, whatsapp, zona}] — se editan en la app (Datos de empresa)
   titular:"", subtitulo:"", quienesTitulo:"", quienesTexto:"",
+  textos:{},                            // textos de la web editados en la app (Textos de la web); vacío = texto por defecto
   actualizado:"20/10/2026"
 };
 const PEND=t=>`<span class="pend">[${t} pendiente]</span>`;
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const num=n=>n==null?"—":new Intl.NumberFormat("es-ES").format(n);
-const eur=n=>new Intl.NumberFormat("es-ES",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(n);
+const num=n=>n==null?"—":String(Math.round(+n)).replace(/\B(?=(\d{3})+(?!\d))/g,".");
+const eur=n=>String(Math.round(+n)).replace(/\B(?=(\d{3})+(?!\d))/g,".")+" €"; /* Intl no pone punto en 4 cifras */
 let toastT;function toast(m){let t=$("#toast");if(!t){t=document.createElement("div");t.id="toast";t.className="toast";t.setAttribute("role","status");document.body.appendChild(t)}t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,3000)}
 
 /* Los coches se leen de la base de datos (solo la vista pública «coches_web»: nada de datos de subasta) */
@@ -348,17 +349,28 @@ async function cargarCoches(){
     .sort((a,b)=>(a.disponibilidad==="stock"?0:1)-(b.disponibilidad==="stock"?0:1));
 }
 const titulo=c=>[c.marca,c.modelo].filter(Boolean).join(" ");
+/* Textos editables desde la app de gestión: T(clave, texto por defecto) y elementos con data-t */
+const T=(k,def)=>{const v=EMPRESA.textos&&EMPRESA.textos[k];return v!=null&&String(v).trim()!==""?String(v):def};
 const DISP={stock:"En stock",encargo:"Por encargo"};
+function aplicarTextos(){
+  document.querySelectorAll("[data-t]").forEach(el=>{const v=T(el.dataset.t,null);if(v==null)return;
+    if(el.dataset.tEnlace){const m=v.match(/^(.*?)\{(.+?)\}(.*)$/s);el.textContent="";if(m){el.append(m[1]);const a=document.createElement("a");a.href=el.dataset.tEnlace;a.textContent=m[2];el.append(a,m[3])}else el.textContent=v}
+    else el.textContent=v});
+  document.querySelectorAll("[data-t-ph]").forEach(el=>{const v=T(el.dataset.tPh,null);if(v!=null)el.placeholder=v});
+  DISP.stock=T("estado.stock","En stock");DISP.encargo=T("estado.encargo","Por encargo");
+  document.title=T("seo.titulo",document.title);
+  const md=document.querySelector('meta[name="description"]');if(md)md.content=T("seo.descripcion",md.content);
+}
 
 /* ---------- portada ---------- */
 function portada(){
   const d=COCHES.find(c=>c.disponibilidad==="stock"&&c.fotos.length)||COCHES.find(c=>c.fotos.length);
   if(d){const h=$("#herocar");h.hidden=false;h.innerHTML=`<img src="${esc(d.fotos[0])}" alt="${esc(titulo(d))}"><figcaption><span><b>${esc(titulo(d))}</b>${[d.anio,d.km!=null?num(d.km)+" km":null,d.combustible].filter(Boolean).map(esc).join(" · ")}</span><span class="badge ${d.disponibilidad}" style="position:static">${DISP[d.disponibilidad]}</span></figcaption>`;h.style.cursor="pointer";h.onclick=()=>abrirFicha(d.id)}
   const s=COCHES.filter(c=>c.disponibilidad==="stock").length,e=COCHES.length-s;
-  $("#facts").innerHTML=`<span><b class="tnum">${s}</b>en stock</span><span><b class="tnum">${e}</b>por encargo</span><span><b>Transporte y papeles</b>incluidos en la gestión</span>`;
+  $("#facts").innerHTML=`<span><b class="tnum">${s}</b>${esc(T("portada.dato.stock","en stock"))}</span><span><b class="tnum">${e}</b>${esc(T("portada.dato.encargo","por encargo"))}</span><span><b>${esc(T("portada.dato3.titulo","Transporte y papeles"))}</b>${esc(T("portada.dato3.texto","incluidos en la gestión"))}</span>`;
   const ciudades=[...new Set(contactos().flatMap(c=>String(c.zona||"").split(/\s*(?:\/|,|\by\b)\s*/)).map(x=>x.trim()).filter(Boolean))];
   const zt=ciudades.length?(ciudades.length>1?ciudades.slice(0,-1).join(", ")+" y "+ciudades.at(-1):ciudades[0]):EMPRESA.zona;
-  $("#zona-txt").innerHTML=zt?`Trabajamos en ${esc(zt)} y entregamos en toda España.`:"";
+  $("#zona-txt").textContent=zt?T("quienes.zona","Trabajamos en {zonas} y entregamos en toda España.").replace(/\{zonas\}/g,zt):"";
 }
 
 /* ---------- listado ---------- */
@@ -376,8 +388,8 @@ function pintarCoches(){
     <div class="ph">${c.fotos[0]?`<img src="${esc(c.fotos[0])}" alt="" loading="lazy">`:""}<span class="badge ${c.disponibilidad}">${DISP[c.disponibilidad]}</span>${c.fotos.length>1?`<span class="nfotos">${c.fotos.length} fotos</span>`:""}</div>
     <div class="b"><div class="t">${esc(titulo(c))}</div>${c.version?`<div class="v">${esc(c.version)}</div>`:""}
       <div class="sp tnum">${[c.anio,c.km!=null?num(c.km)+" km":null,c.combustible,c.cv?c.cv+" CV":null].filter(Boolean).map(x=>`<span>${esc(x)}</span>`).join("")}</div>
-      <div class="p tnum">${c.precio?eur(c.precio):"Consultar precio"}</div></div></button>`).join("")
-    :`<div class="empty"><strong>${COCHES.length?"Ningún coche con estos filtros":"Estamos preparando nuevos coches"}</strong>${COCHES.length?"Prueba con otros filtros o cuéntanos qué buscas.":"Cuéntanos qué buscas y te avisamos en cuanto tengamos opciones."}</div>`}
+      <div class="p tnum">${c.precio?eur(c.precio):esc(T("coches.consultar","Consultar precio"))}</div></div></button>`).join("")
+    :`<div class="empty"><strong>${esc(COCHES.length?T("coches.sinresultados.titulo","Ningún coche con estos filtros"):T("coches.vacio.titulo","Estamos preparando nuevos coches"))}</strong>${esc(COCHES.length?T("coches.sinresultados.texto","Prueba con otros filtros o cuéntanos qué buscas."):T("coches.vacio.texto","Cuéntanos qué buscas y te avisamos en cuanto tengamos opciones."))}</div>`}
 ["#f-disp","#f-tipo","#f-comb","#f-anio"].forEach(s=>$(s).addEventListener("change",pintarCoches));
 $("#cars").innerHTML=`<div class="empty"><strong>Cargando coches…</strong></div>`;
 function textosEmpresa(){
@@ -392,9 +404,10 @@ async function cargarEmpresa(){
   const r=await fetch(SB_URL+"/rest/v1/empresa_web?select=data",{headers:{apikey:SB_KEY,Accept:"application/json"}});
   if(!r.ok)return;const f=(await r.json())[0];if(!f||!f.data)return;
   for(const[k,v]of Object.entries(f.data)){if(!(k in EMPRESA)||v==null)continue;
+    if(k==="textos"){if(v&&typeof v==="object")EMPRESA.textos=v;continue}
     if(k==="contactos"){if(Array.isArray(v))EMPRESA.contactos=v.filter(c=>c&&(c.telefono||c.whatsapp)).map(c=>({nombre:String(c.nombre||"").trim(),telefono:String(c.telefono||"").trim(),whatsapp:String(c.whatsapp||"").replace(/\D/g,""),zona:String(c.zona||"").trim()}));continue}
     if(String(v).trim()!=="")EMPRESA[k]=k==="whatsapp"?String(v).replace(/\D/g,""):String(v).trim()}
-  textosEmpresa();
+  aplicarTextos();textosEmpresa();
 }
 Promise.all([cargarCoches().catch(e=>{console.warn("No se pudieron cargar los coches",e)}),cargarEmpresa().catch(()=>{})])
   .finally(()=>{portada();opcionesFiltros();pintarCoches();contacto()});
@@ -412,12 +425,12 @@ function pintarFicha(){
   f.innerHTML=`<div class="ficha-in"><div class="fh"><div><span class="tag ${c.disponibilidad}">${DISP[c.disponibilidad]}</span><h3 style="margin-top:8px">${esc(titulo(c))}</h3></div><button class="vbtn" style="background:var(--sunk);color:var(--ink)" id="fclose" aria-label="Cerrar">✕</button></div>
     <div class="fbody"><div>${c.fotos.length?`<button type="button" class="gal-main" id="galmain" aria-label="Ver fotos a pantalla completa"><img src="${esc(c.fotos[fotoI])}" alt="${esc(titulo(c))}, foto ${fotoI+1}"><span class="wm">HUELSAN</span>${c.fotos.length>1?`<span class="nfotos">${fotoI+1} / ${c.fotos.length}</span>`:""}</button>
       ${c.fotos.length>1?`<div class="thumbs">${c.fotos.map((u,i)=>`<button type="button" data-foto="${i}" aria-label="Foto ${i+1}" ${i===fotoI?'aria-current="true"':""}><img src="${esc(u)}" alt=""></button>`).join("")}</div>`:""}
-      <p class="legalfoto">Fotos del propio vehículo. Matrículas ocultadas por protección de datos. Imágenes y datos orientativos, sin valor contractual. <a href="#fotos-info">Más información</a>.</p>`:`<div class="empty">Fotos disponibles bajo petición.</div>`}</div>
-    <div class="fside"><div class="fprice"><b class="tnum">${c.precio?eur(c.precio):"Consultar precio"}</b></div>
+      <p class="legalfoto">${esc(T("ficha.aviso.fotos","Fotos del propio vehículo. Matrículas ocultadas por protección de datos. Imágenes y datos orientativos, sin valor contractual."))} <a href="#fotos-info">${esc(T("ficha.mas.info","Más información"))}</a>.</p>`:`<div class="empty">${esc(T("ficha.sinfotos","Fotos disponibles bajo petición."))}</div>`}</div>
+    <div class="fside"><div class="fprice"><b class="tnum">${c.precio?eur(c.precio):esc(T("coches.consultar","Consultar precio"))}</b></div>
       <dl class="kv tnum">${datos.map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
       ${c.equipamiento?`<div class="equip"><b style="color:var(--ink)">Equipamiento:</b> ${esc(c.equipamiento)}</div>`:""}
-      ${c.disponibilidad==="encargo"?`<p class="small" style="margin:0">Coche disponible por encargo durante pocos días. El precio final te lo confirmamos al consultarnos.</p>`:""}
-      <button class="btn primary" type="button" id="finteres">Me interesa este coche</button></div></div></div>`;
+      ${c.disponibilidad==="encargo"?`<p class="small" style="margin:0">${esc(T("ficha.encargo","Coche disponible por encargo durante pocos días. El precio final te lo confirmamos al consultarnos."))}</p>`:""}
+      <button class="btn primary" type="button" id="finteres">${esc(T("ficha.boton","Me interesa este coche"))}</button></div></div></div>`;
   $("#fclose").focus({preventScroll:true})}
 const VIS={on:false};
 function abrirVisor(){VIS.on=true;pintarVisor()}
@@ -450,15 +463,15 @@ const contactos=()=>EMPRESA.contactos.length?EMPRESA.contactos:(EMPRESA.telefono
 const telTxt=t=>{const d=String(t||"").replace(/\D/g,"");const n=d.length===11&&d.startsWith("34")?d.slice(2):d;return n.length===9?n.replace(/(\d{3})(\d{3})(\d{3})/,"$1 $2 $3"):t};
 function contacto(){
   const cs=contactos();
-  const d=cs.length?cs.map(c=>[c.zona||"Teléfono",`${c.nombre?`<b>${esc(c.nombre)}</b><br>`:""}${c.telefono?`<a href="tel:+${esc(String(c.telefono).replace(/\D/g,"").replace(/^(?!34)(\d{9})$/,"34$1"))}">${esc(telTxt(c.telefono))}</a>`:""}${c.whatsapp?` · <a href="https://wa.me/${esc(c.whatsapp)}" target="_blank" rel="noopener">WhatsApp</a>`:""}`,true]):[["Teléfono",null]];
-  d.push(["Correo",EMPRESA.email?`<a href="mailto:${esc(EMPRESA.email)}">${esc(EMPRESA.email)}</a>`:null,true]);
+  const d=cs.length?cs.map(c=>[c.zona||T("contacto.etiqueta.telefono","Teléfono"),`${c.nombre?`<b>${esc(c.nombre)}</b><br>`:""}${c.telefono?`<a href="tel:+${esc(String(c.telefono).replace(/\D/g,"").replace(/^(?!34)(\d{9})$/,"34$1"))}">${esc(telTxt(c.telefono))}</a>`:""}${c.whatsapp?` · <a href="https://wa.me/${esc(c.whatsapp)}" target="_blank" rel="noopener">WhatsApp</a>`:""}`,true]):[[T("contacto.etiqueta.telefono","Teléfono"),null]];
+  d.push([T("contacto.etiqueta.correo","Correo"),EMPRESA.email?`<a href="mailto:${esc(EMPRESA.email)}">${esc(EMPRESA.email)}</a>`:null,true]);
   $("#cdata").innerHTML=d.map(([k,v,html])=>`<div><dt>${esc(k)}</dt><dd>${v?(html?v:esc(v)):PEND(String(k).toLowerCase())}</dd></div>`).join("");
   const a=[];
   const wa=cs.filter(c=>c.whatsapp);
-  if(wa.length===1)a.push(`<button class="btn primary" type="submit" data-via="wa" data-wa="${esc(wa[0].whatsapp)}">Enviar por WhatsApp</button>`);
-  else wa.forEach((c,i)=>a.push(`<button class="btn ${i?"":"primary"}" type="submit" data-via="wa" data-wa="${esc(c.whatsapp)}">WhatsApp ${esc(c.zona||c.nombre||"")}</button>`));
-  if(EMPRESA.email)a.push(`<button class="btn" type="submit" data-via="mail">Enviar por correo</button>`);
-  a.push(`<button class="btn" type="submit" data-via="copia">Copiar mensaje</button>`);
+  if(wa.length===1)a.push(`<button class="btn primary" type="submit" data-via="wa" data-wa="${esc(wa[0].whatsapp)}">${esc(T("contacto.boton.whatsapp","Enviar por WhatsApp"))}</button>`);
+  else wa.forEach((c,i)=>a.push(`<button class="btn ${i?"":"primary"}" type="submit" data-via="wa" data-wa="${esc(c.whatsapp)}">${esc(T("contacto.boton.whatsappzona","WhatsApp {zona}").replace(/\{zona\}/g,c.zona||c.nombre||""))}</button>`));
+  if(EMPRESA.email)a.push(`<button class="btn" type="submit" data-via="mail">${esc(T("contacto.boton.correo","Enviar por correo"))}</button>`);
+  a.push(`<button class="btn" type="submit" data-via="copia">${esc(T("contacto.boton.copiar","Copiar mensaje"))}</button>`);
   $("#c-acciones").innerHTML=a.join("");
   $("#pie-emp").innerHTML=[EMPRESA.razonSocial||EMPRESA.nombre,EMPRESA.nif?"NIF "+EMPRESA.nif:null,EMPRESA.domicilio].filter(Boolean).map(esc).join(" · ");
 }

@@ -2,6 +2,7 @@
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><title>Huelsan · Datos de empresa</title>
 <link rel="icon" href="../favicon.svg">
+<link rel="manifest" href="../manifest.webmanifest" crossorigin="use-credentials">
 <script src="../adaptador.js"></script>
 <style>
 :root{--bg:#f6f5f2;--panel:#fff;--ink:#1b1d20;--muted:#5f6368;--line:#dcdad5;--accent:#8c6e44;--ok:#067647;--bad:#b42318}
@@ -26,7 +27,7 @@ button{font:inherit;font-weight:650;padding:11px 18px;border:0;border-radius:8px
 button:disabled{opacity:.6}
 #msg{font-size:13.5px}#msg.ok{color:var(--ok)}#msg.bad{color:var(--bad)}
 </style></head><body>
-<header><a href="../">← Volver a la app</a><span style="font-weight:650">Huelsan · Datos de empresa</span></header>
+<header><a href="../">← Volver a la app</a><span style="display:flex;gap:14px;align-items:center"><a href="../textos/">Textos de la web</a><span style="font-weight:650">Datos de empresa</span></span></header>
 <main>
   <div><h1>Datos de empresa para la web</h1>
   <p class="intro">Se muestran en huelsanautomocion.com (contacto, pie de página y textos legales) en cuanto guardas. Deja en blanco lo que aún no tengas: en la web aparecerá como pendiente.</p></div>
@@ -46,17 +47,14 @@ button:disabled{opacity:.6}
       <button type="button" id="add-c" style="justify-self:start;background:transparent;color:inherit;border:1px solid var(--line)">Añadir persona</button>
     </fieldset>
     <fieldset><legend>Textos de la web</legend>
-      <label>Titular de la portada <small>la primera frase sale en blanco y la segunda en dorado</small><input name="titular" placeholder="Pasión por el motor. Precisión en cada búsqueda."></label>
-      <label>Texto bajo el titular<input name="subtitulo"></label>
-      <label>Título de «Quiénes somos»<input name="quienesTitulo"></label>
-      <label>Texto de «Quiénes somos» <small>un párrafo por línea</small><textarea name="quienesTexto" rows="14"></textarea></label>
+      <p style="margin:0">El titular, «Quiénes somos» y el resto de textos de la web se editan en <a href="../textos/">Textos de la web</a>.</p>
     </fieldset>
     <div class="bar"><button type="submit" id="guardar" disabled>Guardar</button><span id="msg" role="status">Cargando…</span></div>
   </form>
 </main>
 <script>
 "use strict";
-const CAMPOS=["nombre","razonSocial","nif","domicilio","registro","email","titular","subtitulo","quienesTitulo","quienesTexto"];
+const CAMPOS=["nombre","razonSocial","nif","domicilio","registro","email"];
 const filaC=(c={})=>{const d=document.createElement("div");d.className="cfila";d.style.cssText="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));align-items:end;border-top:1px dashed var(--line);padding-top:12px";
   d.innerHTML=`<label>Nombre<input data-c="nombre"></label><label>Teléfono<input data-c="telefono" type="tel"></label><label>WhatsApp <small>con prefijo 34</small><input data-c="whatsapp" inputmode="numeric"></label><label>Zona<input data-c="zona" placeholder="Huelva/Sevilla"></label><button type="button" data-quitar style="background:transparent;color:inherit;border:1px solid var(--line)">Quitar</button>`;
   for(const k of ["nombre","telefono","whatsapp","zona"])d.querySelector(`[data-c=${k}]`).value=c[k]||"";
@@ -78,7 +76,7 @@ const f=document.getElementById("f"),msg=(t,c)=>{const m=document.getElementById
     // compatibilidad: primer contacto en los campos sueltos
     d.telefono=d.contactos[0]?d.contactos[0].telefono:"";d.whatsapp=d.contactos[0]?d.contactos[0].whatsapp:"";d.zona=d.contactos.map(c=>c.zona).filter(Boolean).join(" y ");
     d.actualizado=new Date().toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit",year:"numeric"});
-    try{await ref.set(d);msg("Guardado. Ya se ve en huelsanautomocion.com (recarga la web).","ok")}
+    try{try{await ref.update(d)}catch(err){if(err.code!=="not-found")throw err;await ref.set(d)}msg("Guardado. Ya se ve en huelsanautomocion.com (recarga la web).","ok")}
     catch(err){msg("No se ha podido guardar: "+err.message,"bad")}finally{b.disabled=false}});
 })();
 </script></body></html>

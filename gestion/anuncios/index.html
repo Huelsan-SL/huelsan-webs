@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Huelsan · Anuncios en portales</title>
+<link rel="icon" href="../favicon.svg">
+<link rel="manifest" href="../manifest.webmanifest" crossorigin="use-credentials">
+<script src="../adaptador.js"></script>
+<style>
+:root{--bg:#f6f5f2;--panel:#fff;--ink:#1b1d20;--muted:#5f6368;--line:#dcdad5;--accent:#8c6e44;--soft:#efe7da;--ok:#067647;--okbg:#e3f3ea;--bad:#b42318;--badbg:#fbe9e7}
+@media (prefers-color-scheme:dark){:root{--bg:#141517;--panel:#1d1f22;--ink:#f0efed;--muted:#a3a3a3;--line:#33363a;--accent:#cdb084;--soft:#352d22;--ok:#6cc592;--okbg:#1d3427;--bad:#f2867a;--badbg:#3a201d}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+header a{color:inherit}
+main{max-width:1180px;margin:0 auto;padding:20px 16px 60px;display:grid;gap:18px}
+h1{font-size:22px;margin:0}h2{font-size:18px;margin:0}
+p.intro{margin:6px 0 0;color:var(--muted);max-width:80ch}
+.grid{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.lista{display:grid;gap:8px}
+.coche{display:grid;gap:4px;text-align:left;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);cursor:pointer;font:inherit;color:inherit}
+.coche[aria-current="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.coche b{font-size:15px}.coche small{color:var(--muted)}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chip{font-size:11px;font-weight:650;padding:1px 7px;border-radius:5px;background:var(--soft);color:var(--accent)}
+.chip.ok{background:var(--okbg);color:var(--ok)}.chip.bad{background:var(--badbg);color:var(--bad)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:14px}
+.aviso{background:var(--badbg);color:var(--bad);border-radius:10px;padding:10px 14px;font-weight:600}
+label{display:grid;gap:4px;font-size:13.5px;font-weight:600}
+label small{font-weight:400;color:var(--muted)}
+input,textarea{font:inherit;font-weight:400;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:transparent;color:inherit;width:100%;min-width:0}
+textarea{resize:vertical}
+button,.btn{font:inherit;font-weight:650;padding:9px 14px;border:0;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer;text-decoration:none;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+button.sec,.btn.sec{background:transparent;color:inherit;border:1px solid var(--line);font-weight:500}
+button.mini,.btn.mini{padding:5px 9px;font-size:13px}
+button:disabled{opacity:.55;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td{padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:middle}
+td:first-child{color:var(--muted);width:34%}
+td:last-child{width:1%;text-align:right}
+.fotos{display:flex;gap:6px;flex-wrap:wrap}
+.fotos img{width:110px;height:70px;object-fit:cover;border-radius:6px;display:block}
+.portales{display:grid;gap:8px}
+.portal{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+@media (max-width:620px){.portal{grid-template-columns:minmax(0,1fr)}}
+.portal b{display:block}.portal small{color:var(--muted)}
+#msg{font-size:13.5px;position:sticky;bottom:0;background:var(--bg);padding:8px 0}#msg:empty{display:none}#msg.ok{color:var(--ok)}#msg.bad{color:var(--bad)}
+.cnt{font-weight:400;color:var(--muted);font-size:12.5px}
+[hidden]{display:none!important}
+</style></head><body>
+<header><a href="../">← Volver a la app</a><span style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><a href="../folleto/">Estudio</a><span style="font-weight:650">Anuncios en portales</span></span></header>
+<main>
+  <div><h1>Anuncios en portales</h1>
+  <p class="intro">Prepara el anuncio de cada coche una vez y cópialo en Wallapop, Milanuncios, coches.net y el resto. Aquí apuntas en qué portales está publicado, y si vendes el coche te avisa de qué anuncios hay que retirar. Con la extensión de Chrome 1.2 o posterior, al abrir un portal aparece un panel con los datos para pegarlos (o rellenarlos) sin cambiar de pestaña.</p></div>
+  <div id="retirar" class="aviso" hidden></div>
+  <div class="grid">
+    <div class="lista"><input type="search" id="q" placeholder="Buscar coche" aria-label="Buscar coche"><div id="lista" class="lista"><p class="cnt">Cargando…</p></div>
+      <button type="button" class="sec" id="feed" title="Lista de coches en stock con su anuncio, para un multipublicador">Exportar todos (JSON)</button></div>
+    <div id="det" class="panel"><p class="cnt" style="margin:0">Elige un coche de la lista.</p></div>
+  </div>
+  <span id="msg" role="status"></span>
+</main>
+<script>
+"use strict";
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num=n=>n==null||n===""?"":String(Math.round(+n)).replace(/\B(?=(\d{3})+(?!\d))/g,".");
+const msg=(t,c)=>{const m=$("#msg");m.textContent=t||"";m.className=c||""};
+/* Portales: «nuevo» abre la página para crear el anuncio (si cambia, basta con tocar esta lista) */
+const PORTALES=[
+  {id:"wallapop",nombre:"Wallapop",nuevo:"https://es.wallapop.com/app/catalog/upload",nota:"Gratis; destacados de pago",max:50},
+  {id:"milanuncios",nombre:"Milanuncios",nuevo:"https://www.milanuncios.com/publicar-anuncios-gratis/",nota:"Gratis; destacados de pago",max:70},
+  {id:"facebook",nombre:"Facebook Marketplace",nuevo:"https://www.facebook.com/marketplace/create/vehicle",nota:"Gratis",max:100},
+  {id:"cochesnet",nombre:"coches.net",nuevo:"https://www.coches.net/",nota:"Profesional: suscripción",max:70},
+  {id:"autoscout24",nombre:"AutoScout24",nuevo:"https://www.autoscout24.es/",nota:"Profesional: suscripción",max:70},
+  {id:"autocasion",nombre:"Autocasión",nuevo:"https://www.autocasion.com/",nota:"Profesional: suscripción",max:70},
+  {id:"cochescom",nombre:"coches.com",nuevo:"https://www.coches.com/",nota:"Profesional",max:70}];
+const S={db:null,lotes:[],sel:null,empresa:{}};
+const tel=t=>{const d=String(t||"").replace(/\D/g,"").replace(/^34(?=\d{9}$)/,"");return d.length===9?d.replace(/(\d{3})(\d{3})(\d{3})/,"$1 $2 $3"):t};
+const urlFoto=n=>/^https?:/.test(n)?n:HUELSAN.FOTOS_WEB+n;
+const tituloCorto=l=>[l.marca,l.modelo].filter(Boolean).join(" ")||l.id;
+const version=l=>{let v=(l.derivado||"").trim();for(const p of [l.marca,(l.modelo||"").split(" ")[0]])if(p)v=v.replace(new RegExp("^"+p.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\s+","i"),"");return v};
+const precio=l=>+(l.precioVenta||(l.folleto&&l.folleto.precio)||0)||0;
+const publicados=l=>Object.entries(l.portales||{}).filter(([,p])=>p&&p.estado==="publicado");
+
+/* ---------- texto del anuncio a partir de los datos del coche y de su folleto ---------- */
+function anuncioBase(l){
+  const f=l.folleto||{},e=S.empresa||{};
+  const tit=[l.marca,(l.modelo||"").replace(/\b(diesel|gasolina)\b/ig,"").trim(),version(l),l.anio].filter(Boolean).join(" ").replace(/\s+/g," ").trim();
+  const datos=[["Año",l.anio],["Kilómetros",l.km?num(l.km)+" km":""],["Combustible",l.combustible],["Cambio",l.cambio],["Potencia",l.cv?l.cv+" CV":""],["Color",l.color],["Plazas",l.plazas]].filter(x=>x[1]);
+  const equip=String(f.equipamiento||l.equipamiento||"").split(/\s*[,\n]\s*/).filter(Boolean).slice(0,12);
+  const estado=String(f.estado||"").split("\n").map(x=>x.trim()).filter(Boolean);
+  const ventajas=[f.v1,f.v2,f.v3].filter(Boolean);
+  const contactos=(Array.isArray(e.contactos)?e.contactos:[]).filter(c=>c&&c.telefono).map(c=>`${c.nombre?c.nombre+": ":""}${tel(c.telefono)}${c.zona?" ("+c.zona+")":""}`);
+  const p=[];
+  p.push(tit);
+  p.push(datos.map(([k,v])=>`• ${k}: ${v}`).join("\n"));
+  if(equip.length)p.push("Equipamiento destacado:\n"+equip.map(x=>"- "+x).join("\n"));
+  if(estado.length)p.push("Estado:\n"+estado.map(x=>"- "+x).join("\n"));
+  if(ventajas.length)p.push(ventajas.map(x=>"✔ "+x).join("\n"));
+  p.push([`${e.nombre||"Huelsan Automoción"} · compraventa de vehículos de ocasión.`,contactos.length?"Contacto: "+contactos.join(" · "):"","Más coches en huelsanautomocion.com"].filter(Boolean).join("\n"));
+  return{titulo:tit,descripcion:p.filter(Boolean).join("\n\n")};
+}
+const anuncio=l=>({...anuncioBase(l),...(l.anuncio||{})});
+
+/* ---------- datos ---------- */
+async function cargar(){
+  const filas=await HUELSAN.rest("/rest/v1/lotes?select=id,data&or=(estado.in.(comprado,stock,vendido),publico.is.true)&order=actualizado.desc&limit=400");
+  S.lotes=(filas||[]).map(f=>({...f.data,id:f.id})).filter(l=>l.estado!=="vendido"||publicados(l).length);
+  try{const e=await HUELSAN.rest("/rest/v1/ajustes?select=data&id=eq.web%2Fempresa");S.empresa=(e&&e[0]&&e[0].data)||{}}catch(err){}
+  pintarLista();avisoRetirar();
+  const pre=new URLSearchParams(location.search).get("id");if(pre&&S.lotes.some(l=>l.id===pre))elegir(pre);
+}
+function avisoRetirar(){
+  const v=S.lotes.filter(l=>l.estado==="vendido"&&publicados(l).length);
+  $("#retirar").hidden=!v.length;
+  $("#retirar").innerHTML=v.length?`Coches vendidos con anuncios activos: ${v.map(l=>`<a href="?id=${encodeURIComponent(l.id)}" data-ir="${esc(l.id)}" style="color:inherit">${esc(tituloCorto(l))}</a> (${publicados(l).map(([k])=>esc((PORTALES.find(p=>p.id===k)||{nombre:k}).nombre)).join(", ")})`).join(" · ")}. Retíralos y márcalos como retirados.`:"";
+}
+function pintarLista(){
+  const q=$("#q").value.trim().toLowerCase();
+  const l=S.lotes.filter(x=>!q||[x.marca,x.modelo,x.derivado,x.matricula].join(" ").toLowerCase().includes(q));
+  $("#lista").innerHTML=l.length?l.map(x=>{const pub=publicados(x);return`<button type="button" class="coche" data-ir="${esc(x.id)}" aria-current="${S.sel&&S.sel.id===x.id}">
+    <b>${esc(tituloCorto(x))}</b><small>${[x.anio,x.km?num(x.km)+" km":"",precio(x)?num(precio(x))+" €":"sin precio",x.estado==="vendido"?"VENDIDO":""].filter(Boolean).join(" · ")}</small>
+    <span class="chips">${pub.length?pub.map(([k])=>`<span class="chip ${x.estado==="vendido"?"bad":"ok"}">${esc((PORTALES.find(p=>p.id===k)||{nombre:k}).nombre)}</span>`).join(""):`<span class="chip">Sin anunciar</span>`}${(x.fotosWeb||[]).length?"":`<span class="chip bad">Sin fotos de estudio</span>`}</span></button>`}).join(""):`<p class="cnt">No hay coches en stock.</p>`;
+}
+function elegir(id){
+  S.sel=S.lotes.find(l=>l.id===id);if(!S.sel)return;
+  history.replaceState(null,"","?id="+encodeURIComponent(id));pintarLista();pintarDetalle();
+}
+function campos(l){return[["Marca",l.marca],["Modelo",(l.modelo||"").replace(/\b(diesel|gasolina)\b/ig,"").trim()],["Versión",version(l)],["Año",l.anio],["Kilómetros",l.km],["Combustible",l.combustible],["Cambio",l.cambio],["Potencia (CV)",l.cv],["Color",l.color],["Plazas",l.plazas],["Carrocería",l.carroceria||l.tipo],["Precio (€)",precio(l)||""]].filter(x=>x[1]!=null&&x[1]!=="")}
+function pintarDetalle(){
+  const l=S.sel,a=anuncio(l),fotos=l.fotosWeb||[];
+  $("#det").innerHTML=`<div class="row" style="justify-content:space-between"><h2>${esc(tituloCorto(l))}</h2><span class="row"><a class="btn sec mini" href="../folleto/?id=${encodeURIComponent(l.id)}">Estudio y folleto</a></span></div>
+  <label>Título del anuncio <small id="tcnt"></small><input id="a-tit" value="${esc(a.titulo)}" maxlength="120"></label>
+  <label>Descripción <small>se genera con los datos del coche y de su folleto; puedes cambiarla</small><textarea id="a-desc" rows="16">${esc(a.descripcion)}</textarea></label>
+  <div class="row"><button type="button" id="a-guardar">Guardar anuncio</button><button type="button" class="sec" id="a-regen">Volver a generar</button><button type="button" class="sec" data-copiar="#a-tit">Copiar título</button><button type="button" class="sec" data-copiar="#a-desc">Copiar descripción</button></div>
+  <div><h2 style="font-size:15px;margin-bottom:6px">Datos para los campos del portal</h2><table>${campos(l).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${esc(v)}</td><td><button type="button" class="sec mini" data-valor="${esc(v)}">Copiar</button></td></tr>`).join("")}</table></div>
+  <div><div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 style="font-size:15px">Fotos de estudio (${fotos.length})</h2>${fotos.length?`<button type="button" class="sec mini" id="a-zip">Descargar fotos (ZIP)</button>`:""}</div>
+    ${fotos.length?`<div class="fotos">${fotos.map(n=>`<a href="${esc(urlFoto(n))}" target="_blank" rel="noopener"><img src="${esc(urlFoto(n))}" alt="" loading="lazy"></a>`).join("")}</div>`:`<p class="cnt" style="margin:0">Este coche aún no tiene fotos de estudio. Prepáralas en el <a href="../folleto/?id=${encodeURIComponent(l.id)}">Estudio</a>: con la matrícula tapada y el fondo de exposición quedan mejor en los portales.</p>`}</div>
+  <div><h2 style="font-size:15px;margin-bottom:4px">Dónde está publicado</h2><div class="portales">${PORTALES.map(p=>{const e=(l.portales||{})[p.id]||{};const pub=e.estado==="publicado";
+    return`<div class="portal" data-portal="${p.id}"><div><b>${esc(p.nombre)}</b><small>${pub?"Publicado"+(e.fecha?" el "+esc(e.fecha):""):e.estado==="retirado"?"Retirado"+(e.fecha?" el "+esc(e.fecha):""):esc(p.nota)}</small></div>
+      <input placeholder="Enlace del anuncio (opcional)" value="${esc(e.url||"")}" data-url aria-label="Enlace del anuncio en ${esc(p.nombre)}">
+      <span class="row">${pub&&e.url?`<a class="btn sec mini" href="${esc(e.url)}" target="_blank" rel="noopener">Ver</a>`:""}<button type="button" class="sec mini" data-abrir="${p.id}">Preparar en ${esc(p.nombre)}</button>${pub?`<button type="button" class="mini" data-marcar="retirado">Marcar retirado</button>`:`<button type="button" class="mini" data-marcar="publicado">Marcar publicado</button>`}</span></div>`}).join("")}</div></div>`;
+  contar();
+}
+function contar(){const t=$("#a-tit");if(!t)return;const n=t.value.length;const lim=PORTALES.filter(p=>n>p.max).map(p=>p.nombre);
+  $("#tcnt").textContent=`${n} caracteres${lim.length?" · demasiado largo para "+lim.join(", "):""}`}
+function leerAnuncio(){return{titulo:$("#a-tit").value.trim(),descripcion:$("#a-desc").value.replace(/\r/g,"").trim()}}
+async function guardar(cambios,txt){
+  const l=S.sel;await S.db.doc("lotes/"+l.id).update(cambios);Object.assign(l,cambios);
+  pintarLista();avisoRetirar();if(txt)msg(txt,"ok")}
+async function copiar(t){try{await navigator.clipboard.writeText(t);msg("Copiado.","ok")}catch(e){msg("No se ha podido copiar: selecciona el texto y cópialo a mano.","bad")}}
+const hoy=()=>new Date().toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit",year:"numeric"});
+
+document.addEventListener("input",e=>{if(e.target.id==="a-tit")contar()});
+$("#q").addEventListener("input",pintarLista);
+document.addEventListener("click",async e=>{const t=e.target;
+  const ir=t.closest("[data-ir]");if(ir){e.preventDefault();elegir(ir.dataset.ir);return}
+  if(t.closest("[data-copiar]")){copiar($(t.closest("[data-copiar]").dataset.copiar).value);return}
+  if(t.closest("[data-valor]")){copiar(t.closest("[data-valor]").dataset.valor);return}
+  if(t.id==="a-guardar"){try{await guardar({anuncio:leerAnuncio()},"Anuncio guardado.")}catch(err){msg(err.message,"bad")}return}
+  if(t.id==="a-regen"){const a=anuncioBase(S.sel);$("#a-tit").value=a.titulo;$("#a-desc").value=a.descripcion;contar();msg("Texto generado de nuevo: pulsa «Guardar anuncio» para quedártelo.");return}
+  if(t.id==="a-zip"){descargarFotos(t);return}
+  const mk=t.closest("[data-marcar]");if(mk){const fila=mk.closest("[data-portal]"),id=fila.dataset.portal;
+    const portales={...(S.sel.portales||{})};portales[id]={estado:mk.dataset.marcar,fecha:hoy(),url:fila.querySelector("[data-url]").value.trim()};
+    try{await guardar({portales});pintarDetalle();msg(`${(PORTALES.find(p=>p.id===id)||{}).nombre}: ${mk.dataset.marcar}.`,"ok")}catch(err){msg(err.message,"bad")}return}
+  const ab=t.closest("[data-abrir]");if(ab){abrirPortal(ab.dataset.abrir);return}
+});
+/* Abre el portal: con la extensión (1.2+) el anuncio viaja a un panel dentro del portal; sin ella se copia el texto */
+async function abrirPortal(id){
+  const p=PORTALES.find(x=>x.id===id),l=S.sel,a=leerAnuncio();
+  const datos={portal:id,titulo:a.titulo,descripcion:a.descripcion,campos:campos(l),fotos:(l.fotosWeb||[]).map(urlFoto),precio:precio(l),coche:tituloCorto(l)};
+  const ext=document.documentElement.dataset.huelsanExt;
+  if(ext&&ext.localeCompare("1.2.0",undefined,{numeric:true})>=0){
+    const id2=Math.random().toString(36).slice(2);
+    const r=await new Promise(res=>{const h=ev=>{if(ev.source===window&&ev.data&&ev.data.respuesta&&ev.data.id===id2){removeEventListener("message",h);res(ev.data)}};addEventListener("message",h);
+      window.postMessage({huelsanExt:"anuncio",id:id2,anuncio:datos,url:p.nuevo},location.origin);setTimeout(()=>res({ok:false,msg:"La extensión no responde"}),5000)});
+    if(r.ok){msg(`Abierto ${p.nombre}: verás el panel de Huelsan con los datos para rellenar.`,"ok");return}
+    msg("Extensión: "+(r.msg||"error")+". Se copia el texto en su lugar.","bad");
+  }
+  await copiar(a.titulo+"\n\n"+a.descripcion);open(p.nuevo,"_blank","noopener");
+  msg(`Texto del anuncio copiado. Pégalo en ${p.nombre} y sube las fotos de estudio.`,"ok");
+}
+async function cargarJSZip(){if(window.JSZip)return window.JSZip;await new Promise((ok,ko)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";s.onload=ok;s.onerror=()=>ko(new Error("No se ha podido cargar el compresor"));document.head.appendChild(s)});return window.JSZip}
+async function descargarFotos(btn){
+  const l=S.sel;btn.disabled=true;const txt=btn.textContent;
+  try{const JSZip=await cargarJSZip();const z=new JSZip();const fs=l.fotosWeb||[];
+    for(let i=0;i<fs.length;i++){btn.textContent=`Descargando ${i+1}/${fs.length}…`;const r=await fetch(urlFoto(fs[i]));if(!r.ok)continue;z.file(`${String(i+1).padStart(2,"0")}.jpg`,await r.blob())}
+    const blob=await z.generateAsync({type:"blob"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+    a.download=(tituloCorto(l)+" "+(l.anio||"")).trim().replace(/[^\wÀ-ÿ ]+/g,"").replace(/\s+/g,"-")+"-fotos.zip";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);msg("Fotos descargadas.","ok")}
+  catch(err){msg(err.message,"bad")}finally{btn.disabled=false;btn.textContent=txt}}
+/* Lista para un multipublicador (opción futura): todos los coches en stock con su anuncio y fotos */
+$("#feed").onclick=()=>{
+  const coches=S.lotes.filter(l=>["comprado","stock"].includes(l.estado)).map(l=>{const a=anuncio(l);
+    return{referencia:"h"+String(l.id).slice(-8),marca:l.marca||"",modelo:(l.modelo||"").replace(/\b(diesel|gasolina)\b/ig,"").trim(),version:version(l),anio:+l.anio||null,km:+l.km||null,
+      combustible:l.combustible||"",cambio:l.cambio||"",potencia_cv:+l.cv||null,color:l.color||"",plazas:+l.plazas||null,carroceria:l.carroceria||l.tipo||"",precio:precio(l)||null,
+      titulo:a.titulo,descripcion:a.descripcion,fotos:(l.fotosWeb||[]).map(urlFoto)}});
+  const b=new Blob([JSON.stringify({empresa:S.empresa.nombre||"Huelsan Automoción",generado:new Date().toISOString(),coches},null,1)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="huelsan-stock.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  msg(`${coches.length} coches exportados.`,"ok")};
+(async()=>{try{S.db=await window.claude.use("db");await cargar()}catch(e){msg("No se han podido cargar los coches: "+e.message,"bad")}})();
+</script></body></html>

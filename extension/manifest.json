@@ -1,29 +1,68 @@
 {
   "manifest_version": 3,
-  "name": "Huelsan · Recogida BCA",
+  "name": "Huelsan · Recogida BCA y anuncios",
   "short_name": "Huelsan BCA",
-  "version": "1.1.0",
-  "description": "Recoge las subastas y lotes de BCA con tu sesión y los guarda en la app de gestión de Huelsan Automoción.",
+  "version": "1.2.0",
+  "description": "Recoge las subastas y lotes de BCA con tu sesión para la app de gestión de Huelsan Automoción, y te ayuda a rellenar los anuncios en los portales.",
   "minimum_chrome_version": "116",
-  "permissions": ["storage", "alarms", "tabs", "notifications"],
+  "permissions": [
+    "storage",
+    "alarms",
+    "tabs",
+    "notifications"
+  ],
   "host_permissions": [
     "https://es.bca-europe.com/*",
     "https://www1.bcaimage.com/*",
     "https://ajxdzchffqaphkmetswx.supabase.co/*"
   ],
-  "background": { "service_worker": "background.js" },
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
-      "matches": ["https://gestion.huelsanautomocion.com/*", "https://huelsan-gestion.netlify.app/*"],
-      "js": ["gestion.js"],
+      "matches": [
+        "https://gestion.huelsanautomocion.com/*",
+        "https://huelsan-gestion.netlify.app/*",
+        "https://prueba--huelsan-gestion.netlify.app/*"
+      ],
+      "js": [
+        "gestion.js"
+      ],
       "run_at": "document_start"
     },
     {
-      "matches": ["https://es.bca-europe.com/*"],
-      "js": ["colector.js", "bca.js"],
+      "matches": [
+        "https://es.bca-europe.com/*"
+      ],
+      "js": [
+        "colector.js",
+        "bca.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://*.wallapop.com/*",
+        "https://*.milanuncios.com/*",
+        "https://www.facebook.com/marketplace/*",
+        "https://*.coches.net/*",
+        "https://*.autoscout24.es/*",
+        "https://*.autocasion.com/*",
+        "https://*.coches.com/*"
+      ],
+      "js": [
+        "portales.js"
+      ],
       "run_at": "document_idle"
     }
   ],
-  "action": { "default_popup": "popup.html", "default_title": "Huelsan · Recogida BCA" },
-  "icons": { "128": "icono128.png", "48": "icono48.png" }
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Huelsan · Recogida BCA y anuncios"
+  },
+  "icons": {
+    "128": "icono128.png",
+    "48": "icono48.png"
+  }
 }

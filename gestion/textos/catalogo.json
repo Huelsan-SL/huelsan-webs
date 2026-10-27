@@ -1,0 +1,588 @@
+[
+ {
+  "seccion": "Buscadores y pestaña del navegador",
+  "ancla": "seo",
+  "campos": [
+   {
+    "clave": "seo.titulo",
+    "etiqueta": "Título de la pestaña y de Google",
+    "defecto": "Huelsan Automoción",
+    "largo": false
+   },
+   {
+    "clave": "seo.descripcion",
+    "etiqueta": "Descripción en Google",
+    "defecto": "Huelsan Automoción: coches de ocasión en stock y búsqueda por encargo.",
+    "largo": false
+   }
+  ]
+ },
+ {
+  "seccion": "Menú superior",
+  "ancla": "menu",
+  "campos": [
+   {
+    "clave": "menu.coches",
+    "etiqueta": "Enlace «Coches»",
+    "defecto": "Coches",
+    "largo": false
+   },
+   {
+    "clave": "menu.que",
+    "etiqueta": "Enlace «Qué hacemos»",
+    "defecto": "Qué hacemos",
+    "largo": false
+   },
+   {
+    "clave": "menu.quienes",
+    "etiqueta": "Enlace «Quiénes somos»",
+    "defecto": "Quiénes somos",
+    "largo": false
+   },
+   {
+    "clave": "menu.contacto",
+    "etiqueta": "Enlace «Contacto»",
+    "defecto": "Contacto",
+    "largo": false
+   }
+  ]
+ },
+ {
+  "seccion": "Portada",
+  "ancla": "portada",
+  "campos": [
+   {
+    "clave": "@titular",
+    "etiqueta": "Titular (la primera frase en blanco y la segunda en dorado)",
+    "defecto": "Buscamos en Europa. Respondemos aquí.",
+    "largo": true
+   },
+   {
+    "clave": "@subtitulo",
+    "etiqueta": "Texto bajo el titular",
+    "defecto": "Coches revisados en stock, listos para entregar, y búsqueda por encargo del coche que necesitas, con transporte y papeles resueltos.",
+    "largo": true
+   },
+   {
+    "clave": "portada.antetitulo",
+    "etiqueta": "Antetítulo (letras pequeñas sobre el titular)",
+    "defecto": "Compraventa de vehículos de ocasión",
+    "largo": false
+   },
+   {
+    "clave": "portada.boton1",
+    "etiqueta": "Botón principal",
+    "defecto": "Ver coches disponibles",
+    "largo": false
+   },
+   {
+    "clave": "portada.boton2",
+    "etiqueta": "Botón secundario",
+    "defecto": "Cuéntanos qué buscas",
+    "largo": false
+   },
+   {
+    "clave": "portada.dato.stock",
+    "etiqueta": "Dato 1: texto junto al número de coches en stock",
+    "defecto": "en stock",
+    "largo": false
+   },
+   {
+    "clave": "portada.dato.encargo",
+    "etiqueta": "Dato 2: texto junto al número de coches por encargo",
+    "defecto": "por encargo",
+    "largo": false
+   },
+   {
+    "clave": "portada.dato3.titulo",
+    "etiqueta": "Dato 3: título",
+    "defecto": "Transporte y papeles",
+    "largo": false
+   },
+   {
+    "clave": "portada.dato3.texto",
+    "etiqueta": "Dato 3: texto",
+    "defecto": "incluidos en la gestión",
+    "largo": false
+   }
+  ]
+ },
+ {
+  "seccion": "Etiquetas de disponibilidad",
+  "ancla": "estado",
+  "campos": [
+   {
+    "clave": "estado.stock",
+    "etiqueta": "Coches en stock",
+    "defecto": "En stock",
+    "largo": false,
+    "ayuda": "también en los filtros, las fichas y la portada"
+   },
+   {
+    "clave": "estado.encargo",
+    "etiqueta": "Coches por encargo",
+    "defecto": "Por encargo",
+    "largo": false
+   }
+  ]
+ },
+ {
+  "seccion": "Listado de coches",
+  "ancla": "coches",
+  "campos": [
+   {
+    "clave": "coches.antetitulo",
+    "etiqueta": "Antetítulo",
+    "defecto": "Coches",
+    "largo": false
+   },
+   {
+    "clave": "coches.titulo",
+    "etiqueta": "Título",
+    "defecto": "Disponibles ahora",
+    "largo": false
+   },
+   {
+    "clave": "coches.intro",
+    "etiqueta": "Introducción",
+    "defecto": "«En stock» son coches nuestros, listos para entregar. «Por encargo» son coches que podemos conseguirte en los próximos días: pregúntanos antes de que se vayan.",
+    "largo": true
+   },
+   {
+    "clave": "coches.consultar",
+    "etiqueta": "Coche sin precio",
+    "defecto": "Consultar precio",
+    "largo": false
+   },
+   {
+    "clave": "coches.sinresultados.titulo",
+    "etiqueta": "Filtros sin resultados: título",
+    "defecto": "Ningún coche con estos filtros",
+    "largo": false
+   },
+   {
+    "clave": "coches.vacio.titulo",
+    "etiqueta": "Sin coches publicados: título",
+    "defecto": "Estamos preparando nuevos coches",
+    "largo": false
+   },
+   {
+    "clave": "coches.sinresultados.texto",
+    "etiqueta": "Filtros sin resultados: texto",
+    "defecto": "Prueba con otros filtros o cuéntanos qué buscas.",
+    "largo": false
+   },
+   {
+    "clave": "coches.vacio.texto",
+    "etiqueta": "Sin coches publicados: texto",
+    "defecto": "Cuéntanos qué buscas y te avisamos en cuanto tengamos opciones.",
+    "largo": false
+   }
+  ]
+ },
+ {
+  "seccion": "Filtros del listado",
+  "ancla": "filtros",
+  "campos": [
+   {
+    "clave": "filtros.disponibilidad",
+    "etiqueta": "Filtro de disponibilidad",
+    "defecto": "Disponibilidad",
+    "largo": false
+   },
+   {
+    "clave": "filtros.todos",
+    "etiqueta": "Opción «todos»",
+    "defecto": "Todos",
+    "largo": false
+   },
+   {
+    "clave": "filtros.tipo",
+    "etiqueta": "Filtro de tipo",
+    "defecto": "Tipo",
+    "largo": false
+   },
+   {
+    "clave": "filtros.combustible",
+    "etiqueta": "Filtro de combustible",
+    "defecto": "Combustible",
+    "largo": false
+   },
+   {
+    "clave": "filtros.anio",
+    "etiqueta": "Filtro de año",
+    "defecto": "Año desde",
+    "largo": false
+   },
+   {
+    "clave": "filtros.cualquiera",
+    "etiqueta": "Opción «cualquier año»",
+    "defecto": "Cualquiera",
+    "largo": false
+   }
+  ]
+ },
+ {
+  "seccion": "Ficha de cada coche",
+  "ancla": "ficha",
+  "campos": [
+   {
+    "clave": "ficha.aviso.fotos",
+    "etiqueta": "Aviso bajo las fotos",
+    "defecto": "Fotos del propio vehículo. Matrículas ocultadas por protección de datos. Imágenes y datos orientativos, sin valor contractual.",
+    "largo": true
+   },
+   {
+    "clave": "ficha.mas.info",
+    "etiqueta": "Enlace «más información»",
+    "defecto": "Más información",
+    "largo": false
+   },
+   {
+    "clave": "ficha.sinfotos",
+    "etiqueta": "Coche sin fotos",
+    "defecto": "Fotos disponibles bajo petición.",
+    "largo": false
+   },
+   {
+    "clave": "ficha.encargo",
+    "etiqueta": "Aviso en coches por encargo",
+    "defecto": "Coche disponible por encargo durante pocos días. El precio final te lo confirmamos al consultarnos.",
+    "largo": true
+   },
+   {
+    "clave": "ficha.boton",
+    "etiqueta": "Botón de interés",
+    "defecto": "Me interesa este coche",
+    "largo": false
+   }
+  ]
+ },
+ {
+  "seccion": "Qué hacemos",
+  "ancla": "que",
+  "campos": [
+   {
+    "clave": "que.antetitulo",
+    "etiqueta": "Antetítulo",
+    "defecto": "Qué hacemos",
+    "largo": false
+   },
+   {
+    "clave": "que.titulo",
+    "etiqueta": "Título",
+    "defecto": "Del anuncio a tu garaje, sin sorpresas",
+    "largo": false
+   },
+   {
+    "clave": "que.servicio1.titulo",
+    "etiqueta": "Servicio 1: título",
+    "defecto": "Coches en stock",
+    "largo": false
+   },
+   {
+    "clave": "que.servicio1.texto",
+    "etiqueta": "Servicio 1: texto",
+    "defecto": "Vehículos de ocasión que ya son nuestros: revisados, con la documentación en regla y listos para entregar.",
+    "largo": true
+   },
+   {
+    "clave": "que.servicio2.titulo",
+    "etiqueta": "Servicio 2: título",
+    "defecto": "Búsqueda por encargo",
+    "largo": false
+   },
+   {
+    "clave": "que.servicio2.texto",
+    "etiqueta": "Servicio 2: texto",
+    "defecto": "Nos dices qué coche quieres y tu presupuesto. Lo buscamos en canales de venta profesional de España y Europa y te enseñamos las opciones antes de comprar.",
+    "largo": true
+   },
+   {
+    "clave": "que.servicio3.titulo",
+    "etiqueta": "Servicio 3: título",
+    "defecto": "Gestión completa",
+    "largo": false
+   },
+   {
+    "clave": "que.servicio3.texto",
+    "etiqueta": "Servicio 3: texto",
+    "defecto": "Nos encargamos del transporte, la transferencia en Tráfico y la puesta a punto. Tú solo recoges el coche.",
+    "largo": true
+   },
+   {
+    "clave": "que.paso1.titulo",
+    "etiqueta": "Paso 1: título",
+    "defecto": "Nos cuentas",
+    "largo": false
+   },
+   {
+    "clave": "que.paso1.texto",
+    "etiqueta": "Paso 1: texto",
+    "defecto": "Qué coche buscas, para qué lo vas a usar y cuánto quieres gastar.",
+    "largo": false
+   },
+   {
+    "clave": "que.paso2.titulo",
+    "etiqueta": "Paso 2: título",
+    "defecto": "Te proponemos",
+    "largo": false
+   },
+   {
+    "clave": "que.paso2.texto",
+    "etiqueta": "Paso 2: texto",
+    "defecto": "Opciones reales con fotos, kilómetros, historial y precio final estimado.",
+    "largo": true
+   },
+   {
+    "clave": "que.paso3.titulo",
+    "etiqueta": "Paso 3: título",
+    "defecto": "Compramos",
+    "largo": false
+   },
+   {
+    "clave": "que.paso3.texto",
+    "etiqueta": "Paso 3: texto",
+    "defecto": "Cuando das el visto bueno, cerramos la compra y lo traemos.",
+    "largo": false
+   },
+   {
+    "clave": "que.paso4.titulo",
+    "etiqueta": "Paso 4: título",
+    "defecto": "Te lo entregamos",
+    "largo": false
+   },
+   {
+    "clave": "que.paso4.texto",
+    "etiqueta": "Paso 4: texto",
+    "defecto": "Preparado, con la transferencia hecha y la garantía legal.",
+    "largo": false
+   }
+  ]
+ },
+ {
+  "seccion": "Quiénes somos",
+  "ancla": "quienes",
+  "campos": [
+   {
+    "clave": "@quienesTitulo",
+    "etiqueta": "Título",
+    "defecto": "Huelsan Automoción",
+    "largo": true
+   },
+   {
+    "clave": "@quienesTexto",
+    "etiqueta": "Texto (un párrafo por línea; [Nombre de la empresa] se sustituye solo)",
+    "defecto": "Somos una empresa de compraventa de vehículos de ocasión. Compramos en los mismos canales en los que compran los concesionarios y trasladamos ese precio a nuestros clientes, sin intermediarios de más.\nAntes de proponerte un coche revisamos sus datos, su estado y sus kilómetros, y te contamos lo que vemos, también lo que no nos convence.",
+    "largo": true
+   },
+   {
+    "clave": "quienes.antetitulo",
+    "etiqueta": "Antetítulo",
+    "defecto": "Quiénes somos",
+    "largo": false
+   },
+   {
+    "clave": "quienes.valor1.titulo",
+    "etiqueta": "Valor 1: título",
+    "defecto": "Transparencia",
+    "largo": false
+   },
+   {
+    "clave": "quienes.valor1.texto",
+    "etiqueta": "Valor 1: texto",
+    "defecto": "Precio final claro y el estado real del coche, con sus fotos.",
+    "largo": false
+   },
+   {
+    "clave": "quienes.valor2.titulo",
+    "etiqueta": "Valor 2: título",
+    "defecto": "Revisión",
+    "largo": false
+   },
+   {
+    "clave": "quienes.valor2.texto",
+    "etiqueta": "Valor 2: texto",
+    "defecto": "Comprobamos kilómetros, historial y daños antes de recomendar un coche.",
+    "largo": true
+   },
+   {
+    "clave": "quienes.valor3.titulo",
+    "etiqueta": "Valor 3: título",
+    "defecto": "Garantía legal",
+    "largo": false
+   },
+   {
+    "clave": "quienes.valor3.texto",
+    "etiqueta": "Valor 3: texto",
+    "defecto": "Todos los coches que vendemos a particulares incluyen la garantía que marca la ley.",
+    "largo": true
+   },
+   {
+    "clave": "quienes.valor4.titulo",
+    "etiqueta": "Valor 4: título",
+    "defecto": "Trato directo",
+    "largo": false
+   },
+   {
+    "clave": "quienes.valor4.texto",
+    "etiqueta": "Valor 4: texto",
+    "defecto": "Hablas siempre con nosotros, de principio a fin.",
+    "largo": false
+   },
+   {
+    "clave": "quienes.zona",
+    "etiqueta": "Frase de zonas",
+    "defecto": "Trabajamos en {zonas} y entregamos en toda España.",
+    "largo": false,
+    "ayuda": "{zonas} se sustituye por las zonas de los contactos"
+   }
+  ]
+ },
+ {
+  "seccion": "Contacto",
+  "ancla": "contacto",
+  "campos": [
+   {
+    "clave": "contacto.antetitulo",
+    "etiqueta": "Antetítulo",
+    "defecto": "Contacto",
+    "largo": false
+   },
+   {
+    "clave": "contacto.titulo",
+    "etiqueta": "Título",
+    "defecto": "Hablemos de tu próximo coche",
+    "largo": false
+   },
+   {
+    "clave": "contacto.form.titulo",
+    "etiqueta": "Título del formulario",
+    "defecto": "Cuéntanos qué buscas",
+    "largo": false
+   },
+   {
+    "clave": "contacto.form.nombre",
+    "etiqueta": "Campo nombre",
+    "defecto": "Nombre",
+    "largo": false
+   },
+   {
+    "clave": "contacto.form.telefono",
+    "etiqueta": "Campo teléfono",
+    "defecto": "Teléfono",
+    "largo": false
+   },
+   {
+    "clave": "contacto.form.tipo",
+    "etiqueta": "Campo tipo de coche",
+    "defecto": "Tipo de coche",
+    "largo": false
+   },
+   {
+    "clave": "contacto.form.tipo.igual",
+    "etiqueta": "Opción «me da igual»",
+    "defecto": "Me da igual",
+    "largo": false
+   },
+   {
+    "clave": "contacto.form.presupuesto",
+    "etiqueta": "Campo presupuesto",
+    "defecto": "Presupuesto máximo (€)",
+    "largo": false
+   },
+   {
+    "clave": "contacto.form.mensaje",
+    "etiqueta": "Campo mensaje",
+    "defecto": "Mensaje",
+    "largo": false
+   },
+   {
+    "clave": "contacto.form.rgpd",
+    "etiqueta": "Casilla de privacidad",
+    "defecto": "He leído la {política de privacidad} y acepto que Huelsan Automoción use estos datos para responder a mi consulta.",
+    "largo": true,
+    "ayuda": "lo que va entre llaves { } es el enlace a la política de privacidad"
+   },
+   {
+    "clave": "contacto.form.nota",
+    "etiqueta": "Nota bajo el formulario",
+    "defecto": "Esta web no guarda los datos del formulario: el mensaje se envía desde tu WhatsApp o tu correo.",
+    "largo": true
+   },
+   {
+    "clave": "contacto.form.ejemplo",
+    "etiqueta": "Ejemplo dentro del campo mensaje",
+    "defecto": "Ej.: familiar diésel automático, del 2019 en adelante, para viajes",
+    "largo": false
+   },
+   {
+    "clave": "contacto.etiqueta.telefono",
+    "etiqueta": "Etiqueta de teléfono",
+    "defecto": "Teléfono",
+    "largo": false
+   },
+   {
+    "clave": "contacto.etiqueta.correo",
+    "etiqueta": "Etiqueta de correo",
+    "defecto": "Correo",
+    "largo": false
+   },
+   {
+    "clave": "contacto.boton.whatsapp",
+    "etiqueta": "Botón WhatsApp (un solo contacto)",
+    "defecto": "Enviar por WhatsApp",
+    "largo": false
+   },
+   {
+    "clave": "contacto.boton.whatsappzona",
+    "etiqueta": "Botón WhatsApp (varios contactos)",
+    "defecto": "WhatsApp {zona}",
+    "largo": false,
+    "ayuda": "cuando hay varios WhatsApp; {zona} es la zona de cada contacto"
+   },
+   {
+    "clave": "contacto.boton.correo",
+    "etiqueta": "Botón correo",
+    "defecto": "Enviar por correo",
+    "largo": false
+   },
+   {
+    "clave": "contacto.boton.copiar",
+    "etiqueta": "Botón copiar",
+    "defecto": "Copiar mensaje",
+    "largo": false
+   }
+  ]
+ },
+ {
+  "seccion": "Pie de página",
+  "ancla": "pie",
+  "campos": [
+   {
+    "clave": "pie.aviso",
+    "etiqueta": "Enlace aviso legal",
+    "defecto": "Aviso legal",
+    "largo": false
+   },
+   {
+    "clave": "pie.privacidad",
+    "etiqueta": "Enlace privacidad",
+    "defecto": "Privacidad",
+    "largo": false
+   },
+   {
+    "clave": "pie.cookies",
+    "etiqueta": "Enlace cookies",
+    "defecto": "Cookies",
+    "largo": false
+   },
+   {
+    "clave": "pie.fotos",
+    "etiqueta": "Enlace fotos e información",
+    "defecto": "Fotos e información de los coches",
+    "largo": false
+   }
+  ]
+ }
+]
