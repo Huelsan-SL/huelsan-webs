@@ -376,7 +376,14 @@ function pintarCoches(){
     :`<div class="empty"><strong>${COCHES.length?"Ningún coche con estos filtros":"Estamos preparando nuevos coches"}</strong>${COCHES.length?"Prueba con otros filtros o cuéntanos qué buscas.":"Cuéntanos qué buscas y te avisamos en cuanto tengamos opciones."}</div>`}
 ["#f-disp","#f-tipo","#f-comb","#f-anio"].forEach(s=>$(s).addEventListener("change",pintarCoches));
 $("#cars").innerHTML=`<div class="empty"><strong>Cargando coches…</strong></div>`;
-cargarCoches().catch(e=>{console.warn("No se pudieron cargar los coches",e)}).finally(()=>{portada();opcionesFiltros();pintarCoches()});
+/* Datos de empresa: se editan en la app de gestión (Datos de empresa) y se leen de la vista pública «empresa_web» */
+async function cargarEmpresa(){
+  const r=await fetch(SB_URL+"/rest/v1/empresa_web?select=data",{headers:{apikey:SB_KEY,Accept:"application/json"}});
+  if(!r.ok)return;const f=(await r.json())[0];if(!f||!f.data)return;
+  for(const[k,v]of Object.entries(f.data))if(k in EMPRESA&&v!=null&&String(v).trim()!=="")EMPRESA[k]=k==="whatsapp"?String(v).replace(/\D/g,""):String(v).trim();
+}
+Promise.all([cargarCoches().catch(e=>{console.warn("No se pudieron cargar los coches",e)}),cargarEmpresa().catch(()=>{})])
+  .finally(()=>{portada();opcionesFiltros();pintarCoches();contacto()});
 
 /* ---------- ficha y visor ---------- */
 let ficha=null,fotoI=0;
@@ -425,7 +432,7 @@ document.addEventListener("keydown",e=>{
   if(ficha){if(e.key==="Escape")cerrarFicha();else if(e.key==="ArrowRight")mover(1);else if(e.key==="ArrowLeft")mover(-1)}});
 
 /* ---------- contacto ---------- */
-(function contacto(){
+function contacto(){
   const d=[["Teléfono",EMPRESA.telefono||null],["WhatsApp",EMPRESA.whatsapp?"+"+EMPRESA.whatsapp:null],["Correo",EMPRESA.email||null],["Dónde estamos",EMPRESA.zona||null]];
   $("#cdata").innerHTML=d.map(([k,v])=>`<div><dt>${k}</dt><dd>${v?esc(v):PEND(k.toLowerCase())}</dd></div>`).join("");
   const a=[];
@@ -434,7 +441,8 @@ document.addEventListener("keydown",e=>{
   a.push(`<button class="btn" type="submit" data-via="copia">Copiar mensaje</button>`);
   $("#c-acciones").innerHTML=a.join("");
   $("#pie-emp").innerHTML=[EMPRESA.razonSocial||EMPRESA.nombre,EMPRESA.nif?"NIF "+EMPRESA.nif:null,EMPRESA.domicilio].filter(Boolean).map(esc).join(" · ");
-})();
+}
+contacto();
 function mensaje(){const n=$("#c-nombre").value.trim(),tel=$("#c-tel").value.trim(),tipo=$("#c-tipo").value,p=$("#c-pres").value,m=$("#c-msg").value.trim();
   return[`Hola, soy ${n}.`,m,tipo?`Tipo de coche: ${tipo}.`:"",p?`Presupuesto máximo: ${eur(+p)}.`:"",tel?`Mi teléfono: ${tel}.`:""].filter(Boolean).join("\n")}
 async function copiar(){const txt=$("#c-out").textContent;try{await navigator.clipboard.writeText(txt);toast("Mensaje copiado")}catch(e){const r=document.createRange();r.selectNodeContents($("#c-out"));const s=getSelection();s.removeAllRanges();s.addRange(r);toast("Selecciona y copia el texto")}}

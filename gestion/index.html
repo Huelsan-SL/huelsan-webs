@@ -159,6 +159,11 @@ textarea{resize:vertical;min-height:70px}
 .lot{display:grid;grid-template-columns:112px minmax(0,1fr) auto;gap:6px 16px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;text-align:left;width:100%}
 .lot:hover{border-color:var(--muted)}
 .lot.off{opacity:.55}
+.qk{display:flex;gap:6px;justify-content:flex-end}
+.qbtn{font:inherit;font-size:12px;font-weight:600;padding:4px 9px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;white-space:nowrap}
+.qbtn:hover{border-color:var(--accent);color:var(--accent)}
+.qbtn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.qbtn.x.on{background:var(--muted);border-color:var(--muted);color:var(--surface)}
 @media (max-width:640px){.lot{grid-template-columns:minmax(0,1fr)}.lot .right{justify-items:start;text-align:left}}
 .lot .t{font:650 15.5px/1.25 var(--f-display)}
 .lot .d{font-size:12.5px;color:var(--muted)}
@@ -276,7 +281,7 @@ tbody tr:hover{background:var(--sunk)}
 <header class="top">
   <div class="top-in">
     <div class="brand"><svg class="logo-sym" viewBox="3 3 58 49" aria-hidden="true"><path d="M8.6 49.5 A27 27 0 1 1 55.4 49.5" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><path d="M55.4 22.5 A27 27 0 0 1 56.47 43.41" fill="none" class="lgs" stroke-width="4.5" stroke-linecap="round"/><path d="M13.340 45.510 L16.660 50.490 L17.500 49.874 L17.500 42.998 Z" class="lgf"/><path d="M28.500 41.806 L35.500 36.672 L35.500 32.130 L28.500 36.357 Z" class="lgf"/><path d="M46.500 28.604 L48.960 26.800 L47.640 24.800 L46.500 25.488 Z" class="lgf"/><rect x="19" y="22" width="8" height="28" fill="currentColor"/><rect x="37" y="22" width="8" height="28" fill="currentColor"/><circle cx="15" cy="48" r="3.0" fill="currentColor"/></svg><span class="brand-txt">HUELSAN <small>Automoción</small></span></div>
-    <div class="status" id="status">Conectando…</div><button type="button" class="btn" id="salir" style="margin-left:8px" onclick="HUELSAN_SALIR()">Salir</button>
+    <div class="status" id="status">Conectando…</div><a class="btn" href="empresa/" style="margin-left:8px;text-decoration:none">Datos de empresa</a><button type="button" class="btn" id="salir" style="margin-left:8px" onclick="HUELSAN_SALIR()">Salir</button>
   </div>
   <nav class="tabs" role="tablist" id="tabs">
     <button role="tab" data-tab="subastas" aria-selected="true">Subastas<span class="count" id="c-subastas"></span></button>
@@ -587,6 +592,7 @@ function lotRow(l){
     </div>
     <div class="right tnum">
       <span class="state ${esc(l.estado||"nuevo")}">${ESTADO_LBL[l.estado||"nuevo"]}</span>
+      ${!isOwned(l)&&["nuevo","interesante","descartado"].includes(l.estado||"nuevo")?`<span class="qk"><button type="button" class="qbtn ${l.estado==="interesante"?"on":""}" data-quick="interesante" data-id="${esc(l.id)}" aria-pressed="${l.estado==="interesante"}" title="${l.estado==="interesante"?"Quitar de interesantes":"Marcar como interesante"}">★ Interesante</button><button type="button" class="qbtn x ${l.estado==="descartado"?"on":""}" data-quick="descartado" data-id="${esc(l.id)}" aria-pressed="${l.estado==="descartado"}" title="${l.estado==="descartado"?"Recuperar":"Descartar"}" aria-label="${l.estado==="descartado"?"Recuperar":"Descartar"}">✕</button></span>`:""}
       <span class="price">${isOwned(l)&&l.precioVenta?eur(l.precioVenta):eur(rp)}</span>
       <span class="d">${isOwned(l)?(l.precioCompra?"Compra "+eur(l.precioCompra):""):priceLbl(l)}</span>${!isOwned(l)&&l.pujaActual&&l.numPujas>0?`<span class="d">Puja actual ${eur(l.pujaActual)}</span>`:""}
       ${m!=null?`<span class="tag ${m>=1500?"good":m>=0?"":"bad"}">Margen est. ${eur(m)}${margenSalPct(l)!=null?" · "+Math.round(margenSalPct(l))+" %":""}</span>`:(l.mercado?`<span class="d">Venta est. ${eur(ventaEst(l))}</span>`:"")}
@@ -1276,6 +1282,10 @@ document.addEventListener("click",async e=>{const t=e.target;
   const pv=t.closest("[data-pubver]");if(pv&&S.pubOpen){const l=S.lots.get(S.pubOpen);if(l)abrirVisor(pubFotos(l),+pv.dataset.pubver,pubTitle(l));return}
   if(t.closest("#pubdrawer")||t.closest("#pubscrim"))return;
   const po=t.closest("[data-pubopen]");if(po){S.pubOpen=po.dataset.pubopen;renderPubDrawer();return}
+  const qk=t.closest("[data-quick]");if(qk){const id=qk.dataset.id,cl=S.lots.get(id);if(!cl)return;
+    const st=(cl.estado||"nuevo")===qk.dataset.quick?"nuevo":qk.dataset.quick;S.lots.set(id,{...cl,estado:st});render();
+    toast(st==="nuevo"?"Vuelve a «Sin revisar»":"Marcado como "+ESTADO_LBL[st].toLowerCase());
+    if(S.db){try{await S.db.doc("lotes/"+id).update({estado:st})}catch(err){toast("No se ha podido guardar: "+(err.message||err.code))}}return}
   const op=t.closest("[data-open]");if(op&&!t.closest("#drawer")){S.open=op.dataset.open;renderDrawer();return}
   if(t.closest("#pick")){$("#file").click();return}
   if(t.closest("#more")){S.limit+=60;render();return}

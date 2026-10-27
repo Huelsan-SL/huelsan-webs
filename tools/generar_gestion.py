@@ -23,7 +23,7 @@ assert "_blob" not in s
 rep("<script>\n", '<script>\nconst BLOB=window.HUELSAN_BLOB||"/_blob/";\n', 1)
 # botón salir junto al estado
 rep('<div class="status" id="status">Conectando…</div>',
-    '<div class="status" id="status">Conectando…</div><button type="button" class="btn" id="salir" style="margin-left:8px" onclick="HUELSAN_SALIR()">Salir</button>')
+    '<div class="status" id="status">Conectando…</div><a class="btn" href="empresa/" style="margin-left:8px;text-decoration:none">Datos de empresa</a><button type="button" class="btn" id="salir" style="margin-left:8px" onclick="HUELSAN_SALIR()">Salir</button>')
 # enlace a la web pública
 s = s.replace("https://claude.ai/artifact/KfiJ9cEvT8971YQqNibYTr", "https://huelsanautomocion.com")
 # recogidas: la web habla con la extensión «Huelsan · Recogida BCA» (Chrome/Edge)

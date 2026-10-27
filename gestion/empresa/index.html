@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Huelsan · Datos de empresa</title>
+<link rel="icon" href="../favicon.svg">
+<script src="../adaptador.js"></script>
+<style>
+:root{--bg:#f6f5f2;--panel:#fff;--ink:#1b1d20;--muted:#5f6368;--line:#dcdad5;--accent:#8c6e44;--ok:#067647;--bad:#b42318}
+@media (prefers-color-scheme:dark){:root{--bg:#141517;--panel:#1d1f22;--ink:#f0efed;--muted:#a3a3a3;--line:#33363a;--accent:#cdb084}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+header a{color:inherit}
+main{max-width:720px;margin:0 auto;padding:20px 16px 60px;display:grid;gap:18px}
+h1{font-size:22px;margin:0}
+p.intro{margin:0;color:var(--muted)}
+fieldset{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:16px;margin:0;display:grid;gap:14px}
+legend{font-weight:650;padding:0 6px}
+label{display:grid;gap:4px;font-size:13.5px;font-weight:600}
+label small{font-weight:400;color:var(--muted)}
+input,textarea{font:inherit;font-weight:400;padding:10px;border:1px solid var(--line);border-radius:8px;background:transparent;color:inherit;width:100%}
+input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+.two{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+@media (max-width:560px){.two{grid-template-columns:1fr}}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;bottom:0;background:var(--bg);padding:12px 0}
+button{font:inherit;font-weight:650;padding:11px 18px;border:0;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer}
+button:disabled{opacity:.6}
+#msg{font-size:13.5px}#msg.ok{color:var(--ok)}#msg.bad{color:var(--bad)}
+</style></head><body>
+<header><a href="../">← Volver a la app</a><span style="font-weight:650">Huelsan · Datos de empresa</span></header>
+<main>
+  <div><h1>Datos de empresa para la web</h1>
+  <p class="intro">Se muestran en huelsanautomocion.com (contacto, pie de página y textos legales) en cuanto guardas. Deja en blanco lo que aún no tengas: en la web aparecerá como pendiente.</p></div>
+  <form id="f" autocomplete="off">
+    <fieldset><legend>Identificación (obligatorio en el aviso legal)</legend>
+      <label>Nombre comercial<input name="nombre" placeholder="Huelsan Automoción"></label>
+      <div class="two">
+        <label>Razón social <small>tal como figura en el CIF, p. ej. «Huelsan Automoción, S.L.»</small><input name="razonSocial"></label>
+        <label>NIF / CIF<input name="nif" placeholder="B12345678"></label>
+      </div>
+      <label>Domicilio social <small>calle, número, código postal, municipio y provincia</small><input name="domicilio"></label>
+      <label>Datos registrales <small>p. ej. «Registro Mercantil de Huelva, tomo 1234, folio 56, hoja H-12345». Si sois autónomos, déjalo en blanco.</small><input name="registro"></label>
+    </fieldset>
+    <fieldset><legend>Contacto (aparece en la web)</legend>
+      <div class="two">
+        <label>Correo electrónico<input name="email" type="email" placeholder="info@huelsanautomocion.com"></label>
+        <label>Teléfono<input name="telefono" type="tel" placeholder="600 000 000"></label>
+      </div>
+      <div class="two">
+        <label>WhatsApp <small>con prefijo, p. ej. 34600000000</small><input name="whatsapp" inputmode="numeric" placeholder="34600000000"></label>
+        <label>Zona donde trabajáis <small>p. ej. «Huelva y Murcia»</small><input name="zona"></label>
+      </div>
+    </fieldset>
+    <div class="bar"><button type="submit" id="guardar" disabled>Guardar</button><span id="msg" role="status">Cargando…</span></div>
+  </form>
+</main>
+<script>
+"use strict";
+const CAMPOS=["nombre","razonSocial","nif","domicilio","registro","email","telefono","whatsapp","zona"];
+const f=document.getElementById("f"),msg=(t,c)=>{const m=document.getElementById("msg");m.textContent=t;m.className=c||""};
+(async()=>{
+  const db=await window.claude.use("db");
+  const ref=db.doc("web/empresa");
+  try{const sn=await ref.get();const d=sn.exists?sn.data():{};for(const k of CAMPOS)if(d[k]!=null)f.elements[k].value=d[k];
+    msg(sn.exists&&d.actualizado?"Última actualización: "+d.actualizado:"Aún no hay datos guardados.")}
+  catch(e){msg("No se han podido cargar los datos: "+e.message,"bad")}
+  document.getElementById("guardar").disabled=false;
+  f.addEventListener("submit",async e=>{e.preventDefault();const b=document.getElementById("guardar");b.disabled=true;
+    const d={};for(const k of CAMPOS)d[k]=f.elements[k].value.trim();
+    d.whatsapp=d.whatsapp.replace(/\D/g,"");f.elements.whatsapp.value=d.whatsapp;
+    d.actualizado=new Date().toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit",year:"numeric"});
+    try{await ref.set(d);msg("Guardado. Ya se ve en huelsanautomocion.com (recarga la web).","ok")}
+    catch(err){msg("No se ha podido guardar: "+err.message,"bad")}finally{b.disabled=false}});
+})();
+</script></body></html>

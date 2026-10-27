@@ -11,8 +11,11 @@ const SES_KEY="huelsan-sesion";
 window.HUELSAN_BLOB=SB_URL+"/storage/v1/object/public/fotos/";
 
 /* ---------------- sesión ---------------- */
-let ses=null;try{ses=JSON.parse(localStorage.getItem(SES_KEY)||"null")}catch(e){}
-const guardarSes=s=>{ses=s;try{s?localStorage.setItem(SES_KEY,JSON.stringify(s)):localStorage.removeItem(SES_KEY)}catch(e){}};
+// «Mantener la sesión iniciada»: en localStorage (sigue al cerrar el navegador) o solo en esta pestaña (sessionStorage)
+const recordar=()=>{try{return localStorage.getItem("huelsan-recordar")!=="0"}catch(e){return true}};
+let ses=null;try{ses=JSON.parse(localStorage.getItem(SES_KEY)||sessionStorage.getItem(SES_KEY)||"null")}catch(e){}
+const guardarSes=s=>{ses=s;try{localStorage.removeItem(SES_KEY);sessionStorage.removeItem(SES_KEY);
+  if(s)(recordar()?localStorage:sessionStorage).setItem(SES_KEY,JSON.stringify(s))}catch(e){}};
 async function authPost(q,body){
   const r=await fetch(SB_URL+"/auth/v1/token?grant_type="+q,{method:"POST",headers:{apikey:SB_KEY,"Content-Type":"application/json"},body:JSON.stringify(body)});
   const j=await r.json().catch(()=>({}));
@@ -164,21 +167,35 @@ window.claude={use(n){
 
 /* ---------------- pantalla de acceso ---------------- */
 let resolverListo;const listo=new Promise(r=>resolverListo=r);
+function cssLogin(){if(document.getElementById("login-css"))return;const st=document.createElement("style");st.id="login-css";st.textContent=`#login-ov{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:var(--bg,#f6f5f2);padding:16px}
+#login-f{width:100%;max-width:340px;display:grid;gap:12px;background:var(--panel,#fff);color:var(--ink,#1a1a1a);border:1px solid var(--line,#ddd);border-radius:12px;padding:24px;font:15px system-ui,sans-serif}
+#login-f h1{font-size:20px;margin:0 0 4px}.lg-marca{font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.7}
+#login-f label{display:grid;gap:4px;font-size:13px}#login-f input{font:inherit;padding:10px;border:1px solid var(--line,#ccc);border-radius:8px;background:transparent;color:inherit}
+#login-f button{font:inherit;font-weight:600;padding:11px;border:0;border-radius:8px;background:var(--accent,#1f4e79);color:#fff;cursor:pointer}#login-f button:disabled{opacity:.6}
+#login-m{margin:0;min-height:1.2em;font-size:13px;color:#b42318}#login-m.ok{color:#067647}
+#login-f .lg-chk{display:flex;gap:8px;align-items:center;font-size:13px}#login-f .lg-chk input{width:auto;padding:0}
+#login-f .lg-link{background:none;color:inherit;font-weight:500;text-decoration:underline;padding:0;font-size:13px;justify-self:start}`;document.head.appendChild(st)}
 function mostrarLogin(msg){
   let ov=document.getElementById("login-ov");
   if(!ov){ov=document.createElement("div");ov.id="login-ov";
     ov.innerHTML=`<form id="login-f" autocomplete="on"><div class="lg-marca">Huelsan Automoción</div><h1>Acceso del equipo</h1>
       <label>Correo<input id="login-e" type="email" autocomplete="username" required></label>
       <label>Contraseña<input id="login-p" type="password" autocomplete="current-password" required></label>
-      <button type="submit" id="login-b">Entrar</button><p id="login-m" role="status"></p></form>`;
-    const st=document.createElement("style");st.textContent=`#login-ov{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:var(--bg,#f6f5f2);padding:16px}
-#login-f{width:100%;max-width:340px;display:grid;gap:12px;background:var(--panel,#fff);color:var(--ink,#1a1a1a);border:1px solid var(--line,#ddd);border-radius:12px;padding:24px;font:15px system-ui,sans-serif}
-#login-f h1{font-size:20px;margin:0 0 4px}.lg-marca{font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.7}
-#login-f label{display:grid;gap:4px;font-size:13px}#login-f input{font:inherit;padding:10px;border:1px solid var(--line,#ccc);border-radius:8px;background:transparent;color:inherit}
-#login-f button{font:inherit;font-weight:600;padding:11px;border:0;border-radius:8px;background:var(--accent,#1f4e79);color:#fff;cursor:pointer}#login-f button:disabled{opacity:.6}
-#login-m{margin:0;min-height:1.2em;font-size:13px;color:#b42318}`;
-    document.head.appendChild(st);document.body.appendChild(ov);
+      <label class="lg-chk"><input id="login-r" type="checkbox"> Mantener la sesión iniciada en este equipo</label>
+      <button type="submit" id="login-b">Entrar</button>
+      <button type="button" id="login-o" class="lg-link">¿Has olvidado la contraseña?</button>
+      <p id="login-m" role="status"></p></form>`;
+    cssLogin();document.body.appendChild(ov);
+    ov.querySelector("#login-r").checked=recordar();
+    ov.querySelector("#login-o").addEventListener("click",async()=>{
+      const m=ov.querySelector("#login-m"),email=ov.querySelector("#login-e").value.trim();m.className="";
+      if(!email){m.textContent="Escribe tu correo y vuelve a pulsar.";ov.querySelector("#login-e").focus();return}
+      try{const r=await fetch(SB_URL+"/auth/v1/recover",{method:"POST",headers:{apikey:SB_KEY,"Content-Type":"application/json"},body:JSON.stringify({email})});
+        if(!r.ok){const j=await r.json().catch(()=>({}));throw new Error(j.msg||j.message||j.error_description||("HTTP "+r.status))}
+        m.className="ok";m.textContent="Si el correo está dado de alta, te llegará un enlace para crear una contraseña nueva (mira también en spam)."}
+      catch(err){m.textContent="No se ha podido enviar: "+err.message}});
     ov.querySelector("#login-f").addEventListener("submit",async e=>{e.preventDefault();
+      try{localStorage.setItem("huelsan-recordar",ov.querySelector("#login-r").checked?"1":"0")}catch(err){}
       const b=ov.querySelector("#login-b"),m=ov.querySelector("#login-m");b.disabled=true;m.textContent="";
       try{const s=await authPost("password",{email:ov.querySelector("#login-e").value.trim(),password:ov.querySelector("#login-p").value});
         guardarSes(s);ov.querySelector("#login-p").value="";ov.remove();resolverListo()}
@@ -191,7 +208,26 @@ function mostrarLogin(msg){
 window.HUELSAN_SALIR=()=>{const s=ses;guardarSes(null);rt.cerrar();
   if(s)fetch(SB_URL+"/auth/v1/logout",{method:"POST",headers:{apikey:SB_KEY,Authorization:"Bearer "+s.access_token}}).catch(()=>{});
   location.reload()};
+function nuevaClave(h){
+  history.replaceState(null,"",location.pathname);
+  const ov=document.createElement("div");ov.id="login-ov";
+  ov.innerHTML=`<form id="login-f"><div class="lg-marca">Huelsan Automoción</div><h1>Contraseña nueva</h1>
+    <label>Contraseña nueva (mínimo 8 caracteres)<input id="nc-1" type="password" autocomplete="new-password" minlength="8" required></label>
+    <label>Repítela<input id="nc-2" type="password" autocomplete="new-password" minlength="8" required></label>
+    <button type="submit" id="login-b">Guardar y entrar</button><p id="login-m" role="status"></p></form>`;
+  cssLogin();document.body.appendChild(ov);setTimeout(()=>ov.querySelector("#nc-1").focus(),0);
+  ov.querySelector("form").addEventListener("submit",async e=>{e.preventDefault();const m=ov.querySelector("#login-m"),a=ov.querySelector("#nc-1").value,b=ov.querySelector("#nc-2").value;
+    if(a!==b){m.textContent="Las dos contraseñas no coinciden.";return}
+    try{const r=await fetch(SB_URL+"/auth/v1/user",{method:"PUT",headers:{apikey:SB_KEY,Authorization:"Bearer "+h.get("access_token"),"Content-Type":"application/json"},body:JSON.stringify({password:a})});
+      const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.msg||j.message||j.error_description||("HTTP "+r.status));
+      guardarSes({access_token:h.get("access_token"),refresh_token:h.get("refresh_token"),expires_at:+h.get("expires_at")||Math.floor(Date.now()/1000)+(+h.get("expires_in")||3600),email:j.email});
+      ov.remove();resolverListo()}
+    catch(err){m.textContent="No se ha podido cambiar: "+err.message}});
+}
 function arrancar(){
+  const h=new URLSearchParams(location.hash.slice(1));
+  if(h.get("type")==="recovery"&&h.get("access_token")){nuevaClave(h);return}
+  if(h.get("error_description")){history.replaceState(null,"",location.pathname);mostrarLogin("El enlace no es válido o ha caducado: "+h.get("error_description").replace(/\+/g," "));return}
   if(ses)token().then(()=>resolverListo()).catch(()=>{ses?resolverListo():mostrarLogin()});
   else mostrarLogin();
 }
