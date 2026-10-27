@@ -747,6 +747,28 @@ function renderInteresantes(){
     <div class="lots">${abiertos.length?abiertos.map(lotRow).join(""):`<div class="empty"><strong>No hay lotes interesantes en subasta</strong>En la pestaña Subastas, pulsa «★ Interesante» en los coches que quieras seguir.</div>`}</div>
     ${cerrados.length?`<h2 style="margin:22px 0 10px;font:650 16px var(--f-display)">Subastas ya cerradas (${cerrados.length})</h2><div class="lots">${cerrados.slice(0,100).map(lotRow).join("")}</div>`:""}`;
 }
+/* Descarga en un ZIP todas las fotos de los coches en stock: una carpeta por coche (fotos, daños y fotos de la web) */
+function cargarJSZip(){return window.JSZip?Promise.resolve(window.JSZip):new Promise((res,rej)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";sc.onload=()=>res(window.JSZip);sc.onerror=()=>rej(new Error("No se pudo cargar el compresor ZIP"));document.head.appendChild(sc)})}
+async function descargarFotosStock(btn){
+  const coches=[...S.lots.values()].filter(l=>isOwned(l)&&l.estado!=="vendido");
+  const limpio=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^\w .-]+/g,"").trim().slice(0,60)||"coche";
+  const tareas=[];
+  for(const l of coches){const dir=limpio([titleOf(l),l.matricula].filter(Boolean).join(" "));
+    (l.fotos||[]).forEach((id,i)=>tareas.push({dir,nombre:`${String(i+1).padStart(2,"0")}.jpg`,url:BLOB+id}));
+    (l.fotosDanos||[]).forEach((id,i)=>tareas.push({dir:dir+"/danos",nombre:`danos-${String(i+1).padStart(2,"0")}.jpg`,url:BLOB+id}));
+    if(window.HUELSAN&&window.HUELSAN.FOTOS_WEB)(l.fotosWeb||[]).forEach((n,i)=>tareas.push({dir:dir+"/web",nombre:`web-${String(i+1).padStart(2,"0")}.jpg`,url:/^https?:/.test(n)?n:window.HUELSAN.FOTOS_WEB+n}))}
+  if(!tareas.length){toast("Los coches en stock no tienen fotos todavía");return}
+  const txt=btn.textContent;btn.disabled=true;let hechas=0,fallos=0;
+  try{const JSZip=await cargarJSZip();const zip=new JSZip();
+    const cola=[...tareas];await Promise.all(Array.from({length:4},async()=>{while(cola.length){const t=cola.shift();
+      try{const r=await fetch(t.url);if(!r.ok)throw 0;const b=await r.blob();zip.file(t.dir+"/"+(b.type==="image/png"?t.nombre.replace(/jpg$/,"png"):t.nombre),b)}catch(e){fallos++}
+      hechas++;btn.textContent=`Descargando fotos… ${hechas} de ${tareas.length}`}}));
+    btn.textContent="Comprimiendo…";
+    const out=await zip.generateAsync({type:"blob"});const a=document.createElement("a");a.href=URL.createObjectURL(out);
+    a.download=`fotos-stock-${new Date().toISOString().slice(0,10)}.zip`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),10000);
+    toast(`${tareas.length-fallos} fotos de ${coches.length} coches descargadas`+(fallos?` (${fallos} no se pudieron leer)`:""))}
+  catch(e){toast("No se ha podido preparar el ZIP: "+e.message)}
+  finally{btn.disabled=false;btn.textContent=txt}}
 function renderStock(){
   const owned=[...S.lots.values()].filter(l=>isOwned(l)).sort((a,b)=>(a.estado==="vendido")-(b.estado==="vendido"));
   const inv=owned.filter(l=>l.estado!=="vendido");
@@ -754,7 +776,7 @@ function renderStock(){
   $("#main").innerHTML=`<div class="pagehead"><div><h1>Stock</h1><p>Coches comprados. Marca un lote como «Comprado» o «En stock» desde su ficha para que aparezca aquí; ponle precio de venta, fotos y actívalo para la web.</p></div>
     <div class="row tnum"><span class="card"><h3>En stock</h3><b style="font:700 20px var(--f-display)">${inv.length}</b></span><span class="card"><h3>Invertido (compra + gastos)</h3><b style="font:700 20px var(--f-display)">${eur(capital)}</b></span><span class="card"><h3>PVP total</h3><b style="font:700 20px var(--f-display)">${eur(pv)}</b></span></div></div>
     <div class="lots">${owned.length?owned.map(lotRow).join(""):`<div class="empty"><strong>Aún no hay coches en stock</strong>Cuando compres un lote, ábrelo y márcalo como «Comprado». También puedes dar de alta un coche comprado fuera de subasta.</div>`}</div>
-    <div class="row" style="margin-top:14px"><button class="btn primary" id="imp-stock">Importar ficha de compra (PDF de inspección o Excel de BCA)</button><button class="btn" id="add-manual">Añadir coche a mano</button></div>
+    <div class="row" style="margin-top:14px"><button class="btn primary" id="imp-stock">Importar ficha de compra (PDF de inspección o Excel de BCA)</button><button class="btn" id="add-manual">Añadir coche a mano</button>${inv.length?`<button class="btn" id="dl-fotos-stock">Descargar todas las fotos del stock (ZIP)</button>`:""}</div>
     <div class="muted" style="font-size:12.5px;margin-top:6px">Para coches comprados fuera de subasta: sube el informe de inspección en PDF (se leen los datos, las fotos y los daños) o el Excel de lotes de BCA, revisa los datos y añádelos al stock.</div>
     ${comparativaGastos(owned)}`}
 
@@ -1334,6 +1356,7 @@ document.addEventListener("click",async e=>{const t=e.target;
   if(t.closest("#g-add")){addGasto();return}
   const gd=t.closest("[data-gdel]");if(gd){delGasto(gd.dataset.gdel,gd);return}
   if(t.closest("#imp-stock")){$("#file-stock").click();return}
+  if(t.closest("#dl-fotos-stock")){descargarFotosStock(t.closest("#dl-fotos-stock"));return}
   if(t.closest("#imp-save")){guardarImport();return}
   if(t.closest("#imp")||t.closest("#impscrim"))return;
   if(t.closest("#add-manual")){const id="man-"+Date.now().toString(36);const doc={id,fuente:"Compra directa",subasta:null,subastaId:null,marca:"Nuevo coche",modelo:"",estado:"stock",publico:false,importadoEn:new Date().toISOString()};
