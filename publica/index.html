@@ -356,7 +356,8 @@ function portada(){
   if(d){const h=$("#herocar");h.hidden=false;h.innerHTML=`<img src="${esc(d.fotos[0])}" alt="${esc(titulo(d))}"><figcaption><span><b>${esc(titulo(d))}</b>${[d.anio,d.km!=null?num(d.km)+" km":null,d.combustible].filter(Boolean).map(esc).join(" · ")}</span><span class="badge ${d.disponibilidad}" style="position:static">${DISP[d.disponibilidad]}</span></figcaption>`;h.style.cursor="pointer";h.onclick=()=>abrirFicha(d.id)}
   const s=COCHES.filter(c=>c.disponibilidad==="stock").length,e=COCHES.length-s;
   $("#facts").innerHTML=`<span><b class="tnum">${s}</b>en stock</span><span><b class="tnum">${e}</b>por encargo</span><span><b>Transporte y papeles</b>incluidos en la gestión</span>`;
-  const zonas=contactos().map(c=>c.zona).filter(Boolean);const zt=zonas.length?zonas.join(" y ").replace(/\//g,", "):EMPRESA.zona;
+  const ciudades=[...new Set(contactos().flatMap(c=>String(c.zona||"").split(/\s*(?:\/|,|\by\b)\s*/)).map(x=>x.trim()).filter(Boolean))];
+  const zt=ciudades.length?(ciudades.length>1?ciudades.slice(0,-1).join(", ")+" y "+ciudades.at(-1):ciudades[0]):EMPRESA.zona;
   $("#zona-txt").innerHTML=zt?`Trabajamos en ${esc(zt)} y entregamos en toda España.`:"";
 }
 
