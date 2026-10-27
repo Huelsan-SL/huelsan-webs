@@ -145,16 +145,17 @@ function colRef(nombre){
 const db={collection:colRef,doc:docRef};
 
 /* ---------------- fotos y PDF ---------------- */
-const assets={
-  async upload(blob){
-    const t=await token();const tipo=blob.type||"application/octet-stream";
-    const ext=({"image/jpeg":"jpg","image/png":"png","image/webp":"webp","application/pdf":"pdf"})[tipo]||"bin";
-    const id=[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,"0")).join("")+"."+ext;
-    const r=await fetch(SB_URL+"/storage/v1/object/fotos/"+id,{method:"POST",headers:{apikey:SB_KEY,Authorization:"Bearer "+t,"Content-Type":tipo,"x-upsert":"false","Cache-Control":"31536000"},body:blob});
-    if(!r.ok)throw new Error("No se pudo subir: HTTP "+r.status);
-    return{id,url:window.HUELSAN_BLOB+id};
-  }
-};
+async function subir(bucket,blob,nombre){
+  const t=await token();const tipo=blob.type||"application/octet-stream";
+  const ext=({"image/jpeg":"jpg","image/png":"png","image/webp":"webp","application/pdf":"pdf"})[tipo]||"bin";
+  const id=nombre||[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,"0")).join("")+"."+ext;
+  const r=await fetch(SB_URL+"/storage/v1/object/"+bucket+"/"+encodeURIComponent(id),{method:"POST",headers:{apikey:SB_KEY,Authorization:"Bearer "+t,"Content-Type":tipo,"x-upsert":"true","Cache-Control":"31536000"},body:blob});
+  if(!r.ok)throw new Error("No se pudo subir: HTTP "+r.status);
+  return{id,url:SB_URL+"/storage/v1/object/public/"+bucket+"/"+id};
+}
+const assets={upload:blob=>subir("fotos",blob)};
+// Para páginas propias de la app (estudio de folletos, datos de empresa)
+window.HUELSAN={rest:(path,opt)=>listo.then(()=>api(path,opt)),subir:(bucket,blob,nombre)=>listo.then(()=>subir(bucket,blob,nombre)),SB_URL,FOTOS_WEB:SB_URL+"/storage/v1/object/public/fotos-web/"};
 
 /* ---------------- window.claude de reemplazo ---------------- */
 const noDisp=n=>Promise.reject(Object.assign(new Error(n+" no disponible en la web"),{code:"capability_disabled"}));

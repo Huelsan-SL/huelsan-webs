@@ -23,9 +23,12 @@ assert "_blob" not in s
 rep("<script>\n", '<script>\nconst BLOB=window.HUELSAN_BLOB||"/_blob/";\n', 1)
 # botón salir junto al estado
 rep('<div class="status" id="status">Conectando…</div>',
-    '<div class="status" id="status">Conectando…</div><a class="btn" href="empresa/" style="margin-left:8px;text-decoration:none">Datos de empresa</a><button type="button" class="btn" id="salir" style="margin-left:8px" onclick="HUELSAN_SALIR()">Salir</button>')
+    '<div class="status" id="status">Conectando…</div><a class="btn" href="folleto/" style="margin-left:8px;text-decoration:none">Estudio</a><a class="btn" href="empresa/" style="margin-left:8px;text-decoration:none">Datos de empresa</a><button type="button" class="btn" id="salir" style="margin-left:8px" onclick="HUELSAN_SALIR()">Salir</button>')
 # enlace a la web pública
 s = s.replace("https://claude.ai/artifact/KfiJ9cEvT8971YQqNibYTr", "https://huelsanautomocion.com")
+# estudio de folletos: acceso desde la ficha de cada coche
+rep('''<button data-state="${k}" aria-pressed="${(l.estado||"nuevo")===k}">${v}</button>`).join("")}</div>''',
+    '''<button data-state="${k}" aria-pressed="${(l.estado||"nuevo")===k}">${v}</button>`).join("")}</div><div style="margin-top:10px"><a class="btn sm" href="folleto/?id=${encodeURIComponent(l.id)}" style="text-decoration:none">Crear folleto y fotos de estudio</a></div>''')
 # recogidas: la web habla con la extensión «Huelsan · Recogida BCA» (Chrome/Edge)
 rep('return({not_granted:', 'if(c==="no_ext")return"Para lanzar recogidas desde la web instala en este ordenador la extensión «Huelsan · Recogida BCA» (Chrome o Edge) y entra en ella con tu usuario.";\n  if(c==="ext")return e.message||"La extensión no ha podido lanzar la recogida.";\n  return({not_granted:')
 rep('async function fireTrigger(id){return S.mcp.callTool("Claude Code Remote","fire_trigger",{trigger_id:id})}',

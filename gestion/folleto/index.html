@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Huelsan · Estudio de folletos</title>
+<link rel="icon" href="../favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="../adaptador.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--bg:#F0EFED;--surface:#fff;--sunk:#E6E4E0;--line:#D6D4CF;--ink:#1B1D20;--muted:#5E636A;--accent:#8C6E44;--accent-ink:#fff;--ok:#067647;--bad:#b42318;
+  --f-brand:"Syncopate","Arial Black",sans-serif;--f-body:"Hanken Grotesk","Segoe UI",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root{--bg:#141517;--surface:#1D1F22;--sunk:#26292D;--line:#363A3F;--ink:#ECEBE8;--muted:#A2A6AC;--accent:#CDB084;--accent-ink:#1B1D20}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--f-body)}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+header.top a{color:inherit}
+.brand{font:700 15px var(--f-brand);letter-spacing:.06em}
+main{display:grid;grid-template-columns:minmax(320px,440px) 1fr;gap:18px;padding:16px;max-width:1500px;margin:0 auto}
+@media (max-width:900px){main{grid-template-columns:1fr}}
+section.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:12px;align-content:start}
+h2{font-size:15px;margin:0;text-transform:uppercase;letter-spacing:.06em}
+.muted{color:var(--muted);font-size:13px}
+label{display:grid;gap:3px;font-size:12.5px;font-weight:600;color:var(--muted)}
+input,select,textarea{font:inherit;font-size:14px;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:8px;padding:8px 9px;width:100%}
+textarea{min-height:110px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.btn{font:inherit;font-weight:650;font-size:13.5px;padding:9px 13px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:disabled{opacity:.55;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chk{display:flex;gap:8px;align-items:center;font-weight:500;color:var(--ink);font-size:13.5px}.chk input{width:auto}
+details{border-top:1px solid var(--line);padding-top:10px}summary{cursor:pointer;font-weight:700;font-size:13.5px}
+.fotos{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.foto{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--sunk);aspect-ratio:4/3}
+.foto img{width:100%;height:100%;object-fit:cover;display:block}
+.foto .acc{position:absolute;inset:auto 0 0 0;display:flex;gap:4px;padding:4px;background:linear-gradient(transparent,rgba(0,0,0,.65))}
+.foto .acc button{flex:1;font:600 11px var(--f-body);padding:4px 2px;border-radius:5px;border:0;background:rgba(255,255,255,.92);color:#1B1D20;cursor:pointer}
+.foto .n{position:absolute;top:4px;left:4px;background:var(--accent);color:var(--accent-ink);font:700 11px var(--f-body);border-radius:10px;padding:1px 7px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}.tabs button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.prev{background:var(--sunk);border-radius:12px;padding:12px;display:grid;place-items:center;min-height:420px}
+.prev canvas{max-width:100%;max-height:78vh;height:auto;box-shadow:0 8px 30px rgba(0,0,0,.25);border-radius:4px}
+#msg{min-height:1.2em;font-size:13px}#msg.ok{color:var(--ok)}#msg.bad{color:var(--bad)}
+/* editor de foto */
+#ed{position:fixed;inset:0;background:rgba(10,11,12,.82);z-index:20;display:none;place-items:center;padding:16px}
+#ed.open{display:grid}
+#ed .box{background:var(--surface);border-radius:12px;padding:14px;max-width:1100px;width:100%;display:grid;gap:10px;max-height:96vh;overflow:auto}
+#ed canvas{width:100%;height:auto;border-radius:6px;cursor:crosshair;touch-action:none;background:#000}
+</style></head><body>
+<header class="top"><a href="../">← Volver a la app</a><span class="brand">HUELSAN · ESTUDIO</span><span></span></header>
+<main>
+<section class="panel" id="izq">
+  <h2>1 · Coche</h2>
+  <label>Buscar coche (stock, comprados, interesantes, por pujar o publicados en la web)
+    <input id="q" placeholder="Marca, modelo o matrícula" autocomplete="off"></label>
+  <select id="sel" size="5" aria-label="Coches"></select>
+  <p class="muted" id="info"></p>
+
+  <h2>2 · Fotos</h2>
+  <p class="muted">Las fotos del folleto y de la web pública son las de «Fotos para la web». Pulsa «Preparar» en cualquier foto para quitar el fondo (estudio), tapar la matrícula y guardarla.</p>
+  <div class="row"><button class="btn" id="b-bca">Traer fotos de BCA</button><label class="btn" style="display:inline-block">Subir fotos<input type="file" id="f-subir" accept="image/*" multiple hidden></label></div>
+  <div><b style="font-size:13px">Fotos disponibles</b><div class="fotos" id="g-orig"></div></div>
+  <div><b style="font-size:13px">Fotos para la web y el folleto</b> <span class="muted">(la nº 1 es la principal)</span><div class="fotos" id="g-web"></div></div>
+
+  <h2>3 · Textos</h2>
+  <div class="g2"><label>Marca<input data-f="marca"></label><label>Modelo<input data-f="modelo"></label></div>
+  <label>Versión<input data-f="version"></label>
+  <div class="g3"><label>Año<input data-f="anio" inputmode="numeric"></label><label>Kilómetros<input data-f="km" inputmode="numeric"></label><label>Combustible<input data-f="combustible"></label></div>
+  <div class="g3"><label>Cambio<input data-f="cambio" placeholder="Manual"></label><label>Potencia (CV)<input data-f="cv" inputmode="numeric"></label><label>Etiqueta DGT<select data-f="etiqueta"><option value="">—</option><option>0</option><option>ECO</option><option>C</option><option>B</option></select></label></div>
+  <div class="g3"><label>Carrocería<input data-f="carroceria"></label><label>Plazas<input data-f="plazas" inputmode="numeric"></label><label>Color<input data-f="color"></label></div>
+  <label>Equipamiento destacado <span style="font-weight:400">(uno por línea; caben 10)</span><textarea data-f="equipamiento"></textarea></label>
+  <label>Estado del coche <span style="font-weight:400">(uno por línea; caben 8)</span><textarea data-f="estado"></textarea></label>
+  <div class="g2"><label>Precio (€)<input data-f="precio" inputmode="numeric"></label><label>Texto bajo el precio<input data-f="precioNota" placeholder="IVA incluido · Financiación disponible"></label></div>
+  <div class="row"><button class="btn" id="b-precio-web">Usar este precio en la web pública</button></div>
+  <details><summary>Ventajas y contacto</summary>
+    <div style="display:grid;gap:8px;margin-top:8px">
+      <label>Ventaja 1<input data-f="v1"></label><label>Ventaja 2<input data-f="v2"></label><label>Ventaja 3<input data-f="v3"></label>
+      <div class="g2"><label>Teléfono<input data-f="telefono"></label><label>WhatsApp<input data-f="whatsapp"></label></div>
+      <label>Zona<input data-f="zona"></label>
+    </div>
+  </details>
+  <div class="row"><button class="btn primary" id="b-guardar">Guardar folleto</button><span id="msg" role="status"></span></div>
+</section>
+
+<section class="panel">
+  <div class="row" style="justify-content:space-between">
+    <div class="tabs" role="group" aria-label="Formato">
+      <button class="btn" data-fmt="historia" aria-pressed="true">Historia 9:16</button>
+      <button class="btn" data-fmt="post" aria-pressed="false">Publicación 4:5</button>
+      <button class="btn" data-fmt="a4" aria-pressed="false">A4 imprimible</button>
+    </div>
+    <div class="row"><button class="btn" id="b-jpg">Descargar imagen</button><button class="btn" id="b-pdf">Descargar PDF</button></div>
+  </div>
+  <div class="prev"><canvas id="cv" width="1080" height="1920" aria-label="Vista previa del folleto"></canvas></div>
+</section>
+</main>
+
+<div id="ed" role="dialog" aria-modal="true" aria-labelledby="ed-t"><div class="box">
+  <div class="row" style="justify-content:space-between"><b id="ed-t">Preparar foto</b><button class="btn" id="ed-x">Cerrar</button></div>
+  <div class="row">
+    <button class="btn" id="ed-fondo">Quitar fondo (estudio)</button>
+    <button class="btn" id="ed-orig">Volver a la original</button>
+    <span class="muted">Matrícula: arrastra un recuadro sobre ella y elige</span>
+    <button class="btn" id="ed-placa" disabled>Tapar con placa Huelsan</button>
+    <button class="btn" id="ed-blur" disabled>Difuminar</button>
+    <button class="btn" id="ed-undo" disabled>Deshacer</button>
+  </div>
+  <p class="muted" id="ed-msg"></p>
+  <canvas id="ed-cv"></canvas>
+  <div class="row"><button class="btn primary" id="ed-ok">Guardar en «Fotos para la web»</button></div>
+</div></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const COL={graf:"#1B1D20",graf2:"#25282C",graf3:"#2F3337",champ:"#B8976A",champO:"#8C6E44",champC:"#CDB084",blanco:"#F0EFED",gris:"#A2A6AC"};
+const BCA_IMG=(id,w)=>"https://www1.bcaimage.com/Document?DocType=VehicleImage&docId="+id+"&width="+w;
+const num=n=>n==null||n===""?"":String(Math.round(+n)).replace(/\B(?=(\d{3})+(?!\d))/g,".");
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const msg=(t,c)=>{const m=$("#msg");m.textContent=t||"";m.className=c||""};
+const S={db:null,lotes:[],lote:null,f:{},webFotos:[],fmt:"historia",img:{},empresa:{}};
+
+/* ---------- datos ---------- */
+const CAMPOS=["marca","modelo","version","anio","km","combustible","cambio","cv","etiqueta","carroceria","plazas","color","equipamiento","estado","precio","precioNota","v1","v2","v3","telefono","whatsapp","zona"];
+const titulo=l=>[l.marca,l.modelo].filter(Boolean).join(" ")||l.id;
+function camposDe(l){
+  const g=l.folleto||{};const e=S.empresa;
+  const base={marca:l.marca||"",modelo:(l.modelo||"").replace(/\b(diesel|gasolina)\b/ig,"").trim(),version:(()=>{let v=(l.derivado||"").trim();for(const p of [l.marca,(l.modelo||"").split(" ")[0]])if(p)v=v.replace(new RegExp("^"+p.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\s+","i"),"");return v})(),
+    anio:l.anio||"",km:l.km||"",combustible:l.combustible||"",cambio:l.cambio||"",cv:l.cv||"",etiqueta:"",carroceria:l.carroceria||l.tipo||"",plazas:l.plazas||"",color:l.color||"",
+    equipamiento:(l.equipamiento||"").split(/\s*,\s*/).filter(Boolean).slice(0,10).join("\n"),
+    estado:["Revisiones al día","Interior y exterior cuidados","ITV al día","Libro de mantenimiento"].join("\n"),
+    precio:l.precioVenta||"",precioNota:"Financiación a tu medida",
+    v1:"Garantía 12 meses",v2:"Transferencia incluida",v3:"Financiación sin entrada",
+    telefono:e.telefono||"",whatsapp:e.whatsapp||"",zona:e.zona||""};
+  return {...base,...g};
+}
+async function cargarLotes(){
+  const filas=await HUELSAN.rest("/rest/v1/lotes?select=id,data&or=(estado.in.(comprado,stock,interesante,pujar),publico.is.true)&order=actualizado.desc&limit=600");
+  S.lotes=(filas||[]).map(f=>({...f.data,id:f.id}));
+  try{const e=await HUELSAN.rest("/rest/v1/ajustes?select=data&id=eq.web%2Fempresa");S.empresa=(e&&e[0]&&e[0].data)||{}}catch(err){}
+  pintarLista();
+  const pre=new URLSearchParams(location.search).get("id");if(pre)elegir(pre);
+}
+const ESTADO_TXT={comprado:"Comprado",stock:"En stock",interesante:"Interesante",pujar:"Pujar",vendido:"Vendido",nuevo:"Sin revisar",descartado:"Descartado"};
+function pintarLista(){
+  const q=$("#q").value.trim().toLowerCase();
+  const l=S.lotes.filter(x=>!q||[x.marca,x.modelo,x.derivado,x.matricula].join(" ").toLowerCase().includes(q))
+    .sort((a,b)=>(["stock","comprado"].includes(b.estado)?1:0)-(["stock","comprado"].includes(a.estado)?1:0));
+  $("#sel").innerHTML=l.slice(0,300).map(x=>`<option value="${esc(x.id)}" ${S.lote&&S.lote.id===x.id?"selected":""}>${esc(titulo(x))} · ${x.anio||""} · ${num(x.km)} km · ${ESTADO_TXT[x.estado||"nuevo"]||""}${x.publico?" · web":""}</option>`).join("")||`<option disabled>Ningún coche</option>`;
+}
+async function elegir(id){
+  let l=S.lotes.find(x=>x.id===id);
+  if(!l){const f=await HUELSAN.rest("/rest/v1/lotes?select=id,data&id=eq."+encodeURIComponent(id));if(f&&f[0]){l={...f[0].data,id:f[0].id};S.lotes.unshift(l);pintarLista()}}
+  if(!l)return;
+  S.lote=l;S.f=camposDe(l);S.webFotos=[...(l.fotosWeb||[])];
+  for(const el of $$("[data-f]"))el.value=S.f[el.dataset.f]??"";
+  $("#info").textContent=`${titulo(l)}${l.matricula?" · "+l.matricula:""} · ${ESTADO_TXT[l.estado||"nuevo"]||""}${l.publico?" · se muestra en la web":" · no se muestra en la web"}`;
+  history.replaceState(null,"","?id="+encodeURIComponent(id));
+  pintarFotos();dibujar();
+}
+
+/* ---------- fotos ---------- */
+const urlWeb=n=>/^https?:/.test(n)?n:HUELSAN.FOTOS_WEB+n;
+function fotosOrigen(l){
+  const a=[];
+  for(const id of l.fotos||[])a.push({tipo:"propia",id,src:window.HUELSAN_BLOB+id});
+  for(const id of l.fotoIds||[])a.push({tipo:"bca",id,src:BCA_IMG(id,320)});
+  return a;
+}
+function pintarFotos(){
+  const l=S.lote;if(!l)return;
+  const o=fotosOrigen(l);
+  $("#g-orig").innerHTML=o.length?o.map((f,i)=>`<div class="foto"><img src="${esc(f.src)}" alt="" loading="lazy"><div class="acc"><button data-prep="${i}">Preparar</button></div></div>`).join(""):`<p class="muted">Sin fotos. Usa «Traer fotos de BCA» o «Subir fotos».</p>`;
+  $("#g-web").innerHTML=S.webFotos.length?S.webFotos.map((n,i)=>`<div class="foto"><span class="n">${i+1}</span><img src="${esc(urlWeb(n))}" alt="" loading="lazy"><div class="acc">${i?`<button data-up="${i}" aria-label="Subir">↑</button>`:""}${i<S.webFotos.length-1?`<button data-down="${i}" aria-label="Bajar">↓</button>`:""}<button data-quitar="${i}">Quitar</button></div></div>`).join(""):`<p class="muted">Aún no hay fotos preparadas.</p>`;
+}
+function b64Blob(b64,tipo){const s=atob(b64),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return new Blob([u],{type:tipo||"image/jpeg"})}
+function extPedir(tipo,extra){return new Promise((res,rej)=>{if(!document.documentElement.dataset.huelsanExt){rej(new Error("Para traer fotos de BCA instala la extensión «Huelsan · Recogida BCA» (versión 1.1 o posterior) en este navegador."));return}
+  const id=Math.random().toString(36).slice(2);const fin=()=>{window.removeEventListener("message",h);clearTimeout(t)};
+  const h=e=>{if(e.source===window&&e.data&&e.data.respuesta&&e.data.id===id){fin();e.data.ok?res(e.data):rej(new Error(e.data.msg||"Error"))}};
+  const t=setTimeout(()=>{fin();rej(new Error("La extensión no responde"))},30000);
+  window.addEventListener("message",h);window.postMessage({huelsanExt:tipo,id,...extra},location.origin)})}
+async function blobDe(f){
+  if(f.tipo==="bca"){const r=await extPedir("foto-bca",{docId:f.id,ancho:1600});return b64Blob(r.base64,r.tipo)}
+  if(f.blob)return f.blob;
+  const r=await fetch(f.src);if(!r.ok)throw new Error("No se pudo leer la foto");return await r.blob();
+}
+$("#b-bca").onclick=async()=>{
+  const l=S.lote;if(!l)return msg("Elige un coche","bad");
+  const ids=(l.fotoIds||[]).filter(x=>!(l.fotosBca||[]).includes(x));
+  if(!ids.length)return msg("Este coche no tiene fotos de BCA pendientes.","bad");
+  const b=$("#b-bca");b.disabled=true;let n=0;const nuevas=[];
+  try{for(const id of ids.slice(0,16)){msg(`Descargando de BCA ${++n} de ${Math.min(ids.length,16)}…`);
+      const blob=await blobDe({tipo:"bca",id});const r=await HUELSAN.subir("fotos",blob);nuevas.push([id,r.id])}
+    const fotos=[...(l.fotos||[]),...nuevas.map(x=>x[1])],fotosBca=[...(l.fotosBca||[]),...nuevas.map(x=>x[0])];
+    await S.db.doc("lotes/"+l.id).update({fotos,fotosBca});Object.assign(l,{fotos,fotosBca});
+    msg(`${nuevas.length} fotos de BCA guardadas en el coche.`,"ok")}
+  catch(e){msg((nuevas.length?`Guardadas ${nuevas.length}. `:"")+e.message,"bad");
+    if(nuevas.length){const fotos=[...(l.fotos||[]),...nuevas.map(x=>x[1])],fotosBca=[...(l.fotosBca||[]),...nuevas.map(x=>x[0])];try{await S.db.doc("lotes/"+l.id).update({fotos,fotosBca});Object.assign(l,{fotos,fotosBca})}catch(err){}}}
+  finally{b.disabled=false;pintarFotos()}};
+$("#f-subir").onchange=async e=>{const l=S.lote;if(!l)return msg("Elige un coche","bad");const files=[...e.target.files];e.target.value="";
+  const ids=[];try{for(const f of files){msg(`Subiendo ${ids.length+1} de ${files.length}…`);ids.push((await HUELSAN.subir("fotos",await reducir(f,2000))).id)}
+    const fotos=[...(l.fotos||[]),...ids];await S.db.doc("lotes/"+l.id).update({fotos});l.fotos=fotos;msg(`${ids.length} fotos subidas.`,"ok")}
+  catch(err){msg(err.message,"bad")}finally{pintarFotos()}};
+async function reducir(blob,max){const bm=await createImageBitmap(blob);const k=Math.min(1,max/Math.max(bm.width,bm.height));
+  const c=document.createElement("canvas");c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);c.getContext("2d").drawImage(bm,0,0,c.width,c.height);
+  return await new Promise(r=>c.toBlob(r,"image/jpeg",.9))}
+
+document.addEventListener("click",async e=>{
+  const t=e.target;
+  const p=t.closest("[data-prep]");if(p){abrirEditor(fotosOrigen(S.lote)[+p.dataset.prep]);return}
+  const up=t.closest("[data-up]"),dn=t.closest("[data-down]"),qt=t.closest("[data-quitar]");
+  if(up||dn){const i=+(up||dn).dataset[up?"up":"down"],j=up?i-1:i+1;[S.webFotos[i],S.webFotos[j]]=[S.webFotos[j],S.webFotos[i]];pintarFotos();dibujar();return}
+  if(qt){S.webFotos.splice(+qt.dataset.quitar,1);pintarFotos();dibujar();return}
+  const fm=t.closest("[data-fmt]");if(fm){S.fmt=fm.dataset.fmt;$$("[data-fmt]").forEach(b=>b.setAttribute("aria-pressed",b===fm));dibujar();return}
+});
+
+/* ---------- editor de foto: fondo de estudio + matrícula ---------- */
+const ED={src:null,orig:null,cur:null,hist:[],sel:null,drag:null};
+const cvE=$("#ed-cv"),ctxE=cvE.getContext("2d");
+function edMsg(t){$("#ed-msg").textContent=t||""}
+async function abrirEditor(f){
+  $("#ed").classList.add("open");edMsg("Cargando la foto…");ED.hist=[];ED.sel=null;botonesSel();
+  try{const blob=await blobDe(f);const bm=await createImageBitmap(await reducir(blob,1800));ED.orig=lienzo(bm);ED.cur=ED.orig;pintarEd();edMsg("")}
+  catch(e){edMsg(e.message)}
+}
+function lienzo(src,w,h){const c=document.createElement("canvas");c.width=w||src.width;c.height=h||src.height;c.getContext("2d").drawImage(src,0,0,c.width,c.height);return c}
+function pintarEd(){const c=ED.cur;if(!c)return;cvE.width=c.width;cvE.height=c.height;ctxE.drawImage(c,0,0);
+  if(ED.sel){const s=ED.sel;ctxE.save();ctxE.strokeStyle=COL.champC;ctxE.lineWidth=Math.max(2,c.width/400);ctxE.setLineDash([10,6]);ctxE.strokeRect(s.x,s.y,s.w,s.h);ctxE.restore()}}
+function botonesSel(){const on=!!(ED.sel&&ED.sel.w>8&&ED.sel.h>4);$("#ed-placa").disabled=!on;$("#ed-blur").disabled=!on;$("#ed-undo").disabled=!ED.hist.length}
+function pt(e){const r=cvE.getBoundingClientRect();return{x:(e.clientX-r.left)*cvE.width/r.width,y:(e.clientY-r.top)*cvE.height/r.height}}
+cvE.addEventListener("pointerdown",e=>{if(!ED.cur)return;cvE.setPointerCapture(e.pointerId);ED.drag=pt(e);ED.sel=null});
+cvE.addEventListener("pointermove",e=>{if(!ED.drag)return;const p=pt(e),d=ED.drag;ED.sel={x:Math.min(d.x,p.x),y:Math.min(d.y,p.y),w:Math.abs(p.x-d.x),h:Math.abs(p.y-d.y)};pintarEd()});
+cvE.addEventListener("pointerup",()=>{ED.drag=null;botonesSel()});
+function guardarHist(){ED.hist.push(ED.cur);ED.cur=lienzo(ED.cur)}
+$("#ed-undo").onclick=()=>{if(ED.hist.length){ED.cur=ED.hist.pop();ED.sel=null;pintarEd();botonesSel()}};
+$("#ed-orig").onclick=()=>{if(ED.orig){guardarHist();ED.cur=lienzo(ED.orig);ED.sel=null;pintarEd();botonesSel()}};
+$("#ed-blur").onclick=()=>{const s=ED.sel;if(!s)return;guardarHist();const c=ED.cur.getContext("2d");
+  const k=Math.max(4,Math.round(s.w/14));const t=document.createElement("canvas");t.width=Math.max(1,Math.round(s.w/k));t.height=Math.max(1,Math.round(s.h/k));
+  t.getContext("2d").drawImage(ED.cur,s.x,s.y,s.w,s.h,0,0,t.width,t.height);c.save();c.imageSmoothingEnabled=true;c.filter="blur("+Math.round(k/2)+"px)";c.drawImage(t,0,0,t.width,t.height,s.x,s.y,s.w,s.h);c.restore();
+  ED.sel=null;pintarEd();botonesSel()};
+$("#ed-placa").onclick=()=>{const s=ED.sel;if(!s)return;guardarHist();placa(ED.cur.getContext("2d"),s.x,s.y,s.w,s.h);ED.sel=null;pintarEd();botonesSel()};
+function placa(c,x,y,w,h){c.save();const r=Math.min(h*.18,w*.05);
+  rr(c,x,y,w,h,r);c.fillStyle=COL.blanco;c.fill();c.lineWidth=Math.max(1,h*.05);c.strokeStyle="#111";c.stroke();
+  c.save();rr(c,x,y,w,h,r);c.clip();c.fillStyle=COL.graf;c.fillRect(x,y,w*.12,h);c.restore();
+  c.fillStyle=COL.champ;c.beginPath();c.arc(x+w*.06,y+h*.42,Math.min(w*.035,h*.22),0,7);c.fill();
+  c.fillStyle=COL.graf;c.textAlign="center";c.textBaseline="middle";ajustar(c,"HUELSAN","700",'"Syncopate"',w*.8,h*.62);c.fillText("HUELSAN",x+w*.56,y+h*.53);c.restore()}
+$("#ed-fondo").onclick=async()=>{
+  const b=$("#ed-fondo");b.disabled=true;
+  try{edMsg("Preparando el recorte (la primera vez descarga el modelo, unos 40 MB; después va más rápido)…");
+    const rb=await import("https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm");
+    const blob=await new Promise(r=>ED.orig.toBlob(r,"image/png"));
+    const out=await rb.removeBackground(blob,{publicPath:"https://staticimgly.com/@imgly/background-removal-data/1.4.5/dist/",model:"medium",output:{format:"image/png"},
+      progress:(k,c,t)=>{if(t)edMsg(`Recortando… ${Math.round(c/t*100)} %`)}});
+    const recorte=await createImageBitmap(out);guardarHist();ED.cur=estudio(recorte);ED.sel=null;pintarEd();botonesSel();
+    edMsg("Fondo de estudio aplicado. Revisa la matrícula y guarda.")}
+  catch(e){console.error(e);edMsg("No se ha podido quitar el fondo en este navegador: "+(e.message||e)+". Puedes guardar la foto tal cual con la matrícula tapada.")}
+  finally{b.disabled=false}};
+function recorteCaja(bm){const c=lienzo(bm),d=c.getContext("2d").getImageData(0,0,c.width,c.height).data;let x0=c.width,y0=c.height,x1=0,y1=0;
+  for(let y=0;y<c.height;y+=2)for(let x=0;x<c.width;x+=2)if(d[(y*c.width+x)*4+3]>40){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
+  return x1>x0?{x:x0,y:y0,w:x1-x0,h:y1-y0}:{x:0,y:0,w:c.width,h:c.height}}
+function estudio(bm){
+  const W=1800,H=1200,c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
+  let g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,"#34383D");g.addColorStop(.62,"#22252A");g.addColorStop(1,"#141518");x.fillStyle=g;x.fillRect(0,0,W,H);
+  g=x.createRadialGradient(W/2,H*.78,40,W/2,H*.78,W*.62);g.addColorStop(0,"rgba(205,176,132,.22)");g.addColorStop(1,"rgba(205,176,132,0)");x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.strokeStyle="rgba(240,239,237,.06)";x.lineWidth=2;x.beginPath();x.moveTo(0,H*.66);x.lineTo(W,H*.66);x.stroke();
+  const b=recorteCaja(bm);const k=Math.min(W*.86/b.w,H*.66/b.h);const cw=b.w*k,ch=b.h*k,cx=(W-cw)/2,cy=H*.86-ch;
+  x.save();x.filter="blur(28px)";x.fillStyle="rgba(0,0,0,.6)";x.beginPath();x.ellipse(W/2,H*.86,cw*.48,ch*.07,0,0,7);x.fill();x.restore();
+  x.drawImage(bm,b.x,b.y,b.w,b.h,cx,cy,cw,ch);
+  x.save();x.globalAlpha=.18;x.translate(cx,H*.86);x.scale(1,-.28);x.drawImage(bm,b.x,b.y,b.w,b.h,0,-ch,cw,ch);x.restore();
+  g=x.createLinearGradient(0,H*.86,0,H);g.addColorStop(0,"rgba(20,21,24,0)");g.addColorStop(1,"rgba(20,21,24,1)");x.fillStyle=g;x.fillRect(0,H*.86,W,H*.14);
+  logo(x,W-330,H-90,300,COL.blanco,.55);
+  return c}
+$("#ed-x").onclick=()=>$("#ed").classList.remove("open");
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#ed").classList.remove("open")});
+$("#ed-ok").onclick=async()=>{
+  if(!ED.cur||!S.lote)return;const b=$("#ed-ok");b.disabled=true;edMsg("Guardando…");
+  try{const blob=await new Promise(r=>ED.cur.toBlob(r,"image/jpeg",.88));const r=await HUELSAN.subir("fotos-web",blob);
+    S.webFotos.push(r.id);await S.db.doc("lotes/"+S.lote.id).update({fotosWeb:S.webFotos});S.lote.fotosWeb=[...S.webFotos];
+    $("#ed").classList.remove("open");pintarFotos();dibujar();msg("Foto guardada en «Fotos para la web».","ok")}
+  catch(e){edMsg("No se ha podido guardar: "+e.message)}finally{b.disabled=false}};
+
+/* ---------- folleto ---------- */
+const FMT={historia:{w:1080,h:1920},post:{w:1080,h:1350},a4:{w:2480,h:3508}};
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function ajustar(c,txt,peso,fam,maxW,size){let s=size;do{c.font=`${peso} ${s}px ${fam}`;if(c.measureText(txt).width<=maxW)break;s-=2}while(s>10);return s}
+function cubrir(c,img,x,y,w,h,r){c.save();rr(c,x,y,w,h,r||0);c.clip();
+  if(img){const k=Math.max(w/img.width,h/img.height),iw=img.width*k,ih=img.height*k;c.drawImage(img,x+(w-iw)/2,y+(h-ih)/2,iw,ih)}
+  else{c.fillStyle=COL.graf3;c.fillRect(x,y,w,h);c.fillStyle=COL.gris;c.font="500 26px 'Hanken Grotesk'";c.textAlign="center";c.textBaseline="middle";c.fillText("Foto pendiente",x+w/2,y+h/2)}
+  c.restore()}
+function logo(c,x,y,w,color,alpha){ // símbolo + HUELSAN / AUTOMOCIÓN; (x,y) = esquina izquierda de la línea base de HUELSAN; ancho total w
+  c.save();if(alpha!=null)c.globalAlpha=alpha;const s=w/300;c.translate(x,y);c.scale(s,s);
+  c.save();c.translate(-3,-52);const D=Math.PI/180;c.lineCap="round";c.lineWidth=4.5;
+  c.strokeStyle=color;c.beginPath();c.arc(32,36.03,27,150*D,390*D,false);c.stroke();
+  c.strokeStyle=COL.champ;c.beginPath();c.arc(32,36.03,27,-30*D,16.8*D,false);c.stroke();
+  c.fillStyle=COL.champ;c.beginPath();c.moveTo(13.3,45.5);c.lineTo(47.6,24.8);c.lineTo(49,26.8);c.lineTo(16.7,50.5);c.closePath();c.fill();
+  c.fillStyle=color;c.fillRect(19,22,8,28);c.fillRect(37,22,8,28);c.beginPath();c.arc(15,48,3,0,7);c.fill();c.restore();
+  c.fillStyle=color;c.textBaseline="alphabetic";c.textAlign="left";c.font="700 33px Syncopate";c.fillText("HUELSAN",68,-14);
+  c.fillStyle=COL.champ;c.font="600 14px 'Hanken Grotesk'";c.fillText("A U T O M O C I Ó N",70,6);c.restore()}
+function lineas(t,max){return String(t||"").split(/\n+/).map(s=>s.trim()).filter(Boolean).slice(0,max)}
+const miles=n=>String(Math.round(+n)).replace(/\B(?=(\d{3})+(?!\d))/g,".");
+function eurT(n){const v=+String(n).replace(/[^\d]/g,"");return v?miles(v)+" €":"Consultar"}
+function check(c,x,y,s){c.save();c.strokeStyle=COL.champ;c.lineWidth=s*.14;c.lineCap="round";c.lineJoin="round";c.beginPath();c.moveTo(x,y+s*.5);c.lineTo(x+s*.38,y+s*.85);c.lineTo(x+s,y+s*.1);c.stroke();c.restore()}
+
+async function cargarImgs(){
+  const out=[];for(const n of S.webFotos.slice(0,4)){const u=urlWeb(n);
+    if(!S.img[u])S.img[u]=new Promise(res=>{const i=new Image();i.crossOrigin="anonymous";i.onload=()=>res(i);i.onerror=()=>res(null);i.src=u});
+    out.push(await S.img[u])}
+  return out}
+let dibujando=0;
+async function dibujar(){
+  const yo=++dibujando;await document.fonts.ready;try{await Promise.all(["700 40px Syncopate","800 40px 'Hanken Grotesk'","600 20px 'Hanken Grotesk'","500 20px 'Hanken Grotesk'"].map(f=>document.fonts.load(f)))}catch(e){}
+  const imgs=await cargarImgs();if(yo!==dibujando)return;
+  const cv=$("#cv"),F=FMT[S.fmt];cv.width=F.w;cv.height=F.h;const c=cv.getContext("2d");
+  const k=F.w/1080,H=F.h/k;c.save();c.scale(k,k);componer(c,H,imgs);c.restore()}
+function componer(c,H,imgs){
+  const f=S.f,W=1080,M=48;
+  // fondo
+  let g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,COL.graf);g.addColorStop(1,"#121315");c.fillStyle=g;c.fillRect(0,0,W,H);
+  c.fillStyle=COL.champ;c.fillRect(0,0,W,8);
+  const compacto=H<1500,alto=H>1800;
+  // cabecera
+  let y=M+16;c.textAlign="left";c.textBaseline="top";
+  c.fillStyle=COL.champ;const sm=ajustar(c,(f.marca||"").toUpperCase(),"700","Syncopate",W-M*2-330,compacto?58:72);c.fillText((f.marca||"").toUpperCase(),M,y);y+=sm+10;
+  c.fillStyle=COL.blanco;const sM=ajustar(c,f.modelo||"","800","'Hanken Grotesk'",W-M*2-330,compacto?62:78);c.fillText(f.modelo||"",M,y);y+=sM+8;
+  if(f.version){c.fillStyle=COL.gris;ajustar(c,f.version,"500","'Hanken Grotesk'",W-M*2,compacto?26:30);c.fillText(f.version,M,y);y+=compacto?36:44}
+  logo(c,W-M-280,M+62,280,COL.blanco);
+  y+=10;
+  // datos clave
+  const chips=[["AÑO",f.anio],["KILÓMETROS",f.km?num(f.km)+" km":""],["COMBUSTIBLE",f.combustible],[f.cambio?"CAMBIO":"POTENCIA",f.cambio||(f.cv?f.cv+" CV":"")]].filter(x=>x[1]);
+  if(f.cambio&&f.cv&&chips.length<4)chips.push(["POTENCIA",f.cv+" CV"]);
+  const ch=compacto?84:96,cw=(W-M*2-(chips.length-1)*12)/Math.max(1,chips.length);
+  chips.forEach((x,i)=>{const cx=M+i*(cw+12);rr(c,cx,y,cw,ch,12);c.fillStyle=COL.graf2;c.fill();c.strokeStyle="rgba(184,151,106,.35)";c.lineWidth=1.5;c.stroke();
+    c.fillStyle=COL.champ;c.font="700 17px 'Hanken Grotesk'";c.fillText(x[0],cx+18,y+16);c.fillStyle=COL.blanco;ajustar(c,String(x[1]),"800","'Hanken Grotesk'",cw-36,compacto?32:38);c.fillText(String(x[1]),cx+18,y+40)});
+  y+=ch+18;
+  // fotos
+  const pie=compacto?96:118;
+  const precioH=compacto?150:170;
+  const listasH=alto?330:(compacto?0:300);
+  const resto=H-y-pie-precioH-listasH-36-(compacto?0:24);
+  const tiras=imgs.length>1&&!compacto;
+  const altoFoto=tiras?resto*0.7:resto;
+  cubrir(c,imgs[0],M,y,W-M*2,altoFoto,18);
+  y+=altoFoto+12;
+  if(tiras){const n=Math.min(3,imgs.length-1),tw=(W-M*2-(n-1)*12)/n,th=resto-altoFoto-12;for(let i=0;i<n;i++)cubrir(c,imgs[i+1],M+i*(tw+12),y,tw,th,12);y+=th+12}
+  // precio + ventajas
+  y+=8;const pw=compacto?400:430;
+  rr(c,W-M-pw,y,pw,precioH,16);g=c.createLinearGradient(W-M-pw,y,W-M,y+precioH);g.addColorStop(0,COL.champC);g.addColorStop(1,COL.champO);c.fillStyle=g;c.fill();
+  c.fillStyle=COL.graf;c.font="700 20px 'Hanken Grotesk'";c.fillText("PRECIO",W-M-pw+26,y+20);
+  ajustar(c,eurT(f.precio),"800","'Hanken Grotesk'",pw-52,compacto?70:80);c.fillText(eurT(f.precio),W-M-pw+26,y+46);
+  if(f.precioNota){c.font="600 18px 'Hanken Grotesk'";ajustar(c,f.precioNota,"600","'Hanken Grotesk'",pw-52,18);c.fillText(f.precioNota,W-M-pw+26,y+precioH-34)}
+  const vent=[f.v1,f.v2,f.v3].filter(Boolean);const vy=precioH/Math.max(1,vent.length);
+  vent.forEach((v,i)=>{const yy=y+i*vy+vy/2-14;check(c,M,yy,26);c.fillStyle=COL.blanco;ajustar(c,v,"700","'Hanken Grotesk'",W-M*2-pw-60,compacto?26:30);c.fillText(v,M+42,yy-2)});
+  y+=precioH+24;
+  // equipamiento y estado
+  if(listasH){const colW=(W-M*2-24)/2;const eq=lineas(f.equipamiento,alto?10:8),es=lineas(f.estado,alto?8:7);
+    const bloque=(tit,items,x)=>{c.fillStyle=COL.champ;c.font="700 19px 'Hanken Grotesk'";c.fillText(tit,x,y);let yy=y+34;const lh=Math.min(30,(listasH-40)/Math.max(1,items.length));
+      for(const it of items){c.fillStyle=COL.champ;c.fillRect(x,yy+lh*.38,8,8);c.fillStyle=COL.blanco;ajustar(c,it,"500","'Hanken Grotesk'",colW-26,Math.min(23,lh-5));c.fillText(it,x+20,yy+2);yy+=lh}};
+    if(eq.length)bloque("EQUIPAMIENTO DESTACADO",eq,M);if(es.length)bloque("ESTADO DEL VEHÍCULO",es,M+colW+24);
+    y+=listasH}
+  // pie
+  const py=H-pie;c.fillStyle=COL.graf2;c.fillRect(0,py,W,pie);c.fillStyle=COL.champ;c.fillRect(0,py,W,4);
+  const cont=[f.whatsapp?"WhatsApp "+fmtTel(f.whatsapp):"",f.telefono&&f.telefono!==f.whatsapp?"Tel. "+fmtTel(f.telefono):""].filter(Boolean).join("   ·   ")||"huelsanautomocion.com";
+  c.fillStyle=COL.blanco;ajustar(c,cont,"800","'Hanken Grotesk'",W-M*2,compacto?32:36);c.textBaseline="middle";c.fillText(cont,M,py+pie*.4);
+  c.fillStyle=COL.gris;c.font="500 20px 'Hanken Grotesk'";c.fillText(["huelsanautomocion.com",f.zona].filter(Boolean).join("  ·  "),M,py+pie*.76);
+  c.textBaseline="top"}
+function fmtTel(t){const d=String(t).replace(/\D/g,"").replace(/^34(?=\d{9}$)/,"");return d.length===9?d.replace(/(\d{3})(\d{2})(\d{2})(\d{2})/,"$1 $2 $3 $4"):t}
+
+/* ---------- campos, guardar y descargar ---------- */
+let tDib=null;
+document.addEventListener("input",e=>{const k=e.target.dataset&&e.target.dataset.f;if(k){S.f[k]=e.target.value;clearTimeout(tDib);tDib=setTimeout(dibujar,250)}
+  if(e.target.id==="q")pintarLista()});
+$("#sel").addEventListener("change",e=>elegir(e.target.value));
+$("#b-guardar").onclick=async()=>{if(!S.lote)return msg("Elige un coche","bad");const b=$("#b-guardar");b.disabled=true;
+  try{const folleto={};for(const k of CAMPOS)folleto[k]=S.f[k]??"";folleto.actualizado=new Date().toISOString();
+    await S.db.doc("lotes/"+S.lote.id).update({folleto,fotosWeb:S.webFotos});S.lote.folleto=folleto;msg("Folleto guardado.","ok")}
+  catch(e){msg("No se ha podido guardar: "+e.message,"bad")}finally{b.disabled=false}};
+$("#b-precio-web").onclick=async()=>{if(!S.lote)return;const p=Math.round(+String(S.f.precio).replace(/\D/g,""));if(!p)return msg("Escribe un precio","bad");
+  try{await S.db.doc("lotes/"+S.lote.id).update({precioVenta:p});S.lote.precioVenta=p;msg(`Precio de la web: ${num(p)} €${S.lote.publico?"":" (el coche aún no está marcado para mostrarse en la web)"}`,"ok")}catch(e){msg(e.message,"bad")}};
+function nombreArchivo(ext){return ("folleto-"+[S.f.marca,S.f.modelo,S.fmt].filter(Boolean).join("-")).toLowerCase().normalize("NFD").replace(/[^\w-]+/g,"-")+"."+ext}
+$("#b-jpg").onclick=()=>{$("#cv").toBlob(b=>{const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=nombreArchivo("jpg");a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)},"image/jpeg",.92)};
+$("#b-pdf").onclick=()=>{
+  if(!window.jspdf)return msg("No se ha podido cargar el generador de PDF","bad");
+  const F=FMT[S.fmt],mm=S.fmt==="a4"?[210,297]:[F.w/F.w*150,F.h/F.w*150];
+  const doc=new window.jspdf.jsPDF({unit:"mm",format:mm,orientation:"portrait"});
+  doc.addImage($("#cv").toDataURL("image/jpeg",.92),"JPEG",0,0,mm[0],mm[1]);doc.save(nombreArchivo("pdf"))};
+
+/* ---------- arranque ---------- */
+(async()=>{S.db=await window.claude.use("db");try{await cargarLotes()}catch(e){msg("No se han podido cargar los coches: "+e.message,"bad")}dibujar()})();
+</script></body></html>

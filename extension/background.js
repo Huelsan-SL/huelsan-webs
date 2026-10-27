@@ -80,6 +80,15 @@ chrome.runtime.onMessage.addListener((m, sender, responder) => {
           await ajuste("recogida/actual", { estado: "en curso", inicio: new Date(j ? j.inicio : Date.now()).toISOString(), mensaje: m.mensaje }).catch(() => {}); }
         return { ok: true };
       }
+      case "foto-bca": {
+        // Foto de BCA a buen tamaño para el estudio de folletos (la web no puede leer bcaimage directamente)
+        const id = String(m.docId || "").replace(/\D/g, ""); if (!id) throw new Error("Falta el id de la foto");
+        const r = await fetch("https://www1.bcaimage.com/Document?DocType=VehicleImage&docId=" + id + "&width=" + (+m.ancho || 1600));
+        if (!r.ok) throw new Error("BCA respondió " + r.status);
+        const bytes = new Uint8Array(await r.arrayBuffer());
+        let bin = ""; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+        return { ok: true, tipo: r.headers.get("content-type") || "image/jpeg", base64: btoa(bin) };
+      }
       case "miniatura": {
         const r = await fetch(m.src); if (!r.ok) throw new Error("img " + r.status);
         const bm = await createImageBitmap(await r.blob()); const W = 220, H = Math.round(bm.height * W / bm.width);

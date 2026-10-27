@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Huelsan · Recogida BCA",
   "short_name": "Huelsan BCA",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Recoge las subastas y lotes de BCA con tu sesión y los guarda en la app de gestión de Huelsan Automoción.",
   "minimum_chrome_version": "116",
   "permissions": ["storage", "alarms", "tabs", "notifications"],
