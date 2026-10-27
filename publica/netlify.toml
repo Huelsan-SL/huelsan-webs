@@ -2,8 +2,9 @@
 [build]
   publish = "."
   # Cada publicación cuesta créditos de Netlify (plan gratis: 300 al mes, 15 por publicación).
-  # Solo se publica si el mensaje del commit contiene [publicar]; el resto de commits se ignoran sin gastar.
-  ignore = "git log -1 --pretty=%B | grep -qF '[publicar]' && exit 1 || exit 0"
+  # La rama «prueba» siempre se publica como vista previa (gratis): prueba--<proyecto>.netlify.app
+  # En «main» (la web real) solo se publica si el mensaje del commit contiene la marca de publicar entre corchetes.
+  ignore = "[ \"$BRANCH\" != \"main\" ] && exit 1; git log -1 --pretty=%B | grep -qF '[publicar]' && exit 1 || exit 0"
 
 [[headers]]
   for = "/*"
