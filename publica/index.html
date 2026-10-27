@@ -223,8 +223,8 @@ dl.kv dd{margin:0;font-weight:600;overflow-wrap:anywhere}
     <div class="wrap hero-grid">
       <div>
         <div class="eyebrow" style="color:var(--champ)">Compraventa de vehículos de ocasión</div>
-        <h1 style="margin-top:12px">Buscamos en Europa.<br><em>Respondemos aquí.</em></h1>
-        <p>Coches revisados en stock, listos para entregar, y búsqueda por encargo del coche que necesitas, con transporte y papeles resueltos.</p>
+        <h1 style="margin-top:12px" id="h-tit">Buscamos en Europa.<br><em>Respondemos aquí.</em></h1>
+        <p id="h-sub">Coches revisados en stock, listos para entregar, y búsqueda por encargo del coche que necesitas, con transporte y papeles resueltos.</p>
         <div class="ctas"><a class="btn primary" href="#coches">Ver coches disponibles</a><a class="btn ghost" href="#contacto">Cuéntanos qué buscas</a></div>
         <div class="facts" id="facts"></div>
       </div>
@@ -266,9 +266,9 @@ dl.kv dd{margin:0;font-weight:600;overflow-wrap:anywhere}
     <div class="wrap about">
       <div>
         <div class="eyebrow">Quiénes somos</div>
-        <h2 style="margin:6px 0 16px">Huelsan Automoción</h2>
-        <p>Somos una empresa de compraventa de vehículos de ocasión. Compramos en los mismos canales en los que compran los concesionarios y trasladamos ese precio a nuestros clientes, sin intermediarios de más.</p>
-        <p>Antes de proponerte un coche revisamos sus datos, su estado y sus kilómetros, y te contamos lo que vemos, también lo que no nos convence.</p>
+        <h2 style="margin:6px 0 16px" id="q-tit">Huelsan Automoción</h2>
+        <div id="q-txt"><p>Somos una empresa de compraventa de vehículos de ocasión. Compramos en los mismos canales en los que compran los concesionarios y trasladamos ese precio a nuestros clientes, sin intermediarios de más.</p>
+        <p>Antes de proponerte un coche revisamos sus datos, su estado y sus kilómetros, y te contamos lo que vemos, también lo que no nos convence.</p></div>
         <p id="zona-txt"></p>
       </div>
       <div class="values">
@@ -322,6 +322,8 @@ const EMPRESA={
   razonSocial:"", nif:"", domicilio:"", registro:"",
   email:"", telefono:"", whatsapp:"",   // whatsapp: número con prefijo, solo dígitos, p. ej. 34600000000
   zona:"",                              // p. ej. "Huelva y Murcia"
+  contactos:[],                         // [{nombre, telefono, whatsapp, zona}] — se editan en la app (Datos de empresa)
+  titular:"", subtitulo:"", quienesTitulo:"", quienesTexto:"",
   actualizado:"20/10/2026"
 };
 const PEND=t=>`<span class="pend">[${t} pendiente]</span>`;
@@ -354,7 +356,8 @@ function portada(){
   if(d){const h=$("#herocar");h.hidden=false;h.innerHTML=`<img src="${esc(d.fotos[0])}" alt="${esc(titulo(d))}"><figcaption><span><b>${esc(titulo(d))}</b>${[d.anio,d.km!=null?num(d.km)+" km":null,d.combustible].filter(Boolean).map(esc).join(" · ")}</span><span class="badge ${d.disponibilidad}" style="position:static">${DISP[d.disponibilidad]}</span></figcaption>`;h.style.cursor="pointer";h.onclick=()=>abrirFicha(d.id)}
   const s=COCHES.filter(c=>c.disponibilidad==="stock").length,e=COCHES.length-s;
   $("#facts").innerHTML=`<span><b class="tnum">${s}</b>en stock</span><span><b class="tnum">${e}</b>por encargo</span><span><b>Transporte y papeles</b>incluidos en la gestión</span>`;
-  $("#zona-txt").innerHTML=EMPRESA.zona?`Trabajamos desde ${esc(EMPRESA.zona)} y entregamos en toda España.`:"";
+  const zonas=contactos().map(c=>c.zona).filter(Boolean);const zt=zonas.length?zonas.join(" y ").replace(/\//g,", "):EMPRESA.zona;
+  $("#zona-txt").innerHTML=zt?`Trabajamos en ${esc(zt)} y entregamos en toda España.`:"";
 }
 
 /* ---------- listado ---------- */
@@ -376,11 +379,21 @@ function pintarCoches(){
     :`<div class="empty"><strong>${COCHES.length?"Ningún coche con estos filtros":"Estamos preparando nuevos coches"}</strong>${COCHES.length?"Prueba con otros filtros o cuéntanos qué buscas.":"Cuéntanos qué buscas y te avisamos en cuanto tengamos opciones."}</div>`}
 ["#f-disp","#f-tipo","#f-comb","#f-anio"].forEach(s=>$(s).addEventListener("change",pintarCoches));
 $("#cars").innerHTML=`<div class="empty"><strong>Cargando coches…</strong></div>`;
+function textosEmpresa(){
+  const tit=EMPRESA.titular.trim();
+  if(tit){const m=tit.match(/^(.+?[.!?])\s+(.+)$/);$("#h-tit").innerHTML=m?`${esc(m[1])}<br><em>${esc(m[2])}</em>`:esc(tit)}
+  if(EMPRESA.subtitulo)$("#h-sub").textContent=EMPRESA.subtitulo;
+  if(EMPRESA.quienesTitulo)$("#q-tit").textContent=EMPRESA.quienesTitulo;
+  if(EMPRESA.quienesTexto)$("#q-txt").innerHTML=EMPRESA.quienesTexto.replace(/\[Nombre de la empresa\]/g,EMPRESA.nombre).split(/\n\s*\n|\n/).map(x=>x.trim()).filter(Boolean).map(x=>`<p>${esc(x)}</p>`).join("");
+}
 /* Datos de empresa: se editan en la app de gestión (Datos de empresa) y se leen de la vista pública «empresa_web» */
 async function cargarEmpresa(){
   const r=await fetch(SB_URL+"/rest/v1/empresa_web?select=data",{headers:{apikey:SB_KEY,Accept:"application/json"}});
   if(!r.ok)return;const f=(await r.json())[0];if(!f||!f.data)return;
-  for(const[k,v]of Object.entries(f.data))if(k in EMPRESA&&v!=null&&String(v).trim()!=="")EMPRESA[k]=k==="whatsapp"?String(v).replace(/\D/g,""):String(v).trim();
+  for(const[k,v]of Object.entries(f.data)){if(!(k in EMPRESA)||v==null)continue;
+    if(k==="contactos"){if(Array.isArray(v))EMPRESA.contactos=v.filter(c=>c&&(c.telefono||c.whatsapp)).map(c=>({nombre:String(c.nombre||"").trim(),telefono:String(c.telefono||"").trim(),whatsapp:String(c.whatsapp||"").replace(/\D/g,""),zona:String(c.zona||"").trim()}));continue}
+    if(String(v).trim()!=="")EMPRESA[k]=k==="whatsapp"?String(v).replace(/\D/g,""):String(v).trim()}
+  textosEmpresa();
 }
 Promise.all([cargarCoches().catch(e=>{console.warn("No se pudieron cargar los coches",e)}),cargarEmpresa().catch(()=>{})])
   .finally(()=>{portada();opcionesFiltros();pintarCoches();contacto()});
@@ -432,11 +445,17 @@ document.addEventListener("keydown",e=>{
   if(ficha){if(e.key==="Escape")cerrarFicha();else if(e.key==="ArrowRight")mover(1);else if(e.key==="ArrowLeft")mover(-1)}});
 
 /* ---------- contacto ---------- */
+const contactos=()=>EMPRESA.contactos.length?EMPRESA.contactos:(EMPRESA.telefono||EMPRESA.whatsapp?[{nombre:"",telefono:EMPRESA.telefono,whatsapp:EMPRESA.whatsapp,zona:EMPRESA.zona}]:[]);
+const telTxt=t=>{const d=String(t||"").replace(/\D/g,"");const n=d.length===11&&d.startsWith("34")?d.slice(2):d;return n.length===9?n.replace(/(\d{3})(\d{3})(\d{3})/,"$1 $2 $3"):t};
 function contacto(){
-  const d=[["Teléfono",EMPRESA.telefono||null],["WhatsApp",EMPRESA.whatsapp?"+"+EMPRESA.whatsapp:null],["Correo",EMPRESA.email||null],["Dónde estamos",EMPRESA.zona||null]];
-  $("#cdata").innerHTML=d.map(([k,v])=>`<div><dt>${k}</dt><dd>${v?esc(v):PEND(k.toLowerCase())}</dd></div>`).join("");
+  const cs=contactos();
+  const d=cs.length?cs.map(c=>[c.zona||"Teléfono",`${c.nombre?`<b>${esc(c.nombre)}</b><br>`:""}${c.telefono?`<a href="tel:+${esc(String(c.telefono).replace(/\D/g,"").replace(/^(?!34)(\d{9})$/,"34$1"))}">${esc(telTxt(c.telefono))}</a>`:""}${c.whatsapp?` · <a href="https://wa.me/${esc(c.whatsapp)}" target="_blank" rel="noopener">WhatsApp</a>`:""}`,true]):[["Teléfono",null]];
+  d.push(["Correo",EMPRESA.email?`<a href="mailto:${esc(EMPRESA.email)}">${esc(EMPRESA.email)}</a>`:null,true]);
+  $("#cdata").innerHTML=d.map(([k,v,html])=>`<div><dt>${esc(k)}</dt><dd>${v?(html?v:esc(v)):PEND(String(k).toLowerCase())}</dd></div>`).join("");
   const a=[];
-  if(EMPRESA.whatsapp)a.push(`<button class="btn primary" type="submit" data-via="wa">Enviar por WhatsApp</button>`);
+  const wa=cs.filter(c=>c.whatsapp);
+  if(wa.length===1)a.push(`<button class="btn primary" type="submit" data-via="wa" data-wa="${esc(wa[0].whatsapp)}">Enviar por WhatsApp</button>`);
+  else wa.forEach((c,i)=>a.push(`<button class="btn ${i?"":"primary"}" type="submit" data-via="wa" data-wa="${esc(c.whatsapp)}">WhatsApp ${esc(c.zona||c.nombre||"")}</button>`));
   if(EMPRESA.email)a.push(`<button class="btn" type="submit" data-via="mail">Enviar por correo</button>`);
   a.push(`<button class="btn" type="submit" data-via="copia">Copiar mensaje</button>`);
   $("#c-acciones").innerHTML=a.join("");
@@ -450,7 +469,7 @@ $("#form").addEventListener("submit",e=>{e.preventDefault();const via=(e.submitt
   if(!$("#c-nombre").value.trim()){toast("Escribe tu nombre");$("#c-nombre").focus();return}
   if(!$("#c-rgpd").checked){toast("Acepta la política de privacidad para continuar");$("#c-rgpd").focus();return}
   const txt=mensaje();const out=$("#c-out");out.hidden=false;out.textContent=txt;
-  if(via==="wa"){const a=document.createElement("a");a.href="https://wa.me/"+EMPRESA.whatsapp+"?text="+encodeURIComponent(txt);a.target="_blank";a.rel="noopener";a.click()}
+  if(via==="wa"){const a=document.createElement("a");a.href="https://wa.me/"+((e.submitter&&e.submitter.dataset.wa)||EMPRESA.whatsapp)+"?text="+encodeURIComponent(txt);a.target="_blank";a.rel="noopener";a.click()}
   else if(via==="mail"){location.href="mailto:"+EMPRESA.email+"?subject="+encodeURIComponent("Consulta desde la web")+"&body="+encodeURIComponent(txt)}
   else copiar()});
 

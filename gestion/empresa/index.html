@@ -41,32 +41,42 @@ button:disabled{opacity:.6}
       <label>Datos registrales <small>p. ej. «Registro Mercantil de Huelva, tomo 1234, folio 56, hoja H-12345». Si sois autónomos, déjalo en blanco.</small><input name="registro"></label>
     </fieldset>
     <fieldset><legend>Contacto (aparece en la web)</legend>
-      <div class="two">
-        <label>Correo electrónico<input name="email" type="email" placeholder="info@huelsanautomocion.com"></label>
-        <label>Teléfono<input name="telefono" type="tel" placeholder="600 000 000"></label>
-      </div>
-      <div class="two">
-        <label>WhatsApp <small>con prefijo, p. ej. 34600000000</small><input name="whatsapp" inputmode="numeric" placeholder="34600000000"></label>
-        <label>Zona donde trabajáis <small>p. ej. «Huelva y Murcia»</small><input name="zona"></label>
-      </div>
+      <label>Correo electrónico<input name="email" type="email" placeholder="info@huelsanautomocion.com"></label>
+      <div id="contactos" style="display:grid;gap:14px"></div>
+      <button type="button" id="add-c" style="justify-self:start;background:transparent;color:inherit;border:1px solid var(--line)">Añadir persona</button>
+    </fieldset>
+    <fieldset><legend>Textos de la web</legend>
+      <label>Titular de la portada <small>la primera frase sale en blanco y la segunda en dorado</small><input name="titular" placeholder="Pasión por el motor. Precisión en cada búsqueda."></label>
+      <label>Texto bajo el titular<input name="subtitulo"></label>
+      <label>Título de «Quiénes somos»<input name="quienesTitulo"></label>
+      <label>Texto de «Quiénes somos» <small>un párrafo por línea</small><textarea name="quienesTexto" rows="14"></textarea></label>
     </fieldset>
     <div class="bar"><button type="submit" id="guardar" disabled>Guardar</button><span id="msg" role="status">Cargando…</span></div>
   </form>
 </main>
 <script>
 "use strict";
-const CAMPOS=["nombre","razonSocial","nif","domicilio","registro","email","telefono","whatsapp","zona"];
+const CAMPOS=["nombre","razonSocial","nif","domicilio","registro","email","titular","subtitulo","quienesTitulo","quienesTexto"];
+const filaC=(c={})=>{const d=document.createElement("div");d.className="cfila";d.style.cssText="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));align-items:end;border-top:1px dashed var(--line);padding-top:12px";
+  d.innerHTML=`<label>Nombre<input data-c="nombre"></label><label>Teléfono<input data-c="telefono" type="tel"></label><label>WhatsApp <small>con prefijo 34</small><input data-c="whatsapp" inputmode="numeric"></label><label>Zona<input data-c="zona" placeholder="Huelva/Sevilla"></label><button type="button" data-quitar style="background:transparent;color:inherit;border:1px solid var(--line)">Quitar</button>`;
+  for(const k of ["nombre","telefono","whatsapp","zona"])d.querySelector(`[data-c=${k}]`).value=c[k]||"";
+  d.querySelector("[data-quitar]").onclick=()=>d.remove();document.getElementById("contactos").appendChild(d)};
+document.getElementById("add-c").onclick=()=>filaC();
 const f=document.getElementById("f"),msg=(t,c)=>{const m=document.getElementById("msg");m.textContent=t;m.className=c||""};
 (async()=>{
   const db=await window.claude.use("db");
   const ref=db.doc("web/empresa");
   try{const sn=await ref.get();const d=sn.exists?sn.data():{};for(const k of CAMPOS)if(d[k]!=null)f.elements[k].value=d[k];
+    const cs=Array.isArray(d.contactos)&&d.contactos.length?d.contactos:(d.telefono||d.whatsapp?[{telefono:d.telefono,whatsapp:d.whatsapp,zona:d.zona}]:[{}]);cs.forEach(filaC);
     msg(sn.exists&&d.actualizado?"Última actualización: "+d.actualizado:"Aún no hay datos guardados.")}
   catch(e){msg("No se han podido cargar los datos: "+e.message,"bad")}
   document.getElementById("guardar").disabled=false;
   f.addEventListener("submit",async e=>{e.preventDefault();const b=document.getElementById("guardar");b.disabled=true;
     const d={};for(const k of CAMPOS)d[k]=f.elements[k].value.trim();
-    d.whatsapp=d.whatsapp.replace(/\D/g,"");f.elements.whatsapp.value=d.whatsapp;
+    d.contactos=[...document.querySelectorAll(".cfila")].map(r=>{const c={};for(const k of ["nombre","telefono","whatsapp","zona"])c[k]=r.querySelector(`[data-c=${k}]`).value.trim();
+      c.whatsapp=c.whatsapp.replace(/\D/g,"");if(/^\d{9}$/.test(c.whatsapp))c.whatsapp="34"+c.whatsapp;r.querySelector("[data-c=whatsapp]").value=c.whatsapp;return c}).filter(c=>c.nombre||c.telefono||c.whatsapp);
+    // compatibilidad: primer contacto en los campos sueltos
+    d.telefono=d.contactos[0]?d.contactos[0].telefono:"";d.whatsapp=d.contactos[0]?d.contactos[0].whatsapp:"";d.zona=d.contactos.map(c=>c.zona).filter(Boolean).join(" y ");
     d.actualizado=new Date().toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit",year:"numeric"});
     try{await ref.set(d);msg("Guardado. Ya se ve en huelsanautomocion.com (recarga la web).","ok")}
     catch(err){msg("No se ha podido guardar: "+err.message,"bad")}finally{b.disabled=false}});

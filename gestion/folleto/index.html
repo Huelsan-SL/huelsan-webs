@@ -98,7 +98,10 @@ details{border-top:1px solid var(--line);padding-top:10px}summary{cursor:pointer
 <div id="ed" role="dialog" aria-modal="true" aria-labelledby="ed-t"><div class="box">
   <div class="row" style="justify-content:space-between"><b id="ed-t">Preparar foto</b><button class="btn" id="ed-x">Cerrar</button></div>
   <div class="row">
-    <button class="btn" id="ed-fondo">Quitar fondo (estudio)</button>
+    <button class="btn primary" id="ed-fondo">Quitar fondo y llevar a exposición</button>
+    <label class="chk" style="font-size:13px">Escena <select id="ed-escena" style="width:auto;padding:5px 8px"><option value="oscura">Exposición oscura</option><option value="clara">Exposición clara</option><option value="estudio">Estudio liso</option></select></label>
+    <label class="chk" style="font-size:13px"><input type="checkbox" id="ed-mejorar" checked> Mejorar calidad y brillo</label>
+    <button class="btn" id="ed-solo">Solo mejorar la foto</button>
     <button class="btn" id="ed-orig">Volver a la original</button>
     <span class="muted">Matrícula: arrastra un recuadro sobre ella y elige</span>
     <button class="btn" id="ed-placa" disabled>Tapar con placa Huelsan</button>
@@ -215,11 +218,11 @@ document.addEventListener("click",async e=>{
 });
 
 /* ---------- editor de foto: fondo de estudio + matrícula ---------- */
-const ED={src:null,orig:null,cur:null,hist:[],sel:null,drag:null};
+const ED={src:null,orig:null,cur:null,hist:[],sel:null,drag:null,recorte:null};
 const cvE=$("#ed-cv"),ctxE=cvE.getContext("2d");
 function edMsg(t){$("#ed-msg").textContent=t||""}
 async function abrirEditor(f){
-  $("#ed").classList.add("open");edMsg("Cargando la foto…");ED.hist=[];ED.sel=null;botonesSel();
+  $("#ed").classList.add("open");edMsg("Cargando la foto…");ED.hist=[];ED.sel=null;ED.recorte=null;botonesSel();
   try{const blob=await blobDe(f);const bm=await createImageBitmap(await reducir(blob,1800));ED.orig=lienzo(bm);ED.cur=ED.orig;pintarEd();edMsg("")}
   catch(e){edMsg(e.message)}
 }
@@ -246,29 +249,91 @@ function placa(c,x,y,w,h){c.save();const r=Math.min(h*.18,w*.05);
   c.fillStyle=COL.graf;c.textAlign="center";c.textBaseline="middle";ajustar(c,"HUELSAN","700",'"Syncopate"',w*.8,h*.62);c.fillText("HUELSAN",x+w*.56,y+h*.53);c.restore()}
 $("#ed-fondo").onclick=async()=>{
   const b=$("#ed-fondo");b.disabled=true;
-  try{edMsg("Preparando el recorte (la primera vez descarga el modelo, unos 40 MB; después va más rápido)…");
-    const rb=await import("https://esm.sh/@imgly/background-removal@1.4.5?bundle");
-    const blob=await new Promise(r=>ED.orig.toBlob(r,"image/png"));
-    const out=await rb.removeBackground(blob,{publicPath:"https://staticimgly.com/@imgly/background-removal-data/1.4.5/dist/",model:"medium",output:{format:"image/png"},
-      progress:(k,c,t)=>{if(t)edMsg(`Recortando… ${Math.round(c/t*100)} %`)}});
-    const recorte=await createImageBitmap(out);guardarHist();ED.cur=estudio(recorte);ED.sel=null;pintarEd();botonesSel();
-    edMsg("Fondo de estudio aplicado. Revisa la matrícula y guarda.")}
-  catch(e){console.error(e);edMsg("No se ha podido quitar el fondo en este navegador: "+(e.message||e)+". Puedes guardar la foto tal cual con la matrícula tapada.")}
+  try{if(!ED.recorte){edMsg("Preparando el recorte (la primera vez descarga el modelo, unos 40 MB; después va más rápido)…");
+      const rb=await import("https://esm.sh/@imgly/background-removal@1.4.5?bundle");
+      const blob=await new Promise(r=>ED.orig.toBlob(r,"image/png"));
+      const out=await rb.removeBackground(blob,{publicPath:"https://staticimgly.com/@imgly/background-removal-data/1.4.5/dist/",model:"medium",output:{format:"image/png"},
+        progress:(k,c,t)=>{if(t)edMsg(`Recortando… ${Math.round(c/t*100)} %`)}});
+      ED.recorte=lienzo(await createImageBitmap(out))}
+    edMsg("Componiendo la escena…");await new Promise(r=>setTimeout(r,30));
+    guardarHist();ED.cur=componerEscena();ED.sel=null;pintarEd();botonesSel();
+    edMsg("Listo. Puedes cambiar la escena o la mejora sin volver a recortar. Tapa la matrícula (también la del reflejo) y guarda.")}
+  catch(e){console.error(e);edMsg("No se ha podido quitar el fondo en este navegador: "+(e.message||e)+". Puedes usar «Solo mejorar la foto» y tapar la matrícula.")}
   finally{b.disabled=false}};
+function componerEscena(){const car=$("#ed-mejorar").checked?mejorar(ED.recorte,true):ED.recorte;return escena(car,$("#ed-escena").value)}
+const recomponer=()=>{if(!ED.recorte)return;guardarHist();ED.cur=componerEscena();ED.sel=null;pintarEd();botonesSel()};
+$("#ed-escena").onchange=recomponer;$("#ed-mejorar").onchange=recomponer;
+$("#ed-solo").onclick=()=>{if(!ED.orig)return;guardarHist();ED.cur=mejorar(ED.orig,false);ED.sel=null;pintarEd();botonesSel();edMsg("Foto mejorada (nitidez, niveles, color y brillo). Tapa la matrícula y guarda.")};
+
+/* Mejora: más resolución, niveles automáticos, contraste suave, color, nitidez y un brillo de carrocería */
+function mejorar(src,brillo){
+  const objetivo=Math.min(2400,Math.max(src.width,1800));let c=src;
+  if(c.width<objetivo){let w=c.width,h=c.height;while(w<objetivo){const nw=Math.min(objetivo,Math.round(w*1.5)),nh=Math.round(h*nw/w);const t=document.createElement("canvas");t.width=nw;t.height=nh;const x=t.getContext("2d");x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";x.drawImage(c,0,0,nw,nh);c=t;w=nw;h=nh}}
+  else c=lienzo(c);
+  const x=c.getContext("2d"),W=c.width,H=c.height,im=x.getImageData(0,0,W,H),d=im.data;
+  const hist=new Uint32Array(256);let n=0;
+  for(let i=0;i<d.length;i+=4){if(d[i+3]<128)continue;hist[(d[i]*77+d[i+1]*150+d[i+2]*29)>>8]++;n++}
+  const pct=p=>{let a=0;for(let v=0;v<256;v++){a+=hist[v];if(a>=n*p)return v}return 255};
+  const lo=Math.min(pct(.004),40),hi=Math.max(pct(.996),200);
+  const lut=new Uint8ClampedArray(256);
+  for(let v=0;v<256;v++){let y=Math.min(1,Math.max(0,(v-lo)/(hi-lo)));y=Math.pow(y,.93);y=y-.045*Math.sin(2*Math.PI*y);lut[v]=Math.round(y*255)}
+  const SAT=1.16;
+  for(let i=0;i<d.length;i+=4){if(!d[i+3])continue;let r=lut[d[i]],g=lut[d[i+1]],b=lut[d[i+2]];const l=.299*r+.587*g+.114*b;
+    d[i]=l+(r-l)*SAT;d[i+1]=l+(g-l)*SAT;d[i+2]=l+(b-l)*SAT}
+  x.putImageData(im,0,0);
+  // nitidez (máscara de enfoque)
+  const bl=document.createElement("canvas");bl.width=W;bl.height=H;const bx=bl.getContext("2d");bx.filter=`blur(${Math.max(1,W/1400).toFixed(1)}px)`;bx.drawImage(c,0,0);
+  const o=x.getImageData(0,0,W,H),od=o.data,bd=bx.getImageData(0,0,W,H).data,A=.7;
+  for(let i=0;i<od.length;i+=4){if(!od[i+3])continue;od[i]+=A*(od[i]-bd[i]);od[i+1]+=A*(od[i+1]-bd[i+1]);od[i+2]+=A*(od[i+2]-bd[i+2])}
+  x.putImageData(o,0,0);
+  if(brillo){ // reflejo de luz de techo sobre la carrocería (solo donde hay coche)
+    const g=document.createElement("canvas");g.width=W;g.height=H;const gx=g.getContext("2d");
+    let gr=gx.createLinearGradient(0,0,0,H);gr.addColorStop(0,"rgba(255,255,255,.55)");gr.addColorStop(.38,"rgba(255,255,255,.12)");gr.addColorStop(.55,"rgba(255,255,255,0)");gx.fillStyle=gr;gx.fillRect(0,0,W,H);
+    gr=gx.createLinearGradient(0,0,W,0);gr.addColorStop(.25,"rgba(255,255,255,0)");gr.addColorStop(.42,"rgba(255,255,255,.35)");gr.addColorStop(.5,"rgba(255,255,255,0)");gx.fillStyle=gr;gx.fillRect(0,0,W,H*.6);
+    gx.globalCompositeOperation="destination-in";gx.drawImage(c,0,0);
+    x.save();x.globalCompositeOperation="soft-light";x.globalAlpha=.9;x.drawImage(g,0,0);x.restore();
+    x.save();x.globalCompositeOperation="screen";x.globalAlpha=.12;x.drawImage(g,0,0);x.restore()}
+  return c}
+
 function recorteCaja(bm){const c=lienzo(bm),d=c.getContext("2d").getImageData(0,0,c.width,c.height).data;let x0=c.width,y0=c.height,x1=0,y1=0;
   for(let y=0;y<c.height;y+=2)for(let x=0;x<c.width;x+=2)if(d[(y*c.width+x)*4+3]>40){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
   return x1>x0?{x:x0,y:y0,w:x1-x0,h:y1-y0}:{x:0,y:0,w:c.width,h:c.height}}
-function estudio(bm){
-  const W=1800,H=1200,c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
-  let g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,"#34383D");g.addColorStop(.62,"#22252A");g.addColorStop(1,"#141518");x.fillStyle=g;x.fillRect(0,0,W,H);
-  g=x.createRadialGradient(W/2,H*.78,40,W/2,H*.78,W*.62);g.addColorStop(0,"rgba(205,176,132,.22)");g.addColorStop(1,"rgba(205,176,132,0)");x.fillStyle=g;x.fillRect(0,0,W,H);
-  x.strokeStyle="rgba(240,239,237,.06)";x.lineWidth=2;x.beginPath();x.moveTo(0,H*.66);x.lineTo(W,H*.66);x.stroke();
-  const b=recorteCaja(bm);const k=Math.min(W*.86/b.w,H*.66/b.h);const cw=b.w*k,ch=b.h*k,cx=(W-cw)/2,cy=H*.86-ch;
-  x.save();x.filter="blur(28px)";x.fillStyle="rgba(0,0,0,.6)";x.beginPath();x.ellipse(W/2,H*.86,cw*.48,ch*.07,0,0,7);x.fill();x.restore();
-  x.drawImage(bm,b.x,b.y,b.w,b.h,cx,cy,cw,ch);
-  x.save();x.globalAlpha=.18;x.translate(cx,H*.86);x.scale(1,-.28);x.drawImage(bm,b.x,b.y,b.w,b.h,0,-ch,cw,ch);x.restore();
-  g=x.createLinearGradient(0,H*.86,0,H);g.addColorStop(0,"rgba(20,21,24,0)");g.addColorStop(1,"rgba(20,21,24,1)");x.fillStyle=g;x.fillRect(0,H*.86,W,H*.14);
-  logo(x,W-330,H-90,300,COL.blanco,.55);
+
+/* Escenas: exposición oscura (grafito y champán), exposición clara y estudio liso */
+function escena(car,tipo){
+  const W=2000,H=1333,c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
+  const suelo=H*.6,clara=tipo==="clara";
+  const P=clara?{pared1:"#EEECE8",pared2:"#DAD7D1",suelo1:"#CFCCC6",suelo2:"#E9E7E3",linea:"rgba(27,29,32,.08)",luz:"rgba(255,255,255,1)",marca:"rgba(27,29,32,.045)",sombra:"rgba(0,0,0,.45)",refl:.22,logo:COL.graf}
+                 :{pared1:"#2E3236",pared2:"#1C1E21",suelo1:"#2A2D31",suelo2:"#111214",linea:"rgba(240,239,237,.05)",luz:"rgba(255,248,235,1)",marca:"rgba(240,239,237,.035)",sombra:"rgba(0,0,0,.75)",refl:.26,logo:COL.blanco};
+  if(tipo==="estudio"){let g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,"#34383D");g.addColorStop(.62,"#22252A");g.addColorStop(1,"#141518");x.fillStyle=g;x.fillRect(0,0,W,H);
+    g=x.createRadialGradient(W/2,H*.78,40,W/2,H*.78,W*.62);g.addColorStop(0,"rgba(205,176,132,.22)");g.addColorStop(1,"rgba(205,176,132,0)");x.fillStyle=g;x.fillRect(0,0,W,H)}
+  else{
+    // pared con paneles
+    let g=x.createLinearGradient(0,0,0,suelo);g.addColorStop(0,P.pared2);g.addColorStop(1,P.pared1);x.fillStyle=g;x.fillRect(0,0,W,suelo);
+    x.strokeStyle=P.linea;x.lineWidth=3;for(let i=1;i<8;i++){const px=i*W/8;x.beginPath();x.moveTo(px,H*.1);x.lineTo(px,suelo);x.stroke()}
+    // franja champán y marca en la pared
+    x.fillStyle=clara?"rgba(184,151,106,.55)":"rgba(184,151,106,.35)";x.fillRect(0,suelo-H*.035,W,H*.006);
+    x.save();x.fillStyle=P.marca;x.textAlign="center";x.textBaseline="middle";x.font="700 260px Syncopate";x.fillText("HUELSAN",W/2,suelo*.42);x.restore();
+    // techo con tiras de luz
+    x.fillStyle=clara?"#F6F5F2":"#141517";x.fillRect(0,0,W,H*.1);
+    for(const fx of [.18,.5,.82]){x.save();x.shadowColor=P.luz;x.shadowBlur=60;x.fillStyle=P.luz;rr(x,W*fx-W*.12,H*.045,W*.24,H*.014,8);x.fill();x.restore()}
+    // conos de luz
+    for(const fx of [.18,.5,.82]){x.save();x.translate(W*fx,H*.1);x.scale(1.6,1);const gg=x.createRadialGradient(0,0,10,0,0,H*.42);gg.addColorStop(0,clara?"rgba(255,255,255,.6)":"rgba(255,244,225,.13)");gg.addColorStop(1,"rgba(255,255,255,0)");
+      x.fillStyle=gg;x.fillRect(-H*.45,0,H*.9,suelo-H*.1);x.restore()}
+    // suelo pulido con perspectiva
+    g=x.createLinearGradient(0,suelo,0,H);g.addColorStop(0,P.suelo1);g.addColorStop(1,P.suelo2);x.fillStyle=g;x.fillRect(0,suelo,W,H-suelo);
+    x.strokeStyle=P.linea;x.lineWidth=2;for(let i=-8;i<=8;i++){x.beginPath();x.moveTo(W/2+i*W*.07,suelo);x.lineTo(W/2+i*W*.33,H);x.stroke()}
+    for(let k=1;k<6;k++){const yy=suelo+(H-suelo)*Math.pow(k/6,1.7);x.beginPath();x.moveTo(0,yy);x.lineTo(W,yy);x.stroke()}
+    // halo de luz en el suelo
+    g=x.createRadialGradient(W/2,H*.8,30,W/2,H*.8,W*.55);g.addColorStop(0,clara?"rgba(255,255,255,.55)":"rgba(205,176,132,.20)");g.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=g;x.fillRect(0,suelo,W,H-suelo)}
+  // coche, sombra y reflejo
+  const b=recorteCaja(car);const k=Math.min(W*.84/b.w,H*.6/b.h);const cw=b.w*k,ch=b.h*k,cx=(W-cw)/2,base=H*.88,cy=base-ch;
+  x.save();x.globalAlpha=P.refl;x.translate(cx,base);x.scale(1,-.42);x.drawImage(car,b.x,b.y,b.w,b.h,0,-ch,cw,ch);x.restore();
+  let g=x.createLinearGradient(0,base,0,base+ch*.42);g.addColorStop(0,"rgba(0,0,0,0)");g.addColorStop(1,clara?"rgba(233,231,227,1)":"rgba(17,18,20,1)");x.fillStyle=g;x.fillRect(0,base,W,ch*.42+2);
+  x.save();x.filter="blur(30px)";x.fillStyle=P.sombra;x.beginPath();x.ellipse(W/2,base-4,cw*.47,ch*.06,0,0,7);x.fill();x.restore();
+  x.save();x.filter="blur(8px)";x.fillStyle=P.sombra;x.beginPath();x.ellipse(W/2,base-2,cw*.42,ch*.025,0,0,7);x.fill();x.restore();
+  x.drawImage(car,b.x,b.y,b.w,b.h,cx,cy,cw,ch);
+  logo(x,W-370,H-70,330,tipo==="estudio"?COL.blanco:P.logo,.6);
   return c}
 $("#ed-x").onclick=()=>$("#ed").classList.remove("open");
 document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#ed").classList.remove("open")});

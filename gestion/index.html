@@ -285,6 +285,7 @@ tbody tr:hover{background:var(--sunk)}
   </div>
   <nav class="tabs" role="tablist" id="tabs">
     <button role="tab" data-tab="subastas" aria-selected="true">Subastas<span class="count" id="c-subastas"></span></button>
+    <button role="tab" data-tab="interesantes" aria-selected="false">Interesantes<span class="count" id="c-interesantes"></span></button>
     <button role="tab" data-tab="stock" aria-selected="false">Stock<span class="count" id="c-stock"></span></button>
     <button role="tab" data-tab="clientes" aria-selected="false">Clientes<span class="count" id="c-clientes"></span></button>
     <button role="tab" data-tab="historico" aria-selected="false">Histórico<span class="count" id="c-historico"></span></button>
@@ -735,6 +736,17 @@ function renderSubastas(){
 }
 
 /* ---------- vista: stock ---------- */
+function renderInteresantes(){
+  const todos=[...S.lots.values()].filter(l=>!isOwned(l)&&["interesante","pujar"].includes(l.estado));
+  const porCierre=(a,b)=>new Date(cierreOf(a)||"2999")-new Date(cierreOf(b)||"2999");
+  const abiertos=todos.filter(l=>!isPast(l)).sort(porCierre),cerrados=todos.filter(l=>isPast(l)).sort((a,b)=>-porCierre(a,b));
+  const pujar=abiertos.filter(l=>l.estado==="pujar").length;
+  const sumaPuja=abiertos.reduce((s,l)=>s+(pujaMaxEst(l)||0),0);
+  $("#main").innerHTML=`<div class="pagehead"><div><h1>Interesantes</h1><p>Lotes marcados como «Interesante» o «Pujar», ordenados por cierre de subasta. Márcalos o desmárcalos desde la lista de Subastas con «★ Interesante» o desde la ficha.</p></div>
+    <div class="row tnum"><span class="card"><h3>En subasta</h3><b style="font:700 20px var(--f-display)">${abiertos.length}</b></span><span class="card"><h3>Para pujar</h3><b style="font:700 20px var(--f-display)">${pujar}</b></span><span class="card"><h3>Suma de pujas máx. sugeridas</h3><b style="font:700 20px var(--f-display)">${eur(sumaPuja)}</b></span></div></div>
+    <div class="lots">${abiertos.length?abiertos.map(lotRow).join(""):`<div class="empty"><strong>No hay lotes interesantes en subasta</strong>En la pestaña Subastas, pulsa «★ Interesante» en los coches que quieras seguir.</div>`}</div>
+    ${cerrados.length?`<h2 style="margin:22px 0 10px;font:650 16px var(--f-display)">Subastas ya cerradas (${cerrados.length})</h2><div class="lots">${cerrados.slice(0,100).map(lotRow).join("")}</div>`:""}`;
+}
 function renderStock(){
   const owned=[...S.lots.values()].filter(l=>isOwned(l)).sort((a,b)=>(a.estado==="vendido")-(b.estado==="vendido"));
   const inv=owned.filter(l=>l.estado!=="vendido");
@@ -1231,6 +1243,7 @@ function render(){
   const cnt=(id,n)=>{const e=$("#c-"+id);if(e)e.textContent=n?"("+n+")":""};
   const L=[...S.lots.values()];
   cnt("subastas",L.filter(l=>!isPast(l)&&!isOwned(l)&&l.estado!=="descartado").length);
+  cnt("interesantes",L.filter(l=>!isOwned(l)&&!isPast(l)&&["interesante","pujar"].includes(l.estado)).length);
   cnt("stock",L.filter(l=>isOwned(l)&&l.estado!=="vendido").length);
   cnt("clientes",[...S.demandas.values()].filter(d=>d.estado!=="cerrada").length);
   cnt("historico",L.filter(l=>isPast(l)&&!isOwned(l)).length);
@@ -1238,7 +1251,7 @@ function render(){
   // Al volver a pintar se sustituye todo #main: guardamos y restauramos la posición de la página y del panel de filtros
   const fa=document.querySelector("aside.filters"),fst=fa?fa.scrollTop:0,wy=window.scrollY,mh=$("#main").offsetHeight;
   $("#main").style.minHeight=mh+"px";
-  ({subastas:renderSubastas,stock:renderStock,clientes:renderClientes,historico:renderHistorico,publico:renderPublico})[S.tab]();
+  ({subastas:renderSubastas,interesantes:renderInteresantes,stock:renderStock,clientes:renderClientes,historico:renderHistorico,publico:renderPublico})[S.tab]();
   hydrateThumbs();
   const fb=document.querySelector("aside.filters");if(fb)fb.scrollTop=fst;
   if(aid){const n=document.getElementById(aid);if(n&&n!==ae&&!n.closest("#drawer")){try{n.focus({preventScroll:true})}catch(e){n.focus()}try{if(sel!=null)n.setSelectionRange(sel,sel)}catch(e){}}}
@@ -1342,7 +1355,7 @@ document.addEventListener("submit",async e=>{e.preventDefault();const f=e.target
   const n=carsFor(d).length;toast(f.id==="leadform"?"Gracias. Te contactaremos pronto.":`Petición guardada · ${n} coche${n==1?"":"s"} encaja${n==1?"":"n"} ahora`);render()});
 
 /* ---------- arranque ---------- */
-try{const t=localStorage.getItem("huelsan-tab");if(t&&["subastas","stock","clientes","historico","publico"].includes(t)){S.tab=t;document.querySelectorAll("#tabs [data-tab]").forEach(x=>x.setAttribute("aria-selected",x.dataset.tab===t))}}catch(e){}
+try{const t=localStorage.getItem("huelsan-tab");if(t&&["subastas","interesantes","stock","clientes","historico","publico"].includes(t)){S.tab=t;document.querySelectorAll("#tabs [data-tab]").forEach(x=>x.setAttribute("aria-selected",x.dataset.tab===t))}}catch(e){}
 render();
 (async()=>{
   const db=window.claude?await window.claude.use("db"):null;
