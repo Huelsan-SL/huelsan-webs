@@ -559,11 +559,12 @@ function thumbHtml(l){
   if((l.fotos||[]).length)return`<div class="thumb"><img src="${BLOB}${esc(l.fotos[0])}" alt="" loading="lazy"></div>`;
   if(l.miniatura)return`<div class="thumb"><img src="${esc(l.miniatura)}" alt="" loading="lazy"></div>`;
   if(l.miniPack){const d=S.thumbs.get(l.id);return`<div class="thumb"><img data-thumb="${esc(l.id)}" alt="" ${d?`src="${d}"`:""}></div>`}
+  if((l.fotoIds||[]).length)return`<div class="thumb"><img src="https://www1.bcaimage.com/Document?DocType=VehicleImage&docId=${esc(l.fotoIds[0])}&width=160" alt="" loading="lazy"></div>`;
   return`<div class="thumb">${carSvg}</div>`}
 /* Miniaturas: se borran de la base de datos 12 h después del cierre de la subasta (quedan los enlaces a las fotos de BCA).
    Los coches comprados o publicados en la web conservan su miniatura copiándola en el propio lote. */
 const MINI_TTL=12*3600*1000;
-async function limpiarMiniaturas(){
+async function limpiarMiniaturas(){return; /* desde el 28/10 se conserva la miniatura de cada coche */
   if(!S.db||!S.dbReady||S.limpiando)return; S.limpiando=true;
   try{
     const packs=new Map();
@@ -841,7 +842,7 @@ function renderHistorico(){
   const h=hBase.filter(l=>!hEst.length||hEst.includes(l.estado||"nuevo")).sort((a,b)=>(b.subasta?.fin||"").localeCompare(a.subasta?.fin||""));
   const nAll=[...S.lots.values()].filter(l=>isPast(l)&&!isOwned(l)).length;
   const arch=[...S.subastas.values()].filter(s=>s.archivada&&!(s.fin&&new Date(s.fin).getTime()<now()));
-  $("#main").innerHTML=`<div class="pagehead"><div><h1>Histórico de subastas</h1><p>Cuando pasa la fecha de cierre, o cuando archivas una subasta desde la pestaña Subastas, los lotes no comprados pasan aquí con todos sus datos. Anota el precio de remate si lo conoces: sirve de referencia de precios para futuras pujas.</p></div></div>
+  $("#main").innerHTML=`<div class="pagehead"><div><h1>Histórico de subastas</h1><p>Cuando pasa la fecha de cierre, o cuando archivas una subasta desde la pestaña Subastas, los lotes no comprados pasan aquí con todos sus datos. Anota el precio de remate si lo conoces: sirve de referencia de precios para futuras pujas.</p></div></div>${typeof histPanel==="function"?histPanel():""}
   ${arch.length?`<h3 style="margin-bottom:6px">Archivadas a mano antes de su cierre</h3><div class="archlist">${arch.map(s=>`<div class="card"><span><b>${esc(s.ubicacion?s.ubicacion+" · ":"")}${esc(s.nombre)}</b> <span class="muted">· cierra ${fdt(s.fin)}</span></span><button class="btn sm" data-desarchivar="${esc(s.id)}">Recuperar</button></div>`).join("")}</div>`:""}
   ${nAll||q||[...S.lots.values()].some(isPast)?`<div class="listbar"><label style="flex:1 1 280px;max-width:460px;display:grid;gap:3px;font-size:12px;font-weight:600;color:var(--muted)">Buscar en el histórico<input type="search" id="h-q" data-h="1" placeholder="Matrícula, bastidor, marca, modelo o subasta…" value="${esc(S.histQ||"")}" autocomplete="off"></label><label class="toggle" style="align-self:end"><input type="checkbox" id="h-precio" ${S.histPrecio?"checked":""}><span>Solo con precio de venta conocido <span class="muted">(${[...S.lots.values()].filter(l=>isPast(l)&&l.precioRemate>0).length})</span></span></label><div class="chips" style="flex-basis:100%" role="group" aria-label="Nuestra decisión">${ESTADOS.filter(([k])=>hCnt[k]||hEst.includes(k)).map(([k,v])=>`<label class="chk"><input type="checkbox" data-hest value="${k}" ${hEst.includes(k)?"checked":""}>${v} <span class="n tnum">${hCnt[k]||0}</span></label>`).join("")}${hEst.length?`<button class="btn sm ghost" id="h-est-clear">Todas</button>`:""}</div><span class="sum">${q||S.histPrecio||hEst.length?`<b class="tnum">${h.length}</b> resultado${h.length==1?"":"s"}${h.some(isOwned)?" · incluye coches comprados":""}`:`<b class="tnum">${nAll}</b> lotes`}</span></div>`:""}
   ${h.length?`<div class="tablewrap"><table><thead><tr><th>Cierre</th><th>Matrícula</th><th>Vehículo</th><th>Subasta</th><th class="num">Año</th><th class="num">Km</th><th class="num">Salida</th><th class="num">Remate</th><th class="num">Mercado</th><th>Nuestra decisión</th></tr></thead><tbody class="tnum">
@@ -1238,7 +1239,7 @@ function comparativaGastos(owned){
 async function guardarMiniatura(l){
   if(!S.db||!l||l.miniatura||(l.fotos||[]).length||!l.miniPack)return;
   try{let d=S.thumbs.get(l.id);if(!d){const sn=await S.db.doc("miniaturas/"+l.miniPack).get();d=sn.exists?((sn.data().img||{})[l.id]||null):null}
-    if(d){const cur=S.lots.get(l.id);S.lots.set(l.id,{...cur,miniatura:d});await S.db.doc("lotes/"+l.id).update({miniatura:d})}}catch(e){}}
+    if(d){const cur=S.lots.get(l.id)||PRE.get(l.id);S.lots.set(l.id,{...cur,miniatura:d});await S.db.doc("lotes/"+l.id).update({miniatura:d})}}catch(e){}}
 async function saveLot(id,patch){
   const cur=S.lots.get(id);if(!cur)return;
   if((patch.estado&&["comprado","stock","vendido"].includes(patch.estado))||patch.publico===true)guardarMiniatura(cur);
@@ -1249,6 +1250,7 @@ async function saveLot(id,patch){
 async function mergeData(subastas,lots){
   let nuevos=0,act=0;
   for(const subasta of subastas){S.subastas.set(subasta.id,{...(S.subastas.get(subasta.id)||{}),...subasta}); if(S.db)await S.db.doc("subastas/"+subasta.id).set(S.subastas.get(subasta.id));}
+  const PRE=window.HUELSAN_HIST?await HUELSAN_HIST.precargar(lots.map(x=>x.id)).catch(()=>new Map()):new Map();
   for(const l0 of lots){const l={...l0};for(const k of["estado","publico","importadoEn","notas","fotos","precioCompra","precioVenta","gastos","pujaMax","mercado","precioRemate"])delete l[k];
     const cur=S.lots.get(l.id);
     if(cur){const patch={};const man=cur.manual||{};for(const[k,v]of Object.entries(l)){if(v!=null&&v!==""&&!man[k]&&JSON.stringify(cur[k])!==JSON.stringify(v))patch[k]=v}
@@ -1427,6 +1429,45 @@ render();
   try{S.sample=await window.claude.use("sample");if(S.sample){render();if(S.open)renderDrawer();programarAuto(4000)}}catch(e){}
 })();
 </script>
-
+<script>
+/* Huelsan · panel «Histórico completo» (se añade a la app al generar gestion/index.html).
+   Al abrir la app solo se cargan del histórico los lotes buenos (grado A/B, daños 1–2, con precio de BCA).
+   Desde aquí se busca o se carga el resto, y se aligera y archiva el histórico a mano. */
+"use strict";
+const HP={pedido:false,cnt:null,arch:null,ult:null,msg:"",tipo:"",ocupado:false,archivo:false};
+function histPanel(){
+  if(!HP.pedido&&window.HUELSAN_HIST&&S.db){HP.pedido=true;
+    Promise.all([HUELSAN_HIST.noCargados().catch(()=>null),HUELSAN_HIST.archivados().catch(()=>null),
+      S.db.doc("historico/mantenimiento").get().then(s=>s.exists?s.data():null).catch(()=>null)])
+      .then(([a,b,c])=>{HP.cnt=a;HP.arch=b;HP.ult=c;if(S.tab==="historico")render()})}
+  const n=x=>x==null?"…":num(x);
+  const ult=HP.ult&&HP.ult.fecha?`Última vez: ${fdate(HP.ult.fecha)} (${n(HP.ult.aligerados||0)} aligerados, ${n(HP.ult.archivados||0)} archivados).`:"";
+  const dis=HP.ocupado?"disabled":"";
+  return`<div class="card" style="display:grid;gap:10px;margin-bottom:16px">
+    <div><b>Histórico completo</b><div class="muted" style="font-size:13px;margin-top:2px">Al abrir la app solo se cargan del histórico los lotes con grado mecánico A o B, daños 1 o 2 y precio de BCA (salida o puja). El resto sigue guardado${HP.cnt!=null?` (${n(HP.cnt)} lotes)`:""}${HP.arch?`, más ${n(HP.arch)} en el archivo de subastas de hace más de un año`:""}: escribe en «Buscar en el histórico» y pulsa «Buscar en todo el histórico».</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="btn sm" data-hp="buscar" ${dis}>Buscar en todo el histórico</button>
+      <button class="btn sm" data-hp="todo" ${dis}>Cargar todo el histórico</button>
+      <label class="toggle" style="font-size:13px"><input type="checkbox" data-hp-arch ${HP.archivo?"checked":""}><span>Incluir el archivo (más de 1 año)</span></label></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line);padding-top:10px">
+      <button class="btn sm" data-hp="aligerar" ${dis}>Aligerar y archivar ahora</button>
+      <span class="muted" style="font-size:12.5px;flex:1 1 320px">Los lotes cerrados hace más de 3 meses se quedan con lo útil para comparar precios (datos del coche, daños, precios, notas del vendedor y una foto para la miniatura) y los de más de 1 año pasan al archivo. Los vuestros (interesantes, comprados, stock, vendidos o publicados) no se tocan. Se hace sola el día 1 de cada mes. ${ult}</span></div>
+    ${HP.msg?`<div class="${HP.tipo==="bad"?"note":"muted"}" role="status" style="font-size:13px">${esc(HP.msg)}</div>`:""}
+  </div>`}
+async function hpAccion(que){
+  if(HP.ocupado)return;
+  const q=((document.getElementById("h-q")||{}).value||S.histQ||"").trim();
+  if(que==="buscar"&&!q){HP.msg="Escribe primero algo en «Buscar en el histórico» (matrícula, marca, modelo o subasta).";HP.tipo="bad";render();return}
+  if(que==="aligerar"&&!confirm("Se aligeran los lotes cerrados hace más de 3 meses y se archivan los de más de 1 año. Vuestros lotes no se tocan. ¿Seguimos?"))return;
+  HP.ocupado=true;HP.msg=que==="aligerar"?"Aligerando el histórico…":"Buscando en la base de datos…";HP.tipo="";render();
+  try{
+    if(que==="buscar"){const k=await HUELSAN_HIST.buscar(q,HP.archivo);HP.msg=k?`${num(k)} lotes más encontrados y añadidos a la lista.`:`No hay más lotes con «${q}» fuera de los ya cargados.`}
+    else if(que==="todo"){const k=await HUELSAN_HIST.cargarTodo(HP.archivo);HP.msg=`${num(k)} lotes más cargados. Al volver a abrir la app solo se cargarán otra vez los del filtro.`}
+    else{const r=await HUELSAN_HIST.aligerar();HP.msg=`Hecho: ${num(r&&r.aligerados||0)} lotes aligerados y ${num(r&&r.archivados||0)} pasados al archivo.`;HP.pedido=false}
+  }catch(e){HP.tipo="bad";HP.msg=/aligerar_historico|PGRST202|404/.test(String(e.message))?"Falta preparar la base de datos para esto (archivo supabase/04-historico.sql).":"No se ha podido completar: "+String(e.message||e).slice(0,200)}
+  finally{HP.ocupado=false;render()}}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-hp]");if(b){e.preventDefault();hpAccion(b.dataset.hp)}});
+document.addEventListener("change",e=>{if(e.target.matches("[data-hp-arch]"))HP.archivo=e.target.checked});
+</script>
 
 </body></html>

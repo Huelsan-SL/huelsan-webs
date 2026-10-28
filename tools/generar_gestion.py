@@ -57,5 +57,18 @@ rep('REC.msg="Recogida lanzada. Puedes cerrar la app: al terminar te llegará un
 rep('Los dos botones funcionan desde cualquier sitio (web, móvil u ordenador): el trabajo se hace en el ordenador de la oficina, que debe estar encendido con la app de escritorio de Claude abierta. «Abrir BCA» abre BCA en el navegador integrado de esa app para que inicies sesión allí; después, «Lanzar recogida» (15–25 min). Si la sesión ha caducado, la recogida se detiene sin cargar nada y te avisa.',
     'Funciona en el ordenador donde esté instalada la extensión «Huelsan · Recogida BCA» (Chrome o Edge). «Lanzar recogida» abre BCA en una ventana: si no tienes la sesión iniciada, entra ahí y la recogida empieza sola (15–25 min). Los lotes aparecen aquí al terminar. En la extensión puedes activar una recogida automática diaria.')
 
+
+# ---------- Histórico ligero (28/10) ----------
+# Antes de incorporar una recogida se traen de la base de datos los lotes existentes que no estén cargados
+rep("  for(const l0 of lots){", "  const PRE=window.HUELSAN_HIST?await HUELSAN_HIST.precargar(lots.map(x=>x.id)).catch(()=>new Map()):new Map();\n  for(const l0 of lots){")
+rep("const cur=S.lots.get(l.id);", "const cur=S.lots.get(l.id)||PRE.get(l.id);")
+# Las miniaturas ya no se borran: cada coche conserva la suya (solo se descarga al verla)
+rep("async function limpiarMiniaturas(){", "async function limpiarMiniaturas(){return; /* desde el 28/10 se conserva la miniatura de cada coche */")
+# Lotes antiguos sin miniatura guardada: la primera foto de BCA en pequeño
+rep('return`<div class="thumb">${carSvg}</div>`}', 'if((l.fotoIds||[]).length)return`<div class="thumb"><img src="https://www1.bcaimage.com/Document?DocType=VehicleImage&docId=${esc(l.fotoIds[0])}&width=160" alt="" loading="lazy"></div>`;\n  return`<div class="thumb">${carSvg}</div>`}')
+# Panel del histórico completo
+rep('para futuras pujas.</p></div></div>', 'para futuras pujas.</p></div></div>${typeof histPanel==="function"?histPanel():""}')
+rep("</script>\n\n\n</body></html>", "</script>\n" + pathlib.Path(__file__).with_name("historico_panel.js").read_text(encoding="utf-8").join(["<script>\n","</script>\n"]) + "\n</body></html>")
+
 out.write_text(s, encoding="utf-8")
 print("ok", out, len(s))

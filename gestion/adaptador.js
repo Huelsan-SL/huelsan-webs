@@ -51,6 +51,19 @@ const cache={};          // tabla → Map(id → data)
 const cargada={};        // tabla → Promise
 const oyentes=new Set(); // {tabla,pref?,id?,cb,err,timer}
 function enc(s){return encodeURIComponent(s)}
+/* ---------------- lotes que se cargan al abrir la app ----------------
+   Se cargan: los de subastas abiertas (o cerradas hace menos de 1 día), los nuestros (interesante, pujar, comprado,
+   stock, vendido), los publicados en la web y, del histórico, solo los de grado mecánico A o B, daños 1 o 2 y con
+   precio de BCA (salida o puja). El resto sigue en la base de datos: se busca o se carga desde la pestaña Histórico. */
+const ESTADOS_SIEMPRE=["interesante","pujar","comprado","stock","vendido"];
+const corteFin=()=>new Date(Date.now()-24*3600e3).toISOString();
+const FILTRO_BUENOS='and(data->>gradoMecanico.in.(A,B),data->>danosClasif.in.(1,2),or(data->>precioSalida.not.is.null,data->>pujaActual.not.is.null))';
+const filtroInicio=()=>`(estado.in.(${ESTADOS_SIEMPRE.join(",")}),publico.is.true,subasta_fin.is.null,subasta_fin.gte."${corteFin()}",${FILTRO_BUENOS})`;
+function seCargaAlInicio(d){
+  if(!d)return false;const fin=d.subasta&&d.subasta.fin;
+  if(ESTADOS_SIEMPRE.includes(d.estado)||d.publico===true||!fin||String(fin)>=corteFin())return true;
+  return["A","B"].includes(d.gradoMecanico)&&["1","2"].includes(String(d.danosClasif))&&(d.precioSalida!=null||d.pujaActual!=null);
+}
 async function cargarTabla(tabla){
   if(cargada[tabla])return cargada[tabla];
   cargada[tabla]=(async()=>{
@@ -58,7 +71,7 @@ async function cargarTabla(tabla){
     // tardaban más de 8 s y Supabase las cortaba, y entonces no se veía ningún lote). Cada página se reintenta.
     const m=new Map();const N=500;let ultimo=null;
     for(;;){
-      const url=`/rest/v1/${tabla}?select=id,data&order=id&limit=${N}`+(ultimo!=null?`&id=gt.${enc(ultimo)}`:"");
+      const url=`/rest/v1/${tabla}?select=id,data&order=id&limit=${N}`+(ultimo!=null?`&id=gt.${enc(ultimo)}`:"")+(tabla==="lotes"?"&or="+enc(filtroInicio()):"");
       let filas,err;
       for(let i=0;i<4;i++){try{filas=await api(url);break}catch(e){err=e;if(e.code==="unauthenticated")break;await new Promise(r=>setTimeout(r,800*(i+1)))}}
       if(!filas)throw err;
@@ -103,7 +116,7 @@ const rt=(()=>{
       if(m.topic===topic&&m.event==="phx_reply"&&m.payload&&m.payload.status==="ok"&&!unido){unido=true;if(reintento===0&&huboCorte){huboCorte=false;recargarTodo()}}
       if(m.event==="postgres_changes"&&m.payload&&m.payload.data){const d=m.payload.data;const tabla=d.table;
         if(d.type==="DELETE"){const id=d.old_record&&d.old_record.id;if(id!=null)aplicar(tabla,id,null)}
-        else if(d.record){aplicar(tabla,d.record.id,d.record.data||{})}}};
+        else if(d.record){const m=cache[tabla];if(tabla==="lotes"&&m&&!m.has(d.record.id)&&!seCargaAlInicio(d.record.data))return;aplicar(tabla,d.record.id,d.record.data||{})}}};
     ws.onclose=()=>{clearInterval(latido);ws=null;unido=false;if(!activo)return;huboCorte=true;
       reintento++;setTimeout(conectar,Math.min(30000,1000*2**Math.min(reintento,5)))};
     ws.onerror=()=>{try{ws&&ws.close()}catch(e){}};
@@ -171,6 +184,50 @@ const sample={async json(prompt,opt={}){
     throw Object.assign(new Error(j.msg||j.error||("HTTP "+r.status)),{code:c})}
   return j.data}};
 // Para páginas propias de la app (estudio de folletos, datos de empresa)
+/* ---------------- histórico completo bajo demanda ---------------- */
+async function contar(tabla,params){
+  const t=await token();
+  const r=await fetch(SB_URL+`/rest/v1/${tabla}?select=id&${params}`,{method:"HEAD",headers:{apikey:SB_KEY,Authorization:"Bearer "+t,Prefer:"count=exact",Range:"0-0","Range-Unit":"items"}});
+  if(!r.ok&&r.status!==206)throw new Error("HTTP "+r.status);
+  const cr=r.headers.get("content-range")||"";const n=+cr.split("/")[1];return isNaN(n)?null:n;
+}
+// Trae lotes que no se cargaron al abrir (o del archivo) y los añade a la app. Devuelve cuántos.
+async function traerLotes(params,{tabla="lotes",max=20000}={}){
+  await cargarTabla("lotes");const m=cache.lotes;let n=0,ultimo=null;const N=500;
+  for(;;){
+    const filas=await api(`/rest/v1/${tabla}?select=id,data&order=id&limit=${N}`+(ultimo!=null?`&id=gt.${enc(ultimo)}`:"")+(params?"&"+params:""));
+    for(const f of filas){if(!m.has(f.id)){m.set(f.id,tabla==="lotes"?(f.data||{}):{...(f.data||{}),archivado:true});n++}}
+    if(filas.length<N||n>=max)break;ultimo=filas[filas.length-1].id;
+  }
+  if(n)avisar("lotes",null);return n;
+}
+// Busca en todo el histórico: cada palabra debe aparecer en matrícula, bastidor, marca, modelo, versión o subasta
+function filtroBusqueda(q){
+  const pal=String(q||"").trim().split(/\s+/).filter(Boolean).slice(0,5).map(w=>w.replace(/[(),"*\\]/g,""));
+  if(!pal.length)return "";
+  const campos=["data->>matricula","data->>vin","data->>marca","data->>modelo","data->>derivado","data->subasta->>nombre"];
+  return "and="+enc("("+pal.map(w=>`or(${campos.map(c=>`${c}.ilike."*${w}*"`).join(",")})`).join(",")+")");
+}
+// Antes de incorporar una recogida: trae de la base de datos los lotes que ya existan pero no estén cargados,
+// para actualizarlos sin pisar lo que tengan anotado.
+async function precargarLotes(ids){
+  await cargarTabla("lotes");const m=cache.lotes;const faltan=[...new Set(ids)].filter(id=>!m.has(id));const out=new Map();
+  for(let i=0;i<faltan.length;i+=80){
+    const lote=faltan.slice(i,i+80);
+    const filas=await api(`/rest/v1/lotes?select=id,data&id=in.(${lote.map(x=>'"'+String(x).replace(/"/g,"")+'"').join(",")})`);
+    for(const f of filas){m.set(f.id,f.data||{});out.set(f.id,f.data||{})}
+  }
+  if(out.size)avisar("lotes",null);return out;
+}
+window.HUELSAN_HIST={
+  noCargados:()=>listo.then(()=>contar("lotes","not.or="+enc(filtroInicio()))),
+  archivados:()=>listo.then(()=>contar("lotes_archivo","").catch(()=>null)),
+  buscar:(q,archivo)=>listo.then(async()=>{const f=filtroBusqueda(q);if(!f)return 0;let n=await traerLotes(f,{max:3000});
+    if(archivo)n+=await traerLotes(f,{tabla:"lotes_archivo",max:3000}).catch(()=>0);return n}),
+  cargarTodo:archivo=>listo.then(async()=>{let n=await traerLotes("");if(archivo)n+=await traerLotes("",{tabla:"lotes_archivo"}).catch(()=>0);return n}),
+  aligerar:()=>listo.then(()=>api("/rest/v1/rpc/aligerar_historico",{method:"POST",body:"{}"})),
+  precargar:ids=>listo.then(()=>precargarLotes(ids)),
+};
 window.HUELSAN={rest:(path,opt)=>listo.then(()=>api(path,opt)),subir:(bucket,blob,nombre)=>listo.then(()=>subir(bucket,blob,nombre)),SB_URL,FOTOS_WEB:SB_URL+"/storage/v1/object/public/fotos-web/"};
 
 /* ---------------- window.claude de reemplazo ---------------- */
