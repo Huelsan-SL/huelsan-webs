@@ -220,7 +220,8 @@ async function precargarLotes(ids){
   if(out.size)avisar("lotes",null);return out;
 }
 window.HUELSAN_HIST={
-  noCargados:()=>listo.then(()=>contar("lotes","not.or="+enc(filtroInicio()))),
+  // total menos los de la carga inicial («not.or» no cuenta los lotes con datos vacíos)
+  noCargados:()=>listo.then(async()=>{const [t,i]=await Promise.all([contar("lotes",""),contar("lotes","or="+enc(filtroInicio()))]);return t!=null&&i!=null?Math.max(0,t-i):null}),
   archivados:()=>listo.then(()=>contar("lotes_archivo","").catch(()=>null)),
   buscar:(q,archivo)=>listo.then(async()=>{const f=filtroBusqueda(q);if(!f)return 0;let n=await traerLotes(f,{max:3000});
     if(archivo)n+=await traerLotes(f,{tabla:"lotes_archivo",max:3000}).catch(()=>0);return n}),
