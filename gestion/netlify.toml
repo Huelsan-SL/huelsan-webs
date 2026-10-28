@@ -4,7 +4,8 @@
   # Cada publicación cuesta créditos de Netlify (plan gratis: 300 al mes, 15 por publicación).
   # La rama «prueba» siempre se publica como vista previa (gratis): prueba--<proyecto>.netlify.app
   # En «main» (la web real) solo se publica si el mensaje del commit contiene la marca de publicar entre corchetes.
-  ignore = "[ \"$BRANCH\" != \"main\" ] && exit 1; git log -1 --pretty=%B | grep -qF '[publicar]' && exit 1 || exit 0"
+  # Con la marca solo se publica la web que haya cambiado desde su última publicación (sin contar este archivo).
+  ignore = "[ \"$BRANCH\" != \"main\" ] && exit 1; git log -1 --pretty=%B | grep -qF '[publicar]' || exit 0; git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ':(exclude)netlify.toml' && exit 0 || exit 1"
 
 [[headers]]
   for = "/*"

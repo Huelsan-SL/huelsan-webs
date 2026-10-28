@@ -54,11 +54,17 @@ function enc(s){return encodeURIComponent(s)}
 async function cargarTabla(tabla){
   if(cargada[tabla])return cargada[tabla];
   cargada[tabla]=(async()=>{
-    const m=new Map();const N=1000;
-    for(let desde=0;;desde+=N){
-      const filas=await api(`/rest/v1/${tabla}?select=id,data&order=id`,{headers:{Range:`${desde}-${desde+N-1}`,"Range-Unit":"items"}});
+    // Por páginas de 500 siguiendo el id (rápido aunque haya muchos lotes; con «offset» las últimas páginas
+    // tardaban más de 8 s y Supabase las cortaba, y entonces no se veía ningún lote). Cada página se reintenta.
+    const m=new Map();const N=500;let ultimo=null;
+    for(;;){
+      const url=`/rest/v1/${tabla}?select=id,data&order=id&limit=${N}`+(ultimo!=null?`&id=gt.${enc(ultimo)}`:"");
+      let filas,err;
+      for(let i=0;i<4;i++){try{filas=await api(url);break}catch(e){err=e;if(e.code==="unauthenticated")break;await new Promise(r=>setTimeout(r,800*(i+1)))}}
+      if(!filas)throw err;
       filas.forEach(f=>m.set(f.id,f.data||{}));
       if(filas.length<N)break;
+      ultimo=filas[filas.length-1].id;
     }
     cache[tabla]=m;rt.suscribir();return m;
   })().catch(e=>{delete cargada[tabla];throw e});
