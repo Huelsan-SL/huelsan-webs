@@ -392,18 +392,24 @@ function limpiarRecorte(c){
   x.putImageData(im,0,0);return c}
 /* Puntos de apoyo de las ruedas: el punto más bajo del coche en su mitad izquierda y en su mitad derecha */
 function analizarCoche(car){
+  // Perfil inferior del coche (el píxel opaco más bajo de cada columna) y su envolvente convexa inferior:
+  // los vértices de esa envolvente son los puntos que tocarían un suelo plano (las ruedas).
   const W=car.width,H=car.height,d=car.getContext("2d").getImageData(0,0,W,H).data;
-  let x0=W,y0=H,x1=0,y1=0;const fondo=new Int32Array(W).fill(-1);
-  for(let x=0;x<W;x++)for(let y=H-1;y>=0;y--)if(d[(y*W+x)*4+3]>170){fondo[x]=y;break}
+  let x0=W,y0=H,x1=0,y1=0;const pts=[];
+  for(let x=0;x<W;x++)for(let y=H-1;y>=0;y--)if(d[(y*W+x)*4+3]>170){pts.push({x,y});break}
   for(let y=0;y<H;y+=2)for(let x=0;x<W;x+=2)if(d[(y*W+x)*4+3]>128){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
-  if(x1<=x0)return{caja:{x:0,y:0,w:W,h:H},izq:{x:W*.25,y:H},der:{x:W*.75,y:H}};
-  const zona=(a,b)=>{let my=-1;for(let x=Math.floor(a);x<b;x++)if(fondo[x]>my)my=fondo[x];
-    let sx=0,n=0;for(let x=Math.floor(a);x<b;x++)if(fondo[x]>=my-2){sx+=x;n++}return{x:n?sx/n:(a+b)/2,y:my}};
-  const w=x1-x0;let izq=zona(x0,x0+w*.46),der=zona(x0+w*.54,x1+1);
-  // pendiente razonable (perspectiva de 3/4): como mucho 9°
-  const ang=Math.atan2(der.y-izq.y,der.x-izq.x),lim=9*Math.PI/180;
-  if(Math.abs(ang)>lim){const m=(izq.y+der.y)/2,dy=Math.tan(Math.sign(ang)*lim)*(der.x-izq.x)/2;izq={x:izq.x,y:m-dy};der={x:der.x,y:m+dy}}
-  return{caja:{x:x0,y:y0,w,h:y1-y0},izq,der};
+  if(x1<=x0||pts.length<4)return{caja:{x:0,y:0,w:W,h:H},p1:{x:W*.3,y:H},p2:{x:W*.7,y:H}};
+  const cr=(o,a,b)=>(a.x-o.x)*(b.y-o.y)-(a.y-o.y)*(b.x-o.x);
+  const hull=[];for(const p of pts){while(hull.length>=2&&cr(hull[hull.length-2],hull[hull.length-1],p)<=0)hull.pop();hull.push(p)} // envolvente por debajo (y hacia abajo)
+  let i1=0;for(let i=1;i<hull.length;i++)if(hull[i].y>hull[i1].y)i1=i; // punto más bajo: normalmente la rueda más cercana
+  const p1=hull[i1];const cands=[hull[i1-1],hull[i1+1]].filter(Boolean)
+    .filter(q=>Math.abs(Math.atan2(q.y-p1.y,q.x-p1.x))<Math.PI*.45||Math.abs(Math.atan2(q.y-p1.y,q.x-p1.x))>Math.PI*.55);
+  // la otra rueda: el vecino más alejado en horizontal (la batalla es más larga que el voladizo del parachoques)
+  let p2=cands.sort((a,b)=>Math.abs(b.x-p1.x)-Math.abs(a.x-p1.x))[0]||{x:p1.x+(x1-x0)*.5,y:p1.y};
+  if(Math.abs(p2.x-p1.x)<(x1-x0)*.15)p2={x:p1.x+(p1.x<(x0+x1)/2?1:-1)*(x1-x0)*.5,y:p1.y};
+  // pendiente máxima razonable para un suelo visto en perspectiva
+  let m=(p2.y-p1.y)/(p2.x-p1.x);m=Math.max(-.7,Math.min(.7,m));p2={x:p2.x,y:p1.y+m*(p2.x-p1.x)};
+  return{caja:{x:x0,y:y0,w:x1-x0,h:y1-y0},p1,p2,m};
 }
 
 /* Mejora: más resolución, niveles automáticos, contraste suave, color, nitidez y brillo de carrocería */
@@ -516,25 +522,26 @@ function escena(car,tipo){
   const W=ESC_W,H=ESC_H,c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");x.imageSmoothingQuality="high";
   const E=tipo==="escaparate"?fondoEscaparate(x,W,H):tipo==="estudio"?fondoEstudio(x,W,H):fondoExposicion(x,W,H,tipo);
   const A=analizarCoche(car),b=A.caja;
-  // tamaño: que el coche ocupe hasta el 84 % del ancho y el 58 % del alto
   const k=Math.min(W*.84/b.w,H*.58/b.h),cw=b.w*k,ch=b.h*k;
-  // línea de apoyo (ruedas) y su ángulo; el punto medio de las ruedas va al centro, a la altura del suelo elegida
-  const iz={x:(A.izq.x-b.x)*k,y:(A.izq.y-b.y)*k},de={x:(A.der.x-b.x)*k,y:(A.der.y-b.y)*k};
-  const mid={x:(iz.x+de.x)/2,y:(iz.y+de.y)/2},ang=Math.atan2(de.y-iz.y,de.x-iz.x);
-  const baseY=Math.max(E.suelo+(H-E.suelo)*.5,H*.86),cx=W/2-mid.x,cy=baseY-mid.y;
-  const apoyoI={x:cx+iz.x,y:cy+iz.y},apoyoD={x:cx+de.x,y:cy+de.y},centro={x:cx+mid.x,y:cy+mid.y};
+  // puntos de apoyo (ruedas) en la escena: el más bajo se coloca sobre el suelo, cerca del borde inferior
+  const P1={x:(A.p1.x-b.x)*k,y:(A.p1.y-b.y)*k},P2={x:(A.p2.x-b.x)*k,y:(A.p2.y-b.y)*k},m=A.m||0;
+  const baseY=Math.max(E.suelo+(H-E.suelo)*.55,H*.88),cx=(W-cw)/2,cy=baseY-P1.y;
+  const a1={x:cx+P1.x,y:cy+P1.y},a2={x:cx+P2.x,y:cy+P2.y};
+  const gY=xx=>a1.y+m*(xx-a1.x); // línea del suelo bajo el coche
   const cocheEsc=document.createElement("canvas");cocheEsc.width=Math.round(cw);cocheEsc.height=Math.round(ch);const ce=cocheEsc.getContext("2d");ce.imageSmoothingQuality="high";
   ce.drawImage(escalar(recortar(car,b),Math.round(cw)),0,0,cw,ch);
-  // reflejo: el coche reflejado respecto a la línea de las ruedas, desvanecido
-  {const r=document.createElement("canvas");r.width=W;r.height=H;const rx=r.getContext("2d");rx.translate(centro.x,centro.y);rx.rotate(ang);rx.scale(1,-1);rx.rotate(-ang);rx.translate(-centro.x,-centro.y);rx.drawImage(cocheEsc,cx,cy);
-    rx.setTransform(1,0,0,1,0,0);rx.globalCompositeOperation="destination-in";const g=rx.createLinearGradient(0,centro.y,0,centro.y+ch*.45);g.addColorStop(0,"rgba(0,0,0,1)");g.addColorStop(1,"rgba(0,0,0,0)");rx.fillStyle=g;rx.fillRect(0,0,W,H);
+  // reflejo: cada punto se refleja en vertical respecto a la línea del suelo (y' = 2·suelo(x) − y)
+  {const r=document.createElement("canvas");r.width=W;r.height=H;const rx=r.getContext("2d");
+    rx.setTransform(1,2*m,0,-1,0,2*a1.y-2*m*a1.x);rx.drawImage(cocheEsc,cx,cy);rx.setTransform(1,0,0,1,0,0);
+    rx.globalCompositeOperation="destination-in";const g=rx.createLinearGradient(0,Math.min(a1.y,a2.y),0,Math.max(a1.y,a2.y)+ch*.42);g.addColorStop(0,"rgba(0,0,0,1)");g.addColorStop(1,"rgba(0,0,0,0)");rx.fillStyle=g;rx.fillRect(0,0,W,H);
     x.save();x.globalAlpha=E.refl;x.filter="blur(1.5px)";x.drawImage(r,0,0);x.restore()}
-  // sombra: silueta del coche aplastada sobre la línea de las ruedas + contacto bajo cada rueda
-  {const s=document.createElement("canvas");s.width=W;s.height=H;const sx=s.getContext("2d");sx.translate(centro.x,centro.y);sx.rotate(ang);sx.scale(1.02,.075);sx.rotate(-ang);sx.translate(-centro.x,-centro.y);sx.drawImage(cocheEsc,cx,cy-ch*.06);
-    sx.setTransform(1,0,0,1,0,0);sx.globalCompositeOperation="source-in";sx.fillStyle=E.sombra;sx.fillRect(0,0,W,H);
-    x.save();x.filter=`blur(${Math.round(W*.009)}px)`;x.drawImage(s,0,ch*.035);x.restore();
-    x.save();x.filter=`blur(${Math.round(W*.022)}px)`;x.globalAlpha=.8;x.fillStyle=E.sombra;x.beginPath();x.ellipse(centro.x,centro.y+ch*.01,Math.hypot(de.x-iz.x,de.y-iz.y)*.62,ch*.05,ang,0,7);x.fill();x.restore();
-    for(const p of [apoyoI,apoyoD]){x.save();x.filter=`blur(${Math.round(W*.004)}px)`;x.fillStyle="rgba(0,0,0,.85)";x.beginPath();x.ellipse(p.x,p.y+2,cw*.055,ch*.018,ang,0,7);x.fill();x.restore()}}
+  // sombra: la silueta aplastada contra la línea del suelo (sigue a las ruedas) + contacto bajo cada rueda
+  {const s=document.createElement("canvas");s.width=W;s.height=H;const sx=s.getContext("2d");const kk=.07;
+    sx.setTransform(1,(1+kk)*m,0,-kk,0,(1+kk)*(a1.y-m*a1.x));sx.drawImage(cocheEsc,cx,cy);sx.setTransform(1,0,0,1,0,0);
+    sx.globalCompositeOperation="source-in";sx.fillStyle=E.sombra;sx.fillRect(0,0,W,H);
+    x.save();x.filter=`blur(${Math.round(W*.008)}px)`;x.drawImage(s,0,0);x.restore();
+    x.save();x.filter=`blur(${Math.round(W*.02)}px)`;x.globalAlpha=.55;x.drawImage(s,0,ch*.01);x.restore();
+    for(const p of [a1,a2]){x.save();x.filter=`blur(${Math.round(W*.0035)}px)`;x.fillStyle="rgba(0,0,0,.9)";x.beginPath();x.ellipse(p.x,p.y+1,cw*.05,ch*.016,Math.atan(m),0,7);x.fill();x.restore()}}
   x.drawImage(cocheEsc,cx,cy);
   if(!E.sinLogo)logo(x,W-W*.185,H-H*.044,W*.165,E.logo,.6);
   return c}
