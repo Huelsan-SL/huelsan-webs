@@ -601,7 +601,7 @@ function filaIconos(c,y,W,M,iconos,f,alto){
   const n=lista.length,paso=(W-M*2)/n,r=Math.min(alto*.3,paso*.24);
   lista.forEach((k,i)=>{const cx=M+paso*(i+.5),cy=y+r+4;
     if(k==="etiqueta")etiquetaDGT(c,cx,cy,r,f.etiqueta);
-    else{c.save();c.beginPath();c.arc(cx,cy,r,0,7);c.fillStyle=COL.graf2;c.fill();c.lineWidth=Math.max(2,r*.07);c.strokeStyle=COL.champ;c.stroke();c.restore();picto(c,k,cx,cy,r*.62)}
+    else{c.save();c.beginPath();c.arc(cx,cy,r,0,7);c.fillStyle=COL.graf2;c.fill();c.lineWidth=Math.max(2,r*.07);c.strokeStyle=COL.champ;c.stroke();c.restore();picto(c,k,cx,cy,r*.95)}
     const t=k==="etiqueta"?["ETIQUETA",f.etiqueta==="0"?"CERO EMISIONES":"DGT "+f.etiqueta]:ICONO_TXT[k];
     c.fillStyle=COL.blanco;c.textAlign="center";c.textBaseline="top";const fs=Math.max(13,Math.min(19,paso*.1));c.font=`800 ${fs}px 'Hanken Grotesk'`;ajustar(c,t[0],"800","'Hanken Grotesk'",paso-10,fs);c.fillText(t[0],cx,cy+r+10);
     c.fillStyle=COL.champ;c.font=`700 ${fs-2}px 'Hanken Grotesk'`;ajustar(c,t[1],"700","'Hanken Grotesk'",paso-10,fs-2);c.fillText(t[1],cx,cy+r+12+fs)});
