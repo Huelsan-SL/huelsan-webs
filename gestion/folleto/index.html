@@ -400,7 +400,7 @@ function analizarCoche(car){
   for(let y=0;y<H;y+=2)for(let x=0;x<W;x+=2)if(d[(y*W+x)*4+3]>128){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
   if(x1<=x0||pts.length<4)return{caja:{x:0,y:0,w:W,h:H},p1:{x:W*.3,y:H},p2:{x:W*.7,y:H}};
   const cr=(o,a,b)=>(a.x-o.x)*(b.y-o.y)-(a.y-o.y)*(b.x-o.x);
-  const hull=[];for(const p of pts){while(hull.length>=2&&cr(hull[hull.length-2],hull[hull.length-1],p)<=0)hull.pop();hull.push(p)} // envolvente por debajo (y hacia abajo)
+  const hull=[];for(const p of pts){while(hull.length>=2&&cr(hull[hull.length-2],hull[hull.length-1],p)>=0)hull.pop();hull.push(p)} // envolvente por debajo (y hacia abajo)
   let i1=0;for(let i=1;i<hull.length;i++)if(hull[i].y>hull[i1].y)i1=i; // punto más bajo: normalmente la rueda más cercana
   const p1=hull[i1];const cands=[hull[i1-1],hull[i1+1]].filter(Boolean)
     .filter(q=>Math.abs(Math.atan2(q.y-p1.y,q.x-p1.x))<Math.PI*.45||Math.abs(Math.atan2(q.y-p1.y,q.x-p1.x))>Math.PI*.55);
