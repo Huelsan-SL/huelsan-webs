@@ -402,8 +402,10 @@ function analizarCoche(car){
   const cr=(o,a,b)=>(a.x-o.x)*(b.y-o.y)-(a.y-o.y)*(b.x-o.x);
   const hull=[];for(const p of pts){while(hull.length>=2&&cr(hull[hull.length-2],hull[hull.length-1],p)>=0)hull.pop();hull.push(p)} // envolvente por debajo (y hacia abajo)
   let i1=0;for(let i=1;i<hull.length;i++)if(hull[i].y>hull[i1].y)i1=i; // punto más bajo: normalmente la rueda más cercana
-  const p1=hull[i1];const cands=[hull[i1-1],hull[i1+1]].filter(Boolean)
-    .filter(q=>Math.abs(Math.atan2(q.y-p1.y,q.x-p1.x))<Math.PI*.45||Math.abs(Math.atan2(q.y-p1.y,q.x-p1.x))>Math.PI*.55);
+  const p1=hull[i1],minDx=(x1-x0)*.1;
+  // candidatos: el primer vértice de la envolvente a cada lado que esté a más del 10 % del ancho (salta la curva de la propia rueda)
+  const lado=dir=>{for(let i=i1+dir;i>=0&&i<hull.length;i+=dir)if(Math.abs(hull[i].x-p1.x)>minDx)return hull[i];return null};
+  const cands=[lado(-1),lado(1)].filter(Boolean);
   // la otra rueda: el vecino más alejado en horizontal (la batalla es más larga que el voladizo del parachoques)
   let p2=cands.sort((a,b)=>Math.abs(b.x-p1.x)-Math.abs(a.x-p1.x))[0]||{x:p1.x+(x1-x0)*.5,y:p1.y};
   if(Math.abs(p2.x-p1.x)<(x1-x0)*.15)p2={x:p1.x+(p1.x<(x0+x1)/2?1:-1)*(x1-x0)*.5,y:p1.y};
