@@ -776,7 +776,7 @@ async function logo(){
   if(logoPNG)return logoPNG;
   const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="3 3 58 49" width="580" height="490"><path d="M8.6 49.5 A27 27 0 1 1 55.4 49.5" fill="none" stroke="#1B1D20" stroke-width="4.5" stroke-linecap="round"/><path d="M55.4 22.5 A27 27 0 0 1 56.47 43.41" fill="none" stroke="#B8976A" stroke-width="4.5" stroke-linecap="round"/><path d="M13.340 45.510 L16.660 50.490 L17.500 49.874 L17.500 42.998 Z" fill="#B8976A"/><path d="M28.500 41.806 L35.500 36.672 L35.500 32.130 L28.500 36.357 Z" fill="#B8976A"/><path d="M46.500 28.604 L48.960 26.800 L47.640 24.800 L46.500 25.488 Z" fill="#B8976A"/><rect x="19" y="22" width="8" height="28" fill="#1B1D20"/><rect x="37" y="22" width="8" height="28" fill="#1B1D20"/><circle cx="15" cy="48" r="3.0" fill="#1B1D20"/></svg>`;
   const img=new Image();img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);await img.decode();
-  const c=document.createElement("canvas");c.width=580;c.height=490;c.getContext("2d").drawImage(img,0,0);logoPNG=c.toDataURL("image/png");return logoPNG;
+  const c=document.createElement("canvas");c.width=232;c.height=196;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,232,196);x.imageSmoothingQuality="high";x.drawImage(img,0,0,232,196);logoPNG=c.toDataURL("image/jpeg",.92);return logoPNG;
 }
 async function pdfFactura(f){
   if(!window.jspdf)throw new Error("No se ha podido cargar el generador de PDF");
@@ -788,7 +788,7 @@ async function pdfFactura(f){
   const lineasTxt=(s,w,size=9)=>{doc.setFontSize(size);return doc.splitTextToSize(String(s||""),w)};
   let pag=1;
   const cabecera=async()=>{
-    doc.addImage(await logo(),"PNG",M,12,15,12.7);
+    doc.addImage(await logo(),"JPEG",M,12,15,12.7,"logo","FAST");
     txt("HUELSAN",M+19,19,{b:1,s:15});txt("AUTOMOCIÓN",M+19.3,24,{s:7.5,c:CH});
     txt(rect?"FACTURA RECTIFICATIVA":"FACTURA",W-M,17,{b:1,s:rect?13:16,a:"right"});
     txt(f.codigo?("Nº "+f.codigo):"BORRADOR",W-M,23.5,{b:1,s:11,a:"right",c:f.codigo?[27,29,32]:[180,35,24]});
@@ -802,7 +802,7 @@ async function pdfFactura(f){
     txt(`Página ${pag}`,W-M,294,{s:6.5,c:GR,a:"right"});
     if(f.huella)txt("Huella: "+f.huella,M,294,{s:5.5,c:[150,150,150]});
   };
-  const marcaAgua=()=>{if(f.estado!=="borrador")return;doc.saveGraphicsState&&doc.saveGraphicsState();doc.setTextColor(230,200,195);doc.setFont("helvetica","bold");doc.setFontSize(46);doc.text("BORRADOR · SIN VALOR",W/2,170,{align:"center",angle:30});doc.restoreGraphicsState&&doc.restoreGraphicsState()};
+  const marcaAgua=()=>{if(f.estado!=="borrador")return;doc.saveGraphicsState&&doc.saveGraphicsState();doc.setTextColor(246,228,225);doc.setFont("helvetica","bold");doc.setFontSize(46);doc.text("BORRADOR · SIN VALOR",W/2,170,{align:"center",angle:30});doc.restoreGraphicsState&&doc.restoreGraphicsState()};
   marcaAgua();await cabecera();
   let y=37;
   // fechas
@@ -827,7 +827,8 @@ async function pdfFactura(f){
     doc.setDrawColor(217,214,208);doc.setLineWidth(.3);doc.roundedRect(M,y,W-2*M,17,2,2);
     txt("VEHÍCULO",M+4,y+5,{s:7,c:CH,b:1});txt([v.marca,v.modelo,v.version].filter(Boolean).join(" "),M+24,y+5.2,{b:1,s:10,w:W-2*M-30});
     const datos=[["Matrícula",v.matricula],["Nº bastidor",v.bastidor],["Kilómetros",v.km?miles(String(Math.round(+v.km)))+" km":""],["1ª matriculación",fecha(v.fechaMatric)!=="—"?fecha(v.fechaMatric):""],["Color",v.color]].filter(x=>x[1]);
-    const cw=(W-2*M-8)/Math.max(1,datos.length);datos.forEach(([k,val],i)=>{txt(k,M+4+i*cw,y+10.5,{s:6.8,c:GR});txt(val,M+4+i*cw,y+14.6,{b:1,s:9})});
+    const anchos={"Matrícula":26,"Nº bastidor":50,"Kilómetros":30,"1ª matriculación":32,"Color":30};let xx=M+4;
+    datos.forEach(([k,val])=>{txt(k,xx,y+10.5,{s:6.8,c:GR});txt(val,xx,y+14.6,{b:1,s:9});xx+=anchos[k]||30});
     y+=22}
   // líneas
   const cols=[{t:"Concepto",x:M+2,w:88},{t:"Cant.",x:M+98,a:"right"},{t:"Precio",x:M+122,a:"right"},{t:"Dto.",x:M+134,a:"right"},{t:"IVA",x:M+149,a:"right"},{t:"Importe",x:W-M-2,a:"right"}];
@@ -848,7 +849,7 @@ async function pdfFactura(f){
   const tx=W-M-72;let ty=y+2;
   const filaT=(k,val,o={})=>{txt(k,tx,ty,{s:o.s||9,b:o.b,c:o.c});txt(val,W-M-2,ty,{a:"right",s:o.s||9,b:o.b,c:o.c});ty+=o.s?7:5};
   for(const g of t.grupos){filaT(`Base imponible (${g.tipo} %)`,numES(g.base)+" €");filaT(`IVA ${g.tipo} %`,numES(g.cuota)+" €")}
-  if(t.rebu)filaT("Importe en régimen de bienes usados",numES(t.rebu)+" €");
+  if(t.rebu)filaT("Importe REBU (IVA incluido)",numES(t.rebu)+" €");
   doc.setDrawColor(27,29,32);doc.setLineWidth(.6);doc.line(tx,ty-2.5,W-M,ty-2.5);ty+=2.5;
   filaT("TOTAL FACTURA",numES(t.total)+" €",{b:1,s:12});
   // menciones y pago (columna izquierda)
