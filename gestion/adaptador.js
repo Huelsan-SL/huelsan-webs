@@ -137,6 +137,8 @@ function docRef(path){
   return{
     id:idCorto,path,
     async get(){const f=await api(`/rest/v1/${tabla}?select=data&id=eq.${enc(id)}`);return docSnap(idCorto,f[0]?f[0].data:null)},
+    // Lee de la base de datos y actualiza la copia local (tras cambios hechos por funciones de la base de datos)
+    async refrescar(){const f=await api(`/rest/v1/${tabla}?select=data&id=eq.${enc(id)}`);const d=f[0]?f[0].data:null;if(cache[tabla])aplicar(tabla,id,d);return docSnap(idCorto,d)},
     async set(data){const d=JSON.parse(JSON.stringify(data||{}));
       await api(`/rest/v1/${tabla}?on_conflict=id`,{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({id,data:d})});
       aplicar(tabla,id,d)},
@@ -173,6 +175,23 @@ async function subir(bucket,blob,nombre){
   return{id,url:SB_URL+"/storage/v1/object/public/"+bucket+"/"+id};
 }
 const assets={upload:blob=>subir("fotos",blob)};
+// Archivos privados (facturas de compra y gastos): se descargan con la sesión, nunca por enlace público
+async function bajar(bucket,ruta){
+  const t=await token();
+  const r=await fetch(SB_URL+"/storage/v1/object/"+bucket+"/"+ruta.split("/").map(encodeURIComponent).join("/"),{headers:{apikey:SB_KEY,Authorization:"Bearer "+t}});
+  if(!r.ok)throw new Error("No se pudo descargar: HTTP "+r.status);
+  return r.blob();
+}
+async function borrarArchivo(bucket,ruta){
+  const t=await token();
+  const r=await fetch(SB_URL+"/storage/v1/object/"+bucket,{method:"DELETE",headers:{apikey:SB_KEY,Authorization:"Bearer "+t,"Content-Type":"application/json"},body:JSON.stringify({prefixes:[ruta]})});
+  if(!r.ok)throw new Error("No se pudo borrar: HTTP "+r.status);
+}
+// Llamada a una función de la base de datos; devuelve el mensaje de error legible si falla
+async function rpc(nombre,args){
+  try{return await api("/rest/v1/rpc/"+nombre,{method:"POST",body:JSON.stringify(args||{})})}
+  catch(e){let m=e.message;try{const j=JSON.parse(m);m=j.message||m;if(j.code==="PGRST202")m="Falta preparar la base de datos (supabase/05-facturacion.sql)."}catch(x){}throw Object.assign(new Error(m),{code:e.code})}
+}
 /* ---------------- estimaciones (Gemini, a través de la función «estimar» de Supabase) ---------------- */
 const sample={async json(prompt,opt={}){
   const t=await token();
@@ -229,7 +248,7 @@ window.HUELSAN_HIST={
   aligerar:()=>listo.then(()=>api("/rest/v1/rpc/aligerar_historico",{method:"POST",body:"{}"})),
   precargar:ids=>listo.then(()=>precargarLotes(ids)),
 };
-window.HUELSAN={rest:(path,opt)=>listo.then(()=>api(path,opt)),subir:(bucket,blob,nombre)=>listo.then(()=>subir(bucket,blob,nombre)),SB_URL,FOTOS_WEB:SB_URL+"/storage/v1/object/public/fotos-web/"};
+window.HUELSAN={rest:(path,opt)=>listo.then(()=>api(path,opt)),subir:(bucket,blob,nombre)=>listo.then(()=>subir(bucket,blob,nombre)),bajar:(b,r)=>listo.then(()=>bajar(b,r)),borrarArchivo:(b,r)=>listo.then(()=>borrarArchivo(b,r)),rpc:(n,a)=>listo.then(()=>rpc(n,a)),email:()=>ses&&ses.email,SB_URL,FOTOS_WEB:SB_URL+"/storage/v1/object/public/fotos-web/"};
 
 /* ---------------- window.claude de reemplazo ---------------- */
 const noDisp=n=>Promise.reject(Object.assign(new Error(n+" no disponible en la web"),{code:"capability_disabled"}));
