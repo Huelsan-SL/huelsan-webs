@@ -37,7 +37,8 @@ setInterval(()=>{if(ses)token().catch(()=>{})},60000);
 async function api(path,opt={}){
   const t=await token();
   const r=await fetch(SB_URL+path,{...opt,headers:{apikey:SB_KEY,Authorization:"Bearer "+t,"Content-Type":"application/json",...(opt.headers||{})}});
-  if(!r.ok){const tx=await r.text().catch(()=>"");throw Object.assign(new Error(tx||("HTTP "+r.status)),{code:r.status===401?"unauthenticated":"http_"+r.status})}
+  if(!r.ok){const tx=await r.text().catch(()=>"");let m=tx;try{const j=JSON.parse(tx);if(j&&j.code==="P0001"&&j.message)m=j.message}catch(e){}
+    throw Object.assign(new Error(m||("HTTP "+r.status)),{code:r.status===401?"unauthenticated":"http_"+r.status})}
   const tx=await r.text();if(!tx)return null;
   const ct=r.headers.get("content-type")||"";if(ct.includes("json")){try{return JSON.parse(tx)}catch(e){return null}}return tx;
 }
