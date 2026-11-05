@@ -65,22 +65,62 @@ function seCargaAlInicio(d){
   if(ESTADOS_SIEMPRE.includes(d.estado)||d.publico===true||!fin||String(fin)>=corteFin())return true;
   return["A","B"].includes(d.gradoMecanico)&&["1","2"].includes(String(d.danosClasif))&&(d.precioSalida!=null||d.pujaActual!=null);
 }
+/* ---------------- copia local (IndexedDB) y sincronización por cambios ----------------
+   Para gastar poco tráfico de Supabase: la primera vez se descarga la tabla entera y se guarda en el navegador.
+   Las siguientes veces (y al reconectar) solo se piden las filas cambiadas desde la última sincronización
+   (columna «actualizado») y la lista de ids para quitar las borradas. */
+const CACHE_V=1;const sync={};
+const IDB=(()=>{let db=null;const abrir=()=>db||(db=new Promise((ok,ko)=>{try{const r=indexedDB.open("huelsan-cache",1);r.onupgradeneeded=()=>r.result.createObjectStore("tablas");r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error)}catch(e){ko(e)}}));
+  return{async get(k){try{const d=await abrir();return await new Promise(ok=>{const q=d.transaction("tablas").objectStore("tablas").get(k);q.onsuccess=()=>ok(q.result||null);q.onerror=()=>ok(null)})}catch(e){return null}},
+    async set(k,v){try{const d=await abrir();await new Promise(ok=>{const t=d.transaction("tablas","readwrite");t.objectStore("tablas").put(v,k);t.oncomplete=ok;t.onerror=ok;t.onabort=ok})}catch(e){}},
+    borrarTodo(){try{db=null;indexedDB.deleteDatabase("huelsan-cache")}catch(e){}}}})();
+const claveCache=t=>`${CACHE_V}:${(ses&&ses.email)||""}:${t}`;
+const tGuardar={};
+function guardarCache(tabla){clearTimeout(tGuardar[tabla]);tGuardar[tabla]=setTimeout(()=>{const m=cache[tabla];if(m&&sync[tabla])IDB.set(claveCache(tabla),{rows:[...m],sync:sync[tabla],guardado:Date.now()})},1500)}
+function verSync(tabla,ts){if(ts&&(!sync[tabla]||ts>sync[tabla]))sync[tabla]=ts}
+async function pedir(url){let err;for(let i=0;i<4;i++){try{return await api(url)}catch(e){err=e;if(e.code==="unauthenticated")break;await new Promise(r=>setTimeout(r,800*(i+1)))}}throw err}
+async function cargaCompleta(tabla){
+  // Por páginas de 500 siguiendo el id (con «offset» las últimas páginas tardaban más de 8 s y Supabase las cortaba)
+  const m=new Map();const N=500;let ultimo=null;delete sync[tabla];
+  for(;;){
+    const filas=await pedir(`/rest/v1/${tabla}?select=id,data,actualizado&order=id&limit=${N}`+(ultimo!=null?`&id=gt.${enc(ultimo)}`:"")+(tabla==="lotes"?"&or="+enc(filtroInicio()):""));
+    filas.forEach(f=>{m.set(f.id,f.data||{});verSync(tabla,f.actualizado)});
+    if(filas.length<N)break;ultimo=filas[filas.length-1].id;
+  }
+  if(!sync[tabla])sync[tabla]=new Date().toISOString();
+  return m;
+}
+// Filas cambiadas desde la última sincronización (con 2 minutos de margen por si alguna transacción tardó en confirmarse)
+async function delta(tabla){
+  const m=cache[tabla];if(!m||!sync[tabla])return 0;
+  const desde=new Date(new Date(sync[tabla]).getTime()-120000).toISOString();const N=500;let n=0;
+  for(let off=0;;off+=N){
+    const filas=await pedir(`/rest/v1/${tabla}?select=id,data,actualizado&actualizado=gt.${enc(desde)}&order=actualizado,id&limit=${N}&offset=${off}`);
+    for(const f of filas){verSync(tabla,f.actualizado);
+      if(tabla==="lotes"&&!m.has(f.id)&&!seCargaAlInicio(f.data))continue;
+      m.set(f.id,f.data||{});n++}
+    if(filas.length<N)break;
+  }
+  return n;
+}
+// Quita de la copia local lo que ya no existe en la base de datos (borrado o archivado)
+async function reconciliar(tabla){
+  const m=cache[tabla];if(!m)return;const ids=new Set();const N=5000;let ultimo=null;
+  for(;;){const filas=await pedir(`/rest/v1/${tabla}?select=id&order=id&limit=${N}`+(ultimo!=null?`&id=gt.${enc(ultimo)}`:""));filas.forEach(f=>ids.add(f.id));if(filas.length<N)break;ultimo=filas[filas.length-1].id}
+  for(const id of [...m.keys()])if(!ids.has(id))m.delete(id);
+}
 async function cargarTabla(tabla){
   if(cargada[tabla])return cargada[tabla];
   cargada[tabla]=(async()=>{
-    // Por páginas de 500 siguiendo el id (rápido aunque haya muchos lotes; con «offset» las últimas páginas
-    // tardaban más de 8 s y Supabase las cortaba, y entonces no se veía ningún lote). Cada página se reintenta.
-    const m=new Map();const N=500;let ultimo=null;
-    for(;;){
-      const url=`/rest/v1/${tabla}?select=id,data&order=id&limit=${N}`+(ultimo!=null?`&id=gt.${enc(ultimo)}`:"")+(tabla==="lotes"?"&or="+enc(filtroInicio()):"");
-      let filas,err;
-      for(let i=0;i<4;i++){try{filas=await api(url);break}catch(e){err=e;if(e.code==="unauthenticated")break;await new Promise(r=>setTimeout(r,800*(i+1)))}}
-      if(!filas)throw err;
-      filas.forEach(f=>m.set(f.id,f.data||{}));
-      if(filas.length<N)break;
-      ultimo=filas[filas.length-1].id;
-    }
-    cache[tabla]=m;rt.suscribir();return m;
+    const c=await IDB.get(claveCache(tabla));
+    if(c&&Array.isArray(c.rows)&&c.sync&&Date.now()-(c.guardado||0)<7*864e5){
+      const m=new Map(c.rows);
+      if(tabla==="lotes")for(const[id,d]of m)if(!seCargaAlInicio(d))m.delete(id); // al abrir, solo lo de la carga inicial
+      cache[tabla]=m;sync[tabla]=c.sync;
+      try{await delta(tabla);await reconciliar(tabla)}
+      catch(e){if(e.code==="unauthenticated"){delete cache[tabla];throw e}console.warn("Sin conexión con la base de datos: se usa la copia local",e)}
+    }else cache[tabla]=await cargaCompleta(tabla);
+    guardarCache(tabla);rt.suscribir();return cache[tabla];
   })().catch(e=>{delete cargada[tabla];throw e});
   return cargada[tabla];
 }
@@ -99,7 +139,7 @@ function avisar(tabla,id){
     clearTimeout(o.timer);o.timer=setTimeout(()=>emitir(o),o.id!=null?50:400);
   }
 }
-function aplicar(tabla,id,data){const m=cache[tabla];if(!m)return;data==null?m.delete(id):m.set(id,data);avisar(tabla,id)}
+function aplicar(tabla,id,data){const m=cache[tabla];if(!m)return;data==null?m.delete(id):m.set(id,data);avisar(tabla,id);guardarCache(tabla)}
 
 /* ---------------- tiempo real (Phoenix / Supabase Realtime) ---------------- */
 const rt=(()=>{
@@ -117,13 +157,13 @@ const rt=(()=>{
       if(m.topic===topic&&m.event==="phx_reply"&&m.payload&&m.payload.status==="ok"&&!unido){unido=true;if(reintento===0&&huboCorte){huboCorte=false;recargarTodo()}}
       if(m.event==="postgres_changes"&&m.payload&&m.payload.data){const d=m.payload.data;const tabla=d.table;
         if(d.type==="DELETE"){const id=d.old_record&&d.old_record.id;if(id!=null)aplicar(tabla,id,null)}
-        else if(d.record){const m=cache[tabla];if(tabla==="lotes"&&m&&!m.has(d.record.id)&&!seCargaAlInicio(d.record.data))return;aplicar(tabla,d.record.id,d.record.data||{})}}};
+        else if(d.record){verSync(tabla,d.record.actualizado);const m=cache[tabla];if(tabla==="lotes"&&m&&!m.has(d.record.id)&&!seCargaAlInicio(d.record.data))return;aplicar(tabla,d.record.id,d.record.data||{})}}};
     ws.onclose=()=>{clearInterval(latido);ws=null;unido=false;if(!activo)return;huboCorte=true;
       reintento++;setTimeout(conectar,Math.min(30000,1000*2**Math.min(reintento,5)))};
     ws.onerror=()=>{try{ws&&ws.close()}catch(e){}};
   }
   let huboCorte=false;
-  async function recargarTodo(){for(const t of Object.keys(cache)){delete cargada[t];try{await cargarTabla(t);avisar(t,null)}catch(e){}}}
+  async function recargarTodo(){for(const t of Object.keys(cache)){try{const n=await delta(t);if(n){avisar(t,null);guardarCache(t)}}catch(e){}}} // al reconectar: solo lo que cambió
   return{
     suscribir(){if(!activo){activo=true;conectar()}},
     nuevoToken(){if(ws&&ses)enviar({topic,event:"access_token",payload:{access_token:ses.access_token}})},
@@ -301,7 +341,7 @@ function mostrarLogin(msg){
   ov.querySelector("#login-m").textContent=msg||"";
   setTimeout(()=>{const e=ov.querySelector(ses&&ses.email?"#login-p":"#login-e");e&&e.focus()},0);
 }
-window.HUELSAN_SALIR=()=>{const s=ses;guardarSes(null);rt.cerrar();
+window.HUELSAN_SALIR=()=>{const s=ses;guardarSes(null);rt.cerrar();IDB.borrarTodo();
   if(s)fetch(SB_URL+"/auth/v1/logout",{method:"POST",headers:{apikey:SB_KEY,Authorization:"Bearer "+s.access_token}}).catch(()=>{});
   location.reload()};
 function nuevaClave(h){
