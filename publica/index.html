@@ -187,16 +187,15 @@ form.card{background:var(--surface);color:var(--ink);border-radius:22px;padding:
 .pregunta legend,.pregunta>.tit{font-weight:800;font-size:16px;padding:0;margin-bottom:10px}
 .campo>.tit{font-weight:800;font-size:16px}
 .num-p{color:var(--gold);margin-right:6px}
-.opciones{display:flex;flex-wrap:wrap;gap:8px}
-.opciones label{position:relative}
-.opciones input{position:absolute;opacity:0;inset:0;cursor:pointer;margin:0}
-.opciones span{display:inline-block;padding:9px 14px;border:1.5px solid var(--line);border-radius:999px;font-weight:600;font-size:14.5px;cursor:pointer;background:var(--surface);transition:background .12s,border-color .12s}
-.opciones input:checked+span{background:var(--green-soft);border-color:var(--green);color:var(--green2)}
-.opciones input:focus-visible+span{outline:3px solid var(--gold);outline-offset:2px}
 .campo{display:grid;gap:6px;font-weight:700;font-size:14px;min-width:0}
 .campo input,.campo textarea{width:100%;padding:12px 13px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);min-width:0;font-weight:500}
 .campo textarea{min-height:90px;resize:vertical}
-.fila3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.fila3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end}
+.fila2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 14px;align-items:end}
+@media (max-width:620px){.fila2{grid-template-columns:minmax(0,1fr)}}
+.campo select{width:100%;padding:12px 40px 12px 13px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235A6B7F' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center/18px;appearance:none;-webkit-appearance:none;min-width:0;font-weight:500;cursor:pointer}
+.campo select:invalid,.campo select.vacio{color:var(--muted)}
+.campo>.tit{font-size:15px}
 @media (max-width:620px){.fila3{grid-template-columns:minmax(0,1fr)}}
 .chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--muted)}
 .chk input{width:18px;height:18px;margin-top:3px;accent-color:var(--green);flex:none}
@@ -398,13 +397,15 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
         <p class="lead" style="margin:0" data-t="form.intro">Cuéntanos qué vehículo estás buscando, qué características necesitas y cuál es tu presupuesto aproximado. Estudiaremos tu solicitud y buscaremos opciones que se adapten a tus preferencias.</p>
       </div>
       <form class="card" id="form" novalidate>
-        <fieldset class="pregunta"><legend><span class="num-p">1</span><span data-t="form.p1">¿Qué tipo de vehículo buscas?</span></legend><div class="opciones" id="op-tipo"></div></fieldset>
-        <label class="campo"><span class="tit"><span class="num-p">2</span><span data-t="form.p2">¿Qué marca o modelo te interesa?</span></span><input id="c-marca" maxlength="120" data-t-ph="form.p2.ejemplo" placeholder="Ej. BMW X3, Audi A4, Volkswagen Transporter, Yamaha TMAX..."></label>
-        <fieldset class="pregunta"><legend><span class="num-p">3</span><span data-t="form.p3">¿Qué presupuesto aproximado tienes?</span></legend><div class="opciones" id="op-pres"></div></fieldset>
-        <fieldset class="pregunta"><legend><span class="num-p">4</span><span data-t="form.p4">¿Qué combustible prefieres?</span></legend><div class="opciones" id="op-comb"></div></fieldset>
-        <fieldset class="pregunta"><legend><span class="num-p">5</span><span data-t="form.p5">¿Qué cambio prefieres?</span></legend><div class="opciones" id="op-cambio"></div></fieldset>
-        <label class="campo"><span class="tit"><span class="num-p">6</span><span data-t="form.p6">¿Qué características buscas?</span></span><textarea id="c-extra" maxlength="1200" data-t-ph="form.p6.ejemplo" placeholder="Año mínimo, kilómetros máximos, equipamiento, potencia, color, número de plazas, etc."></textarea></label>
-        <fieldset class="pregunta"><legend><span class="num-p">7</span><span data-t="form.p7">¿Para cuándo necesitas el vehículo?</span></legend><div class="opciones" id="op-plazo"></div></fieldset>
+        <div class="fila2">
+          <label class="campo"><span class="tit"><span class="num-p">1</span><span data-t="form.p1">¿Qué tipo de vehículo buscas?</span></span><select id="op-tipo"></select></label>
+          <label class="campo"><span class="tit"><span class="num-p">2</span><span data-t="form.p2">¿Qué marca o modelo te interesa?</span></span><input id="c-marca" maxlength="120" data-t-ph="form.p2.ejemplo" placeholder="Ej. BMW X3, Audi A4, Volkswagen Transporter, Yamaha TMAX..."></label>
+          <label class="campo"><span class="tit"><span class="num-p">3</span><span data-t="form.p3">¿Qué presupuesto aproximado tienes?</span></span><select id="op-pres"></select></label>
+          <label class="campo"><span class="tit"><span class="num-p">4</span><span data-t="form.p4">¿Qué combustible prefieres?</span></span><select id="op-comb"></select></label>
+          <label class="campo"><span class="tit"><span class="num-p">5</span><span data-t="form.p5">¿Qué cambio prefieres?</span></span><select id="op-cambio"></select></label>
+          <label class="campo"><span class="tit"><span class="num-p">6</span><span data-t="form.p7">¿Para cuándo necesitas el vehículo?</span></span><select id="op-plazo"></select></label>
+        </div>
+        <label class="campo"><span class="tit"><span class="num-p">7</span><span data-t="form.p6">¿Qué características buscas?</span></span><textarea id="c-extra" maxlength="1200" data-t-ph="form.p6.ejemplo" placeholder="Año mínimo, kilómetros máximos, equipamiento, potencia, color, número de plazas, etc."></textarea></label>
         <label class="campo"><span class="tit"><span class="num-p">8</span><span data-t="form.p8">¿Dónde resides?</span></span><input id="c-reside" maxlength="80" autocomplete="address-level2" data-t-ph="form.p8.ejemplo" placeholder="Ej. Murcia"></label>
         <fieldset class="pregunta"><legend><span class="num-p">9</span><span data-t="form.p9">Datos de contacto</span></legend>
           <div class="fila3"><label class="campo"><span data-t="form.nombre">Nombre</span><input id="c-nombre" maxlength="80" autocomplete="name" required></label>
@@ -614,14 +615,14 @@ $("#cars").innerHTML=`<div class="empty"><strong>Cargando coches…</strong></di
 /* ---------- formulario de búsqueda ---------- */
 // Cada opción: [texto, valor para la app] — tipos y combustibles usan los mismos nombres que la ficha de cliente de la app
 const OPC={
-  tipo:{multi:true,v:[["Turismo",["Utilitario","Compacto"]],["SUV / Todoterreno",["SUV","4x4"]],["Berlina",["Berlina"]],["Familiar",["Familiar"]],["Deportivo",["Deportivo"]],["Furgoneta",["Furgoneta"]],["Motocicleta",[]],["Vehículo comercial",["Comercial"]],["Otro",[]]]},
+  tipo:{v:[["Turismo",["Utilitario","Compacto"]],["SUV / Todoterreno",["SUV","4x4"]],["Berlina",["Berlina"]],["Familiar",["Familiar"]],["Deportivo",["Deportivo"]],["Furgoneta",["Furgoneta"]],["Motocicleta",[]],["Vehículo comercial",["Comercial"]],["Otro",[]]]},
   pres:{v:[["Menos de 10.000 €",10000],["Entre 10.000 y 15.000 €",15000],["Entre 15.000 y 20.000 €",20000],["Entre 20.000 y 25.000 €",25000],["Entre 25.000 y 35.000 €",35000],["Más de 35.000 €",null],["Otro presupuesto",null]]},
   comb:{v:[["Gasolina",["Gasolina"]],["Diésel",["Diésel"]],["Híbrido",["Híbrido"]],["Híbrido enchufable",["Híbrido enchufable"]],["Eléctrico",["Eléctrico"]],["Otro / Indiferente",[]],["No aplica",[]]]},
   cambio:{v:[["Automático"],["Manual"],["Indiferente"],["No aplica"]]},
   plazo:{v:[["Lo antes posible"],["En las próximas semanas"],["En uno o dos meses"],["Sin prisa, estoy buscando"]]}};
-function pintarOpciones(){for(const[k,o]of Object.entries(OPC))$("#op-"+k).innerHTML=o.v.map(([t],i)=>`<label><input type="${o.multi?"checkbox":"radio"}" name="op-${k}" value="${i}"><span data-t="form.op.${k}.${i+1}">${esc(T(`form.op.${k}.${i+1}`,t))}</span></label>`).join("")}
+function pintarOpciones(){for(const[k,o]of Object.entries(OPC)){const el=$("#op-"+k);el.innerHTML=`<option value="" data-t="form.elegir">${esc(T("form.elegir","Elige una opción"))}</option>`+o.v.map(([t],i)=>`<option value="${i}" data-t="form.op.${k}.${i+1}">${esc(T(`form.op.${k}.${i+1}`,t))}</option>`).join("");el.classList.add("vacio");el.onchange=()=>el.classList.toggle("vacio",el.value==="")}}
 pintarOpciones();
-const elegidos=k=>[...document.querySelectorAll(`[name="op-${k}"]:checked`)].map(x=>+x.value);
+const elegidos=k=>{const v=$("#op-"+k).value;return v===""?[]:[+v]};
 const textoOp=(k,i)=>T(`form.op.${k}.${i+1}`,OPC[k].v[i][0]);
 $("#form").addEventListener("submit",async e=>{
   e.preventDefault();const res=$("#c-res");res.hidden=true;
@@ -642,7 +643,7 @@ $("#form").addEventListener("submit",async e=>{
     const r=await fetch(SB_URL+"/rest/v1/rpc/enviar_solicitud",{method:"POST",headers:{...H,"Content-Type":"application/json"},body:JSON.stringify({s:sol})});
     const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.message||T("form.error.envio","No se ha podido enviar la solicitud."));
     if(j&&j.id)fetch(SB_URL+"/functions/v1/aviso-solicitud",{method:"POST",headers:{"Content-Type":"application/json",apikey:SB_KEY},body:JSON.stringify({id:j.id})}).catch(()=>{});
-    $("#form").reset();res.className="resultado ok";res.textContent=T("form.ok","Hemos recibido tu solicitud. Nos pondremos en contacto contigo próximamente.");res.hidden=false;res.scrollIntoView({block:"center"});
+    $("#form").reset();document.querySelectorAll("#form select").forEach(e=>e.classList.add("vacio"));res.className="resultado ok";res.textContent=T("form.ok","Hemos recibido tu solicitud. Nos pondremos en contacto contigo próximamente.");res.hidden=false;res.scrollIntoView({block:"center"});
   }catch(err){res.className="resultado mal";res.textContent=err.message+" "+T("form.alternativa","Inténtalo de nuevo en unos minutos.");res.hidden=false}
   finally{b.disabled=false}});
 

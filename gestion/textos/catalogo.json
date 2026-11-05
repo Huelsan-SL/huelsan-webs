@@ -799,12 +799,6 @@
     "largo": false
    },
    {
-    "clave": "form.p6",
-    "etiqueta": "Pregunta 6",
-    "defecto": "¿Qué características buscas?",
-    "largo": false
-   },
-   {
     "clave": "form.p7",
     "etiqueta": "Pregunta 7",
     "defecto": "¿Para cuándo necesitas el vehículo?",
@@ -832,6 +826,12 @@
     "clave": "form.op.plazo.4",
     "etiqueta": "Pregunta 7 (plazo): opción 4",
     "defecto": "Sin prisa, estoy buscando",
+    "largo": false
+   },
+   {
+    "clave": "form.p6",
+    "etiqueta": "Pregunta 6",
+    "defecto": "¿Qué características buscas?",
     "largo": false
    },
    {
@@ -882,6 +882,12 @@
     "etiqueta": "Texto bajo el botón",
     "defecto": "Una vez recibamos tu solicitud, nos pondremos en contacto contigo para conocer mejor tus necesidades y comenzar la búsqueda.",
     "largo": true
+   },
+   {
+    "clave": "form.elegir",
+    "etiqueta": "Texto inicial de los desplegables",
+    "defecto": "${esc(T(\"form.elegir\",\"Elige una opción\"))}",
+    "largo": false
    },
    {
     "clave": "form.p2.ejemplo",
