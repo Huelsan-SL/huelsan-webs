@@ -215,40 +215,76 @@
     "largo": false
    },
    {
-    "clave": "proceso.paso1",
-    "etiqueta": "Infografía: paso 1",
-    "defecto": "Comienza la búsqueda de tu vehículo",
+    "clave": "proceso.paso1.titulo",
+    "etiqueta": "Paso 1: título",
+    "defecto": "Tu búsqueda",
     "largo": false
    },
    {
-    "clave": "proceso.paso2",
-    "etiqueta": "Infografía: paso 2",
-    "defecto": "Nos contactas",
+    "clave": "proceso.paso1.texto",
+    "etiqueta": "Paso 1: texto",
+    "defecto": "Dinos qué vehículo quieres y tu presupuesto",
     "largo": false
    },
    {
-    "clave": "proceso.paso3",
-    "etiqueta": "Infografía: paso 3",
-    "defecto": "Te enviamos propuestas según lo que necesitas",
+    "clave": "proceso.paso2.titulo",
+    "etiqueta": "Paso 2: título",
+    "defecto": "Hablamos",
     "largo": false
    },
    {
-    "clave": "proceso.paso4",
-    "etiqueta": "Infografía: paso 4",
-    "defecto": "Si te convence, lo vemos juntos y, si también nos convence, trato hecho",
-    "largo": true
-   },
-   {
-    "clave": "proceso.paso5",
-    "etiqueta": "Infografía: paso 5",
-    "defecto": "Lo recibimos, revisamos, limpiamos y preparamos",
+    "clave": "proceso.paso2.texto",
+    "etiqueta": "Paso 2: texto",
+    "defecto": "Te llamamos para conocer bien lo que necesitas",
     "largo": false
    },
    {
-    "clave": "proceso.paso6",
-    "etiqueta": "Infografía: paso 6",
-    "defecto": "Te lo entregamos a tu nombre, con todo tramitado y 1 año de garantía mecánica",
-    "largo": true
+    "clave": "proceso.paso3.titulo",
+    "etiqueta": "Paso 3: título",
+    "defecto": "Propuestas",
+    "largo": false
+   },
+   {
+    "clave": "proceso.paso3.texto",
+    "etiqueta": "Paso 3: texto",
+    "defecto": "Te enviamos opciones a tu medida",
+    "largo": false
+   },
+   {
+    "clave": "proceso.paso4.titulo",
+    "etiqueta": "Paso 4: título",
+    "defecto": "Elección",
+    "largo": false
+   },
+   {
+    "clave": "proceso.paso4.texto",
+    "etiqueta": "Paso 4: texto",
+    "defecto": "Lo vemos juntos; si nos convence a los dos, adelante",
+    "largo": false
+   },
+   {
+    "clave": "proceso.paso5.titulo",
+    "etiqueta": "Paso 5: título",
+    "defecto": "Puesta a punto",
+    "largo": false
+   },
+   {
+    "clave": "proceso.paso5.texto",
+    "etiqueta": "Paso 5: texto",
+    "defecto": "Revisión, limpieza y preparación",
+    "largo": false
+   },
+   {
+    "clave": "proceso.paso6.titulo",
+    "etiqueta": "Paso 6: título",
+    "defecto": "Entrega",
+    "largo": false
+   },
+   {
+    "clave": "proceso.paso6.texto",
+    "etiqueta": "Paso 6: texto",
+    "defecto": "A tu nombre, todo tramitado y con 1 año de garantía mecánica",
+    "largo": false
    },
    {
     "clave": "proceso.financiacion",

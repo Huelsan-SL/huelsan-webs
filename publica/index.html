@@ -122,12 +122,14 @@ nav.menu a:hover{border-color:var(--green)}
 .proceso li:last-child .ic{background:var(--green);color:#fff}
 .proceso .ic svg{width:30px;height:30px}
 .proceso .ic b{position:absolute;top:-6px;right:-6px;width:26px;height:26px;border-radius:50%;background:var(--gold);color:#1B1D20;font-size:13px;display:grid;place-items:center}
-.proceso p{margin:0;font-weight:700;font-size:15px;line-height:1.35;color:var(--ink);max-width:19ch}
+.proceso p{margin:0;display:grid;gap:4px;max-width:20ch}
+.proceso p b{font-size:17px;font-weight:800;color:var(--ink)}
+.proceso p span{font-size:14.5px;line-height:1.4;color:var(--muted)}
 @media (max-width:980px){.proceso{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:30px}.proceso::before{display:none}}
 @media (max-width:600px){.proceso{grid-template-columns:minmax(0,1fr);row-gap:0}
   .proceso li{grid-template-columns:auto minmax(0,1fr);justify-items:start;text-align:left;align-items:center;gap:16px;padding-bottom:18px}
   .proceso li:not(:last-child)::after{content:"";position:absolute;left:33px;top:70px;bottom:0;border-left:2px dashed var(--gold);opacity:.7}
-  .proceso .ic{width:58px;height:58px;margin-left:4px}.proceso .ic svg{width:26px;height:26px}.proceso p{max-width:none;font-size:16px}}
+  .proceso .ic{width:58px;height:58px;margin-left:4px}.proceso .ic svg{width:26px;height:26px}.proceso p{max-width:none}}
 .financia{display:flex;justify-content:center;align-items:center;gap:8px;margin:30px auto 0;color:var(--muted);font-size:14.5px;text-align:center}
 .financia svg{width:18px;height:18px;color:var(--gold);flex:none}
 .centro-btn{display:flex;justify-content:center;margin-top:30px}
@@ -378,12 +380,12 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
     <div class="wrap">
       <div class="cab centro"><h2 data-t="proceso.titulo">Cómo funciona nuestro servicio</h2></div>
       <ol class="proceso">
-        <li><span class="ic"><svg aria-hidden="true"><use href="#i-lupa"/></svg><b>1</b></span><p data-t="proceso.paso1">Comienza la búsqueda de tu vehículo</p></li>
-        <li><span class="ic"><svg aria-hidden="true"><use href="#i-charla"/></svg><b>2</b></span><p data-t="proceso.paso2">Nos contactas</p></li>
-        <li><span class="ic"><svg aria-hidden="true"><use href="#i-lista"/></svg><b>3</b></span><p data-t="proceso.paso3">Te enviamos propuestas según lo que necesitas</p></li>
-        <li><span class="ic"><svg aria-hidden="true"><use href="#i-trato"/></svg><b>4</b></span><p data-t="proceso.paso4">Si te convence, lo vemos juntos y, si también nos convence, trato hecho</p></li>
-        <li><span class="ic"><svg aria-hidden="true"><use href="#i-llave"/></svg><b>5</b></span><p data-t="proceso.paso5">Lo recibimos, revisamos, limpiamos y preparamos</p></li>
-        <li><span class="ic"><svg aria-hidden="true"><use href="#i-escudo"/></svg><b>6</b></span><p data-t="proceso.paso6">Te lo entregamos a tu nombre, con todo tramitado y 1 año de garantía mecánica</p></li>
+        <li><span class="ic"><svg aria-hidden="true"><use href="#i-lupa"/></svg><b>1</b></span><p><b data-t="proceso.paso1.titulo">Tu búsqueda</b><span data-t="proceso.paso1.texto">Dinos qué vehículo quieres y tu presupuesto</span></p></li>
+        <li><span class="ic"><svg aria-hidden="true"><use href="#i-charla"/></svg><b>2</b></span><p><b data-t="proceso.paso2.titulo">Hablamos</b><span data-t="proceso.paso2.texto">Te llamamos para conocer bien lo que necesitas</span></p></li>
+        <li><span class="ic"><svg aria-hidden="true"><use href="#i-lista"/></svg><b>3</b></span><p><b data-t="proceso.paso3.titulo">Propuestas</b><span data-t="proceso.paso3.texto">Te enviamos opciones a tu medida</span></p></li>
+        <li><span class="ic"><svg aria-hidden="true"><use href="#i-trato"/></svg><b>4</b></span><p><b data-t="proceso.paso4.titulo">Elección</b><span data-t="proceso.paso4.texto">Lo vemos juntos; si nos convence a los dos, adelante</span></p></li>
+        <li><span class="ic"><svg aria-hidden="true"><use href="#i-llave"/></svg><b>5</b></span><p><b data-t="proceso.paso5.titulo">Puesta a punto</b><span data-t="proceso.paso5.texto">Revisión, limpieza y preparación</span></p></li>
+        <li><span class="ic"><svg aria-hidden="true"><use href="#i-escudo"/></svg><b>6</b></span><p><b data-t="proceso.paso6.titulo">Entrega</b><span data-t="proceso.paso6.texto">A tu nombre, todo tramitado y con 1 año de garantía mecánica</span></p></li>
       </ol>
       <p class="financia"><svg aria-hidden="true"><use href="#i-euro"/></svg><span data-t="proceso.financiacion">Si lo necesitas, también te ayudamos con la financiación.</span></p>
     </div>
