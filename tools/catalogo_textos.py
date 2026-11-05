@@ -88,6 +88,10 @@ def etiqueta(k, v=""):
         return f"Ventaja {m.group(1)}: {m.group(2).replace('titulo', 'título')}"
     if m := re.fullmatch(r"proceso\.paso(\d)\.(titulo|texto)", k):
         return f"Paso {m.group(1)}: {m.group(2).replace('titulo', 'título')}"
+    if m := re.fullmatch(r"proceso\.paso(\d)", k):
+        return f"Infografía: paso {m.group(1)}"
+    if k == "proceso.financiacion":
+        return "Nota de financiación bajo la infografía"
     if m := re.fullmatch(r"inicio\.titular(\d)", k):
         return f"Titular, línea {m.group(1)}"
     if m := re.fullmatch(r"inicio\.sello(\d)", k):

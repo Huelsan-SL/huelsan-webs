@@ -114,12 +114,22 @@ nav.menu a:hover{border-color:var(--green)}
 .tipos .tipos-nota{margin:0;color:rgba(255,255,255,.8);font-size:15px}
 
 /* proceso */
-.pasos{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
-@media (max-width:980px){.pasos{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:560px){.pasos{grid-template-columns:minmax(0,1fr)}}
-.pasos li{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px 22px;display:grid;gap:10px;align-content:start}
-.pasos .n{font:800 30px/1 var(--f-body);color:var(--gold);letter-spacing:-.02em}
-.pasos p{margin:0;color:var(--muted)}
+/* Infografía del proceso: 6 pasos unidos por una línea (horizontal en ordenador, vertical en móvil) */
+.proceso{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;position:relative;counter-reset:p}
+.proceso::before{content:"";position:absolute;left:8%;right:8%;top:34px;height:2px;background:repeating-linear-gradient(90deg,var(--gold) 0 8px,transparent 8px 14px);opacity:.7}
+.proceso li{position:relative;display:grid;justify-items:center;text-align:center;gap:12px;align-content:start}
+.proceso .ic{position:relative;width:68px;height:68px;border-radius:50%;background:var(--surface);border:2px solid var(--green);color:var(--green2);display:grid;place-items:center;box-shadow:0 6px 16px rgba(14,42,71,.08)}
+.proceso li:last-child .ic{background:var(--green);color:#fff}
+.proceso .ic svg{width:30px;height:30px}
+.proceso .ic b{position:absolute;top:-6px;right:-6px;width:26px;height:26px;border-radius:50%;background:var(--gold);color:#1B1D20;font-size:13px;display:grid;place-items:center}
+.proceso p{margin:0;font-weight:700;font-size:15px;line-height:1.35;color:var(--ink);max-width:19ch}
+@media (max-width:980px){.proceso{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:30px}.proceso::before{display:none}}
+@media (max-width:600px){.proceso{grid-template-columns:minmax(0,1fr);row-gap:0}
+  .proceso li{grid-template-columns:auto minmax(0,1fr);justify-items:start;text-align:left;align-items:center;gap:16px;padding-bottom:18px}
+  .proceso li:not(:last-child)::after{content:"";position:absolute;left:33px;top:70px;bottom:0;border-left:2px dashed var(--gold);opacity:.7}
+  .proceso .ic{width:58px;height:58px;margin-left:4px}.proceso .ic svg{width:26px;height:26px}.proceso p{max-width:none;font-size:16px}}
+.financia{display:flex;justify-content:center;align-items:center;gap:8px;margin:30px auto 0;color:var(--muted);font-size:14.5px;text-align:center}
+.financia svg{width:18px;height:18px;color:var(--gold);flex:none}
 .centro-btn{display:flex;justify-content:center;margin-top:30px}
 
 /* diferencia */
@@ -308,6 +318,8 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
   <symbol id="i-ojo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></g></symbol>
   <symbol id="i-llave" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="15" r="4.5"/><path d="m11.5 11.5 8-8M16.5 6.5l2.5 2.5M14 9l2 2"/></g></symbol>
   <symbol id="i-charla" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M4 5h16v11H9l-5 4V5Z"/></symbol>
+  <symbol id="i-lista" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></g></symbol>
+  <symbol id="i-trato" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 11 4-4 4 1 3-2 3 1 4 4"/><path d="m6 7-3 5 6 6c.8.8 2 .8 2.8 0l5.7-5.7"/><path d="m11 13 2 2M13 11l2.5 2.5M9 15l1.5 1.5"/></g></symbol>
   <symbol id="i-escudo" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 3 5 6v5.5c0 4.4 3 8 7 9.5 4-1.5 7-5.1 7-9.5V6l-7-3Z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="m9 12 2 2 4-4"/></symbol>
 </svg>
 
@@ -365,12 +377,15 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
   <section id="proceso" class="gris">
     <div class="wrap">
       <div class="cab centro"><h2 data-t="proceso.titulo">Cómo funciona nuestro servicio</h2></div>
-      <ol class="pasos">
-        <li><span class="n">01</span><h3 data-t="proceso.paso1.titulo">Nos cuentas qué necesitas</h3><p data-t="proceso.paso1.texto">Nos indicas el tipo de vehículo que buscas, tus preferencias, características y presupuesto aproximado.</p></li>
-        <li><span class="n">02</span><h3 data-t="proceso.paso2.titulo">Buscamos opciones</h3><p data-t="proceso.paso2.texto">Consultamos nuestros contactos y proveedores en España y Europa para localizar vehículos que se ajusten a tus necesidades.</p></li>
-        <li><span class="n">03</span><h3 data-t="proceso.paso3.titulo">Te presentamos las alternativas</h3><p data-t="proceso.paso3.texto">Seleccionamos las opciones más interesantes y te facilitamos información sobre sus características, estado, condiciones y coste de la operación.</p></li>
-        <li><span class="n">04</span><h3 data-t="proceso.paso4.titulo">Gestionamos la operación</h3><p data-t="proceso.paso4.texto">Una vez elegido el vehículo, coordinamos la compra, el transporte y la documentación necesaria hasta preparar su entrega.</p></li>
+      <ol class="proceso">
+        <li><span class="ic"><svg aria-hidden="true"><use href="#i-lupa"/></svg><b>1</b></span><p data-t="proceso.paso1">Comienza la búsqueda de tu vehículo</p></li>
+        <li><span class="ic"><svg aria-hidden="true"><use href="#i-charla"/></svg><b>2</b></span><p data-t="proceso.paso2">Nos contactas</p></li>
+        <li><span class="ic"><svg aria-hidden="true"><use href="#i-lista"/></svg><b>3</b></span><p data-t="proceso.paso3">Te enviamos propuestas según lo que necesitas</p></li>
+        <li><span class="ic"><svg aria-hidden="true"><use href="#i-trato"/></svg><b>4</b></span><p data-t="proceso.paso4">Si te convence, lo vemos juntos y, si también nos convence, trato hecho</p></li>
+        <li><span class="ic"><svg aria-hidden="true"><use href="#i-llave"/></svg><b>5</b></span><p data-t="proceso.paso5">Lo recibimos, revisamos, limpiamos y preparamos</p></li>
+        <li><span class="ic"><svg aria-hidden="true"><use href="#i-escudo"/></svg><b>6</b></span><p data-t="proceso.paso6">Te lo entregamos a tu nombre, con todo tramitado y 1 año de garantía mecánica</p></li>
       </ol>
+      <p class="financia"><svg aria-hidden="true"><use href="#i-euro"/></svg><span data-t="proceso.financiacion">Si lo necesitas, también te ayudamos con la financiación.</span></p>
     </div>
   </section>
 

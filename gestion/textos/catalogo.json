@@ -215,52 +215,46 @@
     "largo": false
    },
    {
-    "clave": "proceso.paso1.titulo",
-    "etiqueta": "Paso 1: título",
-    "defecto": "Nos cuentas qué necesitas",
+    "clave": "proceso.paso1",
+    "etiqueta": "Infografía: paso 1",
+    "defecto": "Comienza la búsqueda de tu vehículo",
     "largo": false
    },
    {
-    "clave": "proceso.paso1.texto",
-    "etiqueta": "Paso 1: texto",
-    "defecto": "Nos indicas el tipo de vehículo que buscas, tus preferencias, características y presupuesto aproximado.",
-    "largo": true
-   },
-   {
-    "clave": "proceso.paso2.titulo",
-    "etiqueta": "Paso 2: título",
-    "defecto": "Buscamos opciones",
+    "clave": "proceso.paso2",
+    "etiqueta": "Infografía: paso 2",
+    "defecto": "Nos contactas",
     "largo": false
    },
    {
-    "clave": "proceso.paso2.texto",
-    "etiqueta": "Paso 2: texto",
-    "defecto": "Consultamos nuestros contactos y proveedores en España y Europa para localizar vehículos que se ajusten a tus necesidades.",
-    "largo": true
-   },
-   {
-    "clave": "proceso.paso3.titulo",
-    "etiqueta": "Paso 3: título",
-    "defecto": "Te presentamos las alternativas",
+    "clave": "proceso.paso3",
+    "etiqueta": "Infografía: paso 3",
+    "defecto": "Te enviamos propuestas según lo que necesitas",
     "largo": false
    },
    {
-    "clave": "proceso.paso3.texto",
-    "etiqueta": "Paso 3: texto",
-    "defecto": "Seleccionamos las opciones más interesantes y te facilitamos información sobre sus características, estado, condiciones y coste de la operación.",
+    "clave": "proceso.paso4",
+    "etiqueta": "Infografía: paso 4",
+    "defecto": "Si te convence, lo vemos juntos y, si también nos convence, trato hecho",
     "largo": true
    },
    {
-    "clave": "proceso.paso4.titulo",
-    "etiqueta": "Paso 4: título",
-    "defecto": "Gestionamos la operación",
+    "clave": "proceso.paso5",
+    "etiqueta": "Infografía: paso 5",
+    "defecto": "Lo recibimos, revisamos, limpiamos y preparamos",
     "largo": false
    },
    {
-    "clave": "proceso.paso4.texto",
-    "etiqueta": "Paso 4: texto",
-    "defecto": "Una vez elegido el vehículo, coordinamos la compra, el transporte y la documentación necesaria hasta preparar su entrega.",
+    "clave": "proceso.paso6",
+    "etiqueta": "Infografía: paso 6",
+    "defecto": "Te lo entregamos a tu nombre, con todo tramitado y 1 año de garantía mecánica",
     "largo": true
+   },
+   {
+    "clave": "proceso.financiacion",
+    "etiqueta": "Nota de financiación bajo la infografía",
+    "defecto": "Si lo necesitas, también te ayudamos con la financiación.",
+    "largo": false
    }
   ]
  },
