@@ -36,6 +36,14 @@ button.mini{padding:8px 10px;font-size:13px}
 button:disabled{opacity:.55;cursor:default}
 .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;bottom:0;background:var(--bg);padding:12px 0;border-top:1px solid var(--line)}
 #msg{font-size:13.5px}#msg.ok{color:var(--ok)}#msg.bad{color:var(--bad)}
+.res{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:16px;display:grid;gap:14px;scroll-margin-top:70px}
+.res h2{font-size:16px;margin:0}.res p{margin:0;color:var(--muted);font-size:13.5px}
+.op{border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:10px}
+.op .g{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:8px}
+@media (max-width:620px){.op .g{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.op label{display:grid;gap:4px;font-size:12.5px;font-weight:600}
+select{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:transparent;color:inherit;width:100%}
+.res.cambiado{border-color:var(--accent)}
 [hidden]{display:none!important}
 </style></head><body>
 <header><a href="../">← Volver a la app</a><span style="display:flex;gap:14px;align-items:center"><a href="../empresa/">Datos de empresa</a><span style="font-weight:650">Textos de la web</span></span></header>
@@ -45,6 +53,10 @@ button:disabled{opacity:.55;cursor:default}
   <div class="herr"><input type="search" id="buscar" placeholder="Buscar un texto (p. ej. «garantía»)" aria-label="Buscar un texto"><a class="btn sec" id="ver" href="https://huelsanautomocion.com/" target="_blank" rel="noopener">Ver la web</a></div>
   <nav class="secs" id="secs" aria-label="Secciones"></nav>
   <form id="f" autocomplete="off"></form>
+  <section class="res" id="s-resenas" aria-labelledby="t-res"><h2 id="t-res">Opiniones de clientes</h2>
+    <p>Añade aquí solo opiniones reales, con el permiso del cliente (por ejemplo, copiadas de vuestra ficha de Google). Mientras no haya ninguna, el bloque «Opiniones» no aparece en la web.</p>
+    <div id="res-lista" style="display:grid;gap:10px"></div>
+    <div><button type="button" class="sec" id="res-add">Añadir opinión</button></div></section>
   <div class="bar"><button type="button" id="guardar" disabled>Guardar</button><button type="button" class="sec" id="deshacer" disabled>Descartar cambios</button><span id="msg" role="status">Cargando…</span></div>
 </main>
 <script>
@@ -53,6 +65,17 @@ const $=(s,r=document)=>r.querySelector(s);
 const msg=(t,c)=>{const m=$("#msg");m.textContent=t;m.className=c||""};
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let CAT=[],DOC={},ref=null;
+const resGuardadas=()=>Array.isArray(DOC.resenas)?DOC.resenas:[];
+function filaRes(r={}){const e=+r.estrellas||5;return`<div class="op"><div class="g">
+  <label>Nombre del cliente<input data-r="nombre" maxlength="60" value="${esc(r.nombre)}" placeholder="Ej. Antonio G."></label>
+  <label>Estrellas<select data-r="estrellas">${[5,4,3,2,1].map(n=>`<option value="${n}" ${n===e?"selected":""}>${"★".repeat(n)}</option>`).join("")}</select></label>
+  <label>Fecha<input data-r="fecha" maxlength="20" value="${esc(r.fecha)}" placeholder="Ej. Octubre 2026"></label>
+  <label>Dónde la dejó<input data-r="fuente" maxlength="30" value="${esc(r.fuente)}" placeholder="Ej. Google"></label></div>
+  <label>Opinión<textarea data-r="texto" rows="3" maxlength="600">${esc(r.texto)}</textarea></label>
+  <div><button type="button" class="sec mini" data-rquitar>Quitar</button></div></div>`}
+function pintarRes(lista=resGuardadas()){$("#res-lista").innerHTML=lista.length?lista.map(filaRes).join(""):`<p>Todavía no hay opiniones.</p>`}
+function leerRes(){return[...document.querySelectorAll("#res-lista .op")].map(o=>{const r={};o.querySelectorAll("[data-r]").forEach(i=>{r[i.dataset.r]=i.value.trim()});r.estrellas=+r.estrellas||5;return r}).filter(r=>r.nombre&&r.texto)}
+const cambiosRes=()=>JSON.stringify(leerRes())!==JSON.stringify(resGuardadas());
 const actual=k=>k.startsWith("@")?(DOC[k.slice(1)]||""):((DOC.textos||{})[k]||"");
 const defecto=k=>{for(const s of CAT)for(const c of s.campos)if(c.clave===k)return c.defecto||"";return""};
 function pintar(){
@@ -71,13 +94,17 @@ function marcar(){
     const guardado=actual(k)||d;const pers=v!==""&&v!==d;c.querySelector(".mod").hidden=!pers;
     c.querySelector("[data-original]").disabled=!pers&&v!=="";
     const camb=(v||d)!==guardado;c.classList.toggle("cambiado",camb);if(camb)n++});
+  const cr=cambiosRes();$("#s-resenas").classList.toggle("cambiado",cr);if(cr)n++;
   $("#guardar").disabled=!n;$("#deshacer").disabled=!n;
   $("#guardar").textContent=n?`Guardar ${n} ${n===1?"cambio":"cambios"}`:"Guardar";
   return n}
 $("#f").addEventListener("input",()=>{if(marcar())msg("Hay cambios sin guardar.")});
 $("#f").addEventListener("click",e=>{const b=e.target.closest("[data-original]");if(!b)return;
   const c=b.closest(".campo");const i=c.querySelector("input,textarea");i.value=defecto(c.dataset.clave);i.focus();if(marcar())msg("Hay cambios sin guardar.")});
-$("#deshacer").onclick=()=>{pintar();aplicarBusqueda();msg("Cambios descartados.")};
+$("#s-resenas").addEventListener("input",()=>{if(marcar())msg("Hay cambios sin guardar.")});
+$("#res-add").onclick=()=>{const l=$("#res-lista");if(!l.querySelector(".op"))l.innerHTML="";l.insertAdjacentHTML("beforeend",filaRes());l.lastElementChild.querySelector("input").focus()};
+$("#res-lista").addEventListener("click",e=>{const b=e.target.closest("[data-rquitar]");if(!b)return;b.closest(".op").remove();if(!$("#res-lista .op"))pintarRes([]);if(marcar())msg("Hay cambios sin guardar.");else msg("")});
+$("#deshacer").onclick=()=>{pintarRes();pintar();aplicarBusqueda();msg("Cambios descartados.")};
 function aplicarBusqueda(){const q=$("#buscar").value.trim().toLowerCase();
   document.querySelectorAll(".campo").forEach(c=>{c.hidden=!!q&&!(c.textContent+" "+valor(c)).toLowerCase().includes(q)});
   document.querySelectorAll("fieldset").forEach(f=>{f.hidden=!f.querySelector(".campo:not([hidden])")})}
@@ -89,10 +116,10 @@ $("#guardar").onclick=async()=>{
   document.querySelectorAll(".campo").forEach(c=>{const k=c.dataset.clave,v=valor(c),d=defecto(k);
     const final=v===d?"":v;
     if(k.startsWith("@"))patch[k.slice(1)]=final;else if(final)textos[k]=final});
-  patch.textos=textos;
+  patch.textos=textos;patch.resenas=leerRes();
   try{
     try{await ref.update(patch)}catch(err){if(err.code!=="not-found")throw err;await ref.set(patch)}
-    Object.assign(DOC,patch);pintar();aplicarBusqueda();
+    Object.assign(DOC,patch);pintarRes();pintar();aplicarBusqueda();
     msg("Guardado. Recarga huelsanautomocion.com para verlo.","ok")}
   catch(err){msg("No se ha podido guardar: "+err.message,"bad");marcar()}};
 (async()=>{
@@ -100,7 +127,7 @@ $("#guardar").onclick=async()=>{
     const [cat,db]=await Promise.all([fetch("catalogo.json",{cache:"no-cache"}).then(r=>r.json()),window.claude.use("db")]);
     CAT=cat;ref=db.doc("web/empresa");
     const sn=await ref.get();DOC=sn.exists?sn.data():{};
-    pintar();msg("Los campos marcados «Personalizado» tienen un texto distinto del original.")
+    pintarRes();pintar();msg("Los campos marcados «Personalizado» tienen un texto distinto del original.")
   }catch(e){msg("No se han podido cargar los textos: "+e.message,"bad")}
 })();
 </script></body></html>
