@@ -172,7 +172,8 @@ function camposDe(l,g){
   const r={...base,...g};if(!Array.isArray(r.iconos))r.iconos=base.iconos;return r;
 }
 async function cargarLotes(){
-  const filas=await HUELSAN.rest("/rest/v1/lotes?select=id,data&or=(estado.in.(comprado,stock,vendido,interesante,pujar),publico.is.true)&order=actualizado.desc&limit=600");
+  // de la copia local de la app (no gasta tráfico si ya está al día)
+  const sn=await S.db.collection("lotes").get();const filas=sn.docs.map(d=>({id:d.id,data:d.data()})).filter(f=>["comprado","stock","vendido","interesante","pujar"].includes(f.data.estado)||f.data.publico===true);
   S.lotes=(filas||[]).map(f=>({...f.data,id:f.id}));
   try{const e=await HUELSAN.rest("/rest/v1/ajustes?select=data&id=eq.web%2Fempresa");S.empresa=(e&&e[0]&&e[0].data)||{}}catch(err){}
   pintarLista();pintarTodos();

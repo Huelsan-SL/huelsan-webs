@@ -106,8 +106,8 @@ const gastoCuota=g=>g.regimen==="General"?r2(g.cuota):0;
   }catch(e){$("#vista").innerHTML=`<div class="aviso bad">No se ha podido cargar la facturación: ${esc(e.message)}</div>`}
 })();
 async function cargarLotes(){
-  try{const f=await HUELSAN.rest("/rest/v1/lotes?select=id,data&or=(estado.in.(comprado,stock,vendido,pujar,interesante),publico.is.true)&order=actualizado.desc&limit=1000");
-    S.lotes=(f||[]).map(x=>({...x.data,id:x.id}))}catch(e){S.lotes=[]}
+  try{const sn=await S.db.collection("lotes").get(); // copia local de la app
+    S.lotes=sn.docs.map(d=>({...d.data(),id:d.id})).filter(l=>["comprado","stock","vendido","pujar","interesante"].includes(l.estado)||l.publico===true)}catch(e){S.lotes=[]}
 }
 async function prellenarEmisor(){
   try{const e=await HUELSAN.rest("/rest/v1/ajustes?select=data&id=eq.web%2Fempresa");const d=(e&&e[0]&&e[0].data)||{};

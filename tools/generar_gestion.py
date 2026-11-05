@@ -70,5 +70,10 @@ rep('return`<div class="thumb">${carSvg}</div>`}', 'if((l.fotoIds||[]).length)re
 rep('para futuras pujas.</p></div></div>', 'para futuras pujas.</p></div></div>${typeof histPanel==="function"?histPanel():""}')
 rep("</script>\n\n\n</body></html>", "</script>\n" + pathlib.Path(__file__).with_name("historico_panel.js").read_text(encoding="utf-8").join(["<script>\n","</script>\n"]) + "\n</body></html>")
 
+# Pestañas: «Facturación» a la vista y «Histórico» al menú (la pestaña sigue existiendo, oculta)
+rep('<button role="tab" data-tab="historico" aria-selected="false">Histórico<span class="count" id="c-historico"></span></button>',
+    '<button role="tab" data-tab="historico" aria-selected="false" hidden>Histórico<span class="count" id="c-historico"></span></button><button type="button" onclick="location.href=\'facturacion/\'">Facturación</button>')
+rep('<a href="facturacion/">Facturación</a>','<a href="#" onclick="document.querySelector(\'[data-tab=historico]\').click();this.closest(\'details\').open=false;return false">Histórico de subastas</a><a href="facturacion/">Facturación</a>')
+
 out.write_text(s, encoding="utf-8")
 print("ok", out, len(s))

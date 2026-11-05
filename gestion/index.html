@@ -291,14 +291,14 @@ tbody tr:hover{background:var(--sunk)}
 <header class="top">
   <div class="top-in">
     <div class="brand"><svg class="logo-sym" viewBox="3 3 58 49" aria-hidden="true"><path d="M8.6 49.5 A27 27 0 1 1 55.4 49.5" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><path d="M55.4 22.5 A27 27 0 0 1 56.47 43.41" fill="none" class="lgs" stroke-width="4.5" stroke-linecap="round"/><path d="M13.340 45.510 L16.660 50.490 L17.500 49.874 L17.500 42.998 Z" class="lgf"/><path d="M28.500 41.806 L35.500 36.672 L35.500 32.130 L28.500 36.357 Z" class="lgf"/><path d="M46.500 28.604 L48.960 26.800 L47.640 24.800 L46.500 25.488 Z" class="lgf"/><rect x="19" y="22" width="8" height="28" fill="currentColor"/><rect x="37" y="22" width="8" height="28" fill="currentColor"/><circle cx="15" cy="48" r="3.0" fill="currentColor"/></svg><span class="brand-txt">HUELSAN <small>Automoción</small></span></div>
-    <div class="status" id="status">Conectando…</div><details class="hmenu"><summary class="btn">Menú ▾</summary><nav><a href="folleto/">Estudio de fotos y folletos</a><a href="anuncios/">Anuncios en portales</a><a href="facturacion/">Facturación</a><a href="textos/">Textos de la web</a><a href="empresa/">Datos de empresa</a><a href="https://huelsanautomocion.com" target="_blank" rel="noopener">Ver la web pública</a><button type="button" data-instalar hidden onclick="HUELSAN_INSTALAR()">Instalar app en este dispositivo</button><button type="button" id="salir" onclick="HUELSAN_SALIR()">Salir</button></nav></details>
+    <div class="status" id="status">Conectando…</div><details class="hmenu"><summary class="btn">Menú ▾</summary><nav><a href="folleto/">Estudio de fotos y folletos</a><a href="anuncios/">Anuncios en portales</a><a href="#" onclick="document.querySelector('[data-tab=historico]').click();this.closest('details').open=false;return false">Histórico de subastas</a><a href="facturacion/">Facturación</a><a href="textos/">Textos de la web</a><a href="empresa/">Datos de empresa</a><a href="https://huelsanautomocion.com" target="_blank" rel="noopener">Ver la web pública</a><button type="button" data-instalar hidden onclick="HUELSAN_INSTALAR()">Instalar app en este dispositivo</button><button type="button" id="salir" onclick="HUELSAN_SALIR()">Salir</button></nav></details>
   </div>
   <nav class="tabs" role="tablist" id="tabs">
     <button role="tab" data-tab="subastas" aria-selected="true">Subastas<span class="count" id="c-subastas"></span></button>
     <button role="tab" data-tab="interesantes" aria-selected="false">Interesantes<span class="count" id="c-interesantes"></span></button>
     <button role="tab" data-tab="stock" aria-selected="false">Stock<span class="count" id="c-stock"></span></button>
     <button role="tab" data-tab="clientes" aria-selected="false">Clientes<span class="count" id="c-clientes"></span></button>
-    <button role="tab" data-tab="historico" aria-selected="false">Histórico<span class="count" id="c-historico"></span></button>
+    <button role="tab" data-tab="historico" aria-selected="false" hidden>Histórico<span class="count" id="c-historico"></span></button><button type="button" onclick="location.href='facturacion/'">Facturación</button>
     <button role="tab" data-tab="publico" aria-selected="false">Vista previa web</button>
   </nav>
 </header>

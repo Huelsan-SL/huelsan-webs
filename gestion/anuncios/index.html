@@ -105,7 +105,7 @@ const anuncio=l=>({...anuncioBase(l),...(l.anuncio||{})});
 
 /* ---------- datos ---------- */
 async function cargar(){
-  const filas=await HUELSAN.rest("/rest/v1/lotes?select=id,data&or=(estado.in.(comprado,stock,vendido),publico.is.true)&order=actualizado.desc&limit=400");
+  const sn=await S.db.collection("lotes").get();const filas=sn.docs.map(d=>({id:d.id,data:d.data()})).filter(f=>["comprado","stock","vendido"].includes(f.data.estado)||f.data.publico===true); // copia local
   S.lotes=(filas||[]).map(f=>({...f.data,id:f.id})).filter(l=>l.estado!=="vendido"||publicados(l).length);
   try{const e=await HUELSAN.rest("/rest/v1/ajustes?select=data&id=eq.web%2Fempresa");S.empresa=(e&&e[0]&&e[0].data)||{}}catch(err){}
   pintarLista();avisoRetirar();
