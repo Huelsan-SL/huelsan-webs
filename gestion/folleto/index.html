@@ -73,8 +73,8 @@ details{border-top:1px solid var(--line);padding-top:10px}summary{cursor:pointer
   <h2>2 · Fotos</h2>
   <p class="muted">Las fotos del folleto y de la web pública son las de «Fotos para la web». Pulsa «Preparar» en cualquier foto para ponerla delante del escaparate, mejorarla y tapar la matrícula.</p>
   <div class="row"><button class="btn" id="b-bca">Traer fotos de BCA (máxima calidad)</button><label class="btn" style="display:inline-block">Subir fotos<input type="file" id="f-subir" accept="image/*" multiple hidden></label></div>
-  <div><b style="font-size:13px">Fotos disponibles</b><div class="fotos" id="g-orig"></div></div>
-  <div><b style="font-size:13px">Fotos para la web y el folleto</b> <span class="muted">(la nº 1 es la principal · arrastra para cambiar el orden)</span><div class="fotos" id="g-web"></div></div>
+  <div><b style="font-size:13px">Fotos del coche</b> <span class="muted">(las subidas y las de BCA; no salen en la web hasta pulsar «Preparar» o «A la web»)</span><div class="fotos" id="g-orig"></div></div>
+  <div><div class="row" style="justify-content:space-between"><span><b style="font-size:13px">Fotos que salen en la web y en el folleto</b> <span class="muted">(la nº 1 es la principal · arrastra para cambiar el orden · «Quitar» la retira de la web)</span></span><button class="btn" id="b-quitar-todas" hidden>Quitar todas de la web</button></div><div class="fotos" id="g-web"></div></div>
 
   <h2>3 · Textos</h2>
   <div class="g2"><label>Marca<input data-f="marca"></label><label>Modelo<input data-f="modelo"></label></div>
@@ -173,7 +173,9 @@ function camposDe(l,g){
 }
 async function cargarLotes(){
   // de la copia local de la app (no gasta tráfico si ya está al día)
-  const sn=await S.db.collection("lotes").get();const filas=sn.docs.map(d=>({id:d.id,data:d.data()})).filter(f=>["comprado","stock","vendido","interesante","pujar"].includes(f.data.estado)||f.data.publico===true);
+  // Solo los coches en stock (o comprados) y los interesantes cuya subasta sigue abierta
+  const ahora=Date.now(),abierta=d=>{const fin=d.subasta&&d.subasta.fin;return !fin||Date.parse(fin)>ahora};
+  const sn=await S.db.collection("lotes").get();const filas=sn.docs.map(d=>({id:d.id,data:d.data()})).filter(f=>["comprado","stock"].includes(f.data.estado)||(["interesante","pujar"].includes(f.data.estado)&&abierta(f.data)));
   S.lotes=(filas||[]).map(f=>({...f.data,id:f.id}));
   try{const e=await HUELSAN.rest("/rest/v1/ajustes?select=data&id=eq.web%2Fempresa");S.empresa=(e&&e[0]&&e[0].data)||{}}catch(err){}
   pintarLista();pintarTodos();
@@ -211,8 +213,9 @@ function fotosOrigen(l){
 function pintarFotos(){
   const l=S.lote;if(!l)return;
   const o=fotosOrigen(l);
-  $("#g-orig").innerHTML=o.length?o.map((f,i)=>`<div class="foto"><img src="${esc(f.src)}" alt="" loading="lazy"><div class="acc"><button data-prep="${i}">Preparar</button></div></div>`).join(""):`<p class="muted">Sin fotos. Usa «Traer fotos de BCA» o «Subir fotos».</p>`;
-  $("#g-web").innerHTML=S.webFotos.length?S.webFotos.map((n,i)=>`<div class="foto" data-i="${i}" data-n="${esc(n)}" title="Arrastra para cambiar el orden"><span class="n">${i+1}</span><img src="${esc(urlWeb(n))}" alt="" loading="lazy"><div class="acc"><button data-quitar="${i}">Quitar</button></div></div>`).join(""):`<p class="muted">Aún no hay fotos preparadas.</p>`;
+  $("#g-orig").innerHTML=o.length?o.map((f,i)=>`<div class="foto"><img src="${esc(f.src)}" alt="" loading="lazy"><div class="acc"><button data-prep="${i}" title="Tapar matrícula, quitar fondo, mejorar">Preparar</button><button data-tal="${i}" title="Añadir a la web sin retocar">A la web</button></div></div>`).join(""):`<p class="muted">Sin fotos. Usa «Traer fotos de BCA» o «Subir fotos».</p>`;
+  $("#g-web").innerHTML=S.webFotos.length?S.webFotos.map((n,i)=>`<div class="foto" data-i="${i}" data-n="${esc(n)}" title="Arrastra para cambiar el orden"><span class="n">${i+1}</span><img src="${esc(urlWeb(n))}" alt="" loading="lazy"><div class="acc"><button data-quitar="${i}">Quitar</button></div></div>`).join(""):`<p class="muted">Ninguna foto sale en la web. Pulsa «Preparar» o «A la web» en las fotos de arriba.</p>`;
+  $("#b-quitar-todas").hidden=!S.webFotos.length;
 }
 function b64Blob(b64,tipo){const s=atob(b64),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return new Blob([u],{type:tipo||"image/jpeg"})}
 function extPedir(tipo,extra){return new Promise((res,rej)=>{if(!document.documentElement.dataset.huelsanExt){rej(new Error("Para traer fotos de BCA instala la extensión «Huelsan · Recogida BCA» (versión 1.1 o posterior) en este navegador."));return}
@@ -242,11 +245,18 @@ $("#b-bca").onclick=async()=>{
   finally{b.disabled=false;pintarFotos()}};
 $("#f-subir").onchange=async e=>{const l=S.lote;if(!l)return msg("Elige un coche","bad");const files=[...e.target.files];e.target.value="";
   const ids=[];try{for(const f of files){msg(`Subiendo ${ids.length+1} de ${files.length}…`);ids.push((await HUELSAN.subir("fotos",await reducir(f,3000))).id)}
-    const fotos=[...(l.fotos||[]),...ids];await S.db.doc("lotes/"+l.id).update({fotos});l.fotos=fotos;msg(`${ids.length} fotos subidas.`,"ok")}
+    const fotos=[...(l.fotos||[]),...ids];await S.db.doc("lotes/"+l.id).update({fotos});l.fotos=fotos;msg(`${ids.length} fotos subidas. Para que salgan en la web pulsa «Preparar» (tapar matrícula, fondo…) o «A la web» en cada una.`,"ok")}
   catch(err){msg(err.message,"bad")}finally{pintarFotos()}};
 async function reducir(blob,max){const bm=await createImageBitmap(blob);const k=Math.min(1,max/Math.max(bm.width,bm.height));
   const c=document.createElement("canvas");c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);const x=c.getContext("2d");x.imageSmoothingQuality="high";x.drawImage(bm,0,0,c.width,c.height);
   return await new Promise(r=>c.toBlob(r,"image/jpeg",.93))}
+
+async function guardarWeb(ok){try{await S.db.doc("lotes/"+S.lote.id).update({fotosWeb:S.webFotos});S.lote.fotosWeb=[...S.webFotos];msg(ok+" La web lo muestra al recargarla.","ok")}catch(err){msg("No se ha podido guardar: "+err.message,"bad")}}
+async function usarTalCual(f,b){if(!f||!S.lote)return;b.disabled=true;msg("Añadiendo la foto a la web…");
+  try{const blob=await reducir(await blobDe(f),2400);const r=await HUELSAN.subir("fotos-web",blob);S.webFotos.push(r.id);pintarFotos();dibujar();
+    await guardarWeb("Foto añadida a la web tal cual: comprueba que no se lee la matrícula (si se lee, quítala y usa «Preparar»).")}
+  catch(e){msg("No se ha podido añadir: "+e.message,"bad")}finally{b.disabled=false}}
+$("#b-quitar-todas").onclick=async()=>{if(!S.lote||!S.webFotos.length)return;S.webFotos=[];pintarFotos();dibujar();await guardarWeb("Todas las fotos retiradas de la web.")};
 
 /* Ordenar «Fotos para la web» arrastrando (ratón y dedo) */
 let AR=null;
@@ -268,7 +278,8 @@ document.addEventListener("click",async e=>{
   const t=e.target;
   const p=t.closest("[data-prep]");if(p){abrirEditor(fotosOrigen(S.lote)[+p.dataset.prep]);return}
   const qt=t.closest("[data-quitar]");
-  if(qt){S.webFotos.splice(+qt.dataset.quitar,1);pintarFotos();dibujar();try{await S.db.doc("lotes/"+S.lote.id).update({fotosWeb:S.webFotos});S.lote.fotosWeb=[...S.webFotos]}catch(err){}return}
+  if(qt){S.webFotos.splice(+qt.dataset.quitar,1);pintarFotos();dibujar();await guardarWeb("Foto retirada de la web.");return}
+  const tl=t.closest("[data-tal]");if(tl){usarTalCual(fotosOrigen(S.lote)[+tl.dataset.tal],tl);return}
   const fm=t.closest("[data-fmt]");if(fm){S.fmt=fm.dataset.fmt;$$("[data-fmt]").forEach(b=>b.setAttribute("aria-pressed",b===fm));dibujar();return}
   const ab=t.closest("[data-fol-abrir]");if(ab){const[lid,fid]=ab.dataset.folAbrir.split("|");if(!S.lote||S.lote.id!==lid){$("#sel").value=lid;await elegir(lid,fid)}else abrirFolleto((S.lote.folletos||[]).find(x=>x.id===fid));return}
   const bj=t.closest("[data-fol-bajar]");if(bj){const[lid,fid]=bj.dataset.folBajar.split("|");const l=S.lotes.find(x=>x.id===lid);const f=l&&(l.folletos||[]).find(x=>x.id===fid);if(f&&f.img){const a=document.createElement("a");a.href=urlWeb(f.img);a.download=nombreArchivo("jpg",f);a.target="_blank";a.click()}return}
