@@ -7,7 +7,7 @@
 // Secretos (Edge Functions → Secrets):
 //   RESEND_API_KEY  clave de Resend (obligatoria)
 //   AVISO_EMAIL     a quién avisar; varios separados por comas (por defecto huelsan26@gmail.com)
-//   AVISO_FROM      remitente; hasta verificar el dominio en Resend usar «Huelsan web <onboarding@resend.dev>»
+//   AVISO_FROM      remitente (opcional; por defecto avisos@huelsanautomocion.com, dominio verificado en Resend)
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     method: "POST",
     headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
     body: JSON.stringify({
-      from: Deno.env.get("AVISO_FROM") || "Huelsan web <onboarding@resend.dev>",
+      from: Deno.env.get("AVISO_FROM") || "Huelsan Automoción <avisos@huelsanautomocion.com>",
       to: para,
       reply_to: d.email || undefined,
       subject: `Nueva solicitud web: ${String(d.nombre || "").slice(0, 60)}${d.marca ? " · " + String(d.marca).slice(0, 60) : ""}`,
