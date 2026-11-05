@@ -69,7 +69,7 @@ function seCargaAlInicio(d){
    Para gastar poco tráfico de Supabase: la primera vez se descarga la tabla entera y se guarda en el navegador.
    Las siguientes veces (y al reconectar) solo se piden las filas cambiadas desde la última sincronización
    (columna «actualizado») y la lista de ids para quitar las borradas. */
-const CACHE_V=1;const sync={};
+const CACHE_V=2;const sync={};
 const IDB=(()=>{let db=null;const abrir=()=>db||(db=new Promise((ok,ko)=>{try{const r=indexedDB.open("huelsan-cache",1);r.onupgradeneeded=()=>r.result.createObjectStore("tablas");r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error)}catch(e){ko(e)}}));
   return{async get(k){try{const d=await abrir();return await new Promise(ok=>{const q=d.transaction("tablas").objectStore("tablas").get(k);q.onsuccess=()=>ok(q.result||null);q.onerror=()=>ok(null)})}catch(e){return null}},
     async set(k,v){try{const d=await abrir();await new Promise(ok=>{const t=d.transaction("tablas","readwrite");t.objectStore("tablas").put(v,k);t.oncomplete=ok;t.onerror=ok;t.onabort=ok})}catch(e){}},
@@ -105,7 +105,7 @@ async function delta(tabla){
 }
 // Quita de la copia local lo que ya no existe en la base de datos (borrado o archivado)
 async function reconciliar(tabla){
-  const m=cache[tabla];if(!m)return;const ids=new Set();const N=5000;let ultimo=null;
+  const m=cache[tabla];if(!m)return;const ids=new Set();const N=1000;let ultimo=null; // Supabase devuelve como mucho 1000 filas por petición
   for(;;){const filas=await pedir(`/rest/v1/${tabla}?select=id&order=id&limit=${N}`+(ultimo!=null?`&id=gt.${enc(ultimo)}`:""));filas.forEach(f=>ids.add(f.id));if(filas.length<N)break;ultimo=filas[filas.length-1].id}
   for(const id of [...m.keys()])if(!ids.has(id))m.delete(id);
 }
