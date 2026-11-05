@@ -47,7 +47,7 @@ begin
 
   -- Límites contra abusos: 20 solicitudes por hora en total y 3 al día por teléfono
   if (select count(*) from public.demandas where id like 'web-%' and actualizado > now() - interval '1 hour') >= 20 then
-    raise exception 'Ahora mismo estamos recibiendo muchas solicitudes. Inténtalo de nuevo en un rato o escríbenos por WhatsApp.';
+    raise exception 'Ahora mismo estamos recibiendo muchas solicitudes. Inténtalo de nuevo en un rato.';
   end if;
   if (select count(*) from public.demandas
        where id like 'web-%' and actualizado > now() - interval '1 day'

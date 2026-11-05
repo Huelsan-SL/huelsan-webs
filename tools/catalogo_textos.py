@@ -36,14 +36,15 @@ SECCIONES = [
 ]
 EXTRA = {"seo.titulo": "Título de la pestaña y de Google", "seo.descripcion": "Descripción en Google"}
 AYUDA = {
-    "inicio.zonas": "{zonas} se sustituye por las zonas de los contactos",
-    "quienes.zona": "{zonas} se sustituye por las zonas de los contactos",
+    "inicio.zonas": "{zonas} se sustituye por las zonas de trabajo",
+    "quienes.zona": "{zonas} se sustituye por las zonas de trabajo",
     "form.rgpd": "lo que va entre llaves { } es el enlace a la política de privacidad",
     "estado.stock": "también en los filtros y las fichas",
-    "zona.intro": "{zonas} se sustituye por las zonas de los contactos",
+    "zona.intro": "{zonas} se sustituye por las zonas de trabajo",
+    "zona.lista": "separadas por comas y «y»; salen en la portada, Quiénes somos, Área de servicio y el pie",
 }
 ETIQ = {
-    "menu.whatsapp": "Botón WhatsApp", "inicio.titular": "Titular", "encargo.lista.nota": "Frase bajo la lista", "zona.intro": "Introducción", "inicio.texto": "Texto bajo el titular", "inicio.zonas": "Frase de zonas",
+    "menu.whatsapp": "Botón WhatsApp", "inicio.titular": "Titular", "encargo.lista.nota": "Frase bajo la lista", "zona.intro": "Introducción", "zona.lista": "Zonas de trabajo", "menu.boton": "Botón de la cabecera", "inicio.texto": "Texto bajo el titular", "inicio.zonas": "Frase de zonas",
     "inicio.boton1": "Botón principal", "inicio.boton2": "Botón secundario",
     "encargo.p4": "Frase destacada", "encargo.lista.titulo": "Título de la lista",
     "stock.aviso": "Aviso bajo el listado", "quienes.lema": "Frase final", "quienes.zona": "Frase de zonas",

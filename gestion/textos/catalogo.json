@@ -12,7 +12,7 @@
    {
     "clave": "seo.descripcion",
     "etiqueta": "Descripción en Google",
-    "defecto": "Compraventa y búsqueda personalizada de vehículos: coches, furgonetas, motocicletas y otros vehículos. Atención en Murcia, Alicante, Huelva y Sevilla.",
+    "defecto": "Compraventa y búsqueda personalizada de vehículos: coches, furgonetas, motocicletas y otros vehículos. Atención en Andalucía, Murcia y Alicante.",
     "largo": true
    }
   ]
@@ -52,9 +52,9 @@
     "largo": false
    },
    {
-    "clave": "menu.whatsapp",
-    "etiqueta": "Botón WhatsApp",
-    "defecto": "WhatsApp",
+    "clave": "menu.boton",
+    "etiqueta": "Botón de la cabecera",
+    "defecto": "Solicitar búsqueda",
     "largo": false
    }
   ]
@@ -110,7 +110,7 @@
     "etiqueta": "Frase de zonas",
     "defecto": "Trabajamos en {zonas}.",
     "largo": false,
-    "ayuda": "{zonas} se sustituye por las zonas de los contactos"
+    "ayuda": "{zonas} se sustituye por las zonas de trabajo"
    }
   ]
  },
@@ -556,7 +556,7 @@
     "etiqueta": "Frase de zonas",
     "defecto": "Trabajamos principalmente en {zonas}, ofreciendo atención personalizada durante todo el proceso.",
     "largo": true,
-    "ayuda": "{zonas} se sustituye por las zonas de los contactos"
+    "ayuda": "{zonas} se sustituye por las zonas de trabajo"
    }
   ]
  },
@@ -910,7 +910,7 @@
    {
     "clave": "form.alternativa",
     "etiqueta": "Texto tras un error de envío",
-    "defecto": "También puedes escribirnos por WhatsApp.",
+    "defecto": "Inténtalo de nuevo en unos minutos.",
     "largo": false
    },
    {
@@ -938,6 +938,13 @@
     "largo": true
    },
    {
+    "clave": "zona.lista",
+    "etiqueta": "Zonas de trabajo",
+    "defecto": "Andalucía, Murcia y Alicante",
+    "largo": false,
+    "ayuda": "separadas por comas y «y»; salen en la portada, Quiénes somos, Área de servicio y el pie"
+   },
+   {
     "clave": "zona.atencion",
     "etiqueta": "Ciudad sin contacto asignado",
     "defecto": "Atención personalizada",
@@ -948,31 +955,7 @@
     "etiqueta": "Introducción",
     "defecto": "Ofrecemos atención personalizada principalmente en {zonas}.",
     "largo": false,
-    "ayuda": "{zonas} se sustituye por las zonas de los contactos"
-   },
-   {
-    "clave": "zona.correo",
-    "etiqueta": "Frase antes del correo",
-    "defecto": "También puedes escribirnos a",
-    "largo": false
-   }
-  ]
- },
- {
-  "seccion": "WhatsApp",
-  "ancla": "whatsapp",
-  "campos": [
-   {
-    "clave": "whatsapp.saludo",
-    "etiqueta": "Mensaje que se escribe al abrir WhatsApp",
-    "defecto": "Hola, os escribo desde la web de Huelsan Automoción.",
-    "largo": false
-   },
-   {
-    "clave": "whatsapp.sin",
-    "etiqueta": "Menú sin WhatsApp configurado",
-    "defecto": "Escríbenos desde el formulario",
-    "largo": false
+    "ayuda": "{zonas} se sustituye por las zonas de trabajo"
    }
   ]
  },
@@ -1031,7 +1014,7 @@
    {
     "clave": "faq.3.r",
     "etiqueta": "Respuesta 3",
-    "defecto": "Trabajamos con proveedores y profesionales en España y Europa, con atención comercial principalmente en Murcia, Alicante, Huelva y Sevilla.",
+    "defecto": "Trabajamos con proveedores y profesionales en España y Europa, con atención comercial principalmente en Andalucía, Murcia y Alicante.",
     "largo": true
    },
    {
@@ -1092,12 +1075,6 @@
     "clave": "final.boton1",
     "etiqueta": "Botón 1",
     "defecto": "Contactar",
-    "largo": false
-   },
-   {
-    "clave": "final.boton2",
-    "etiqueta": "Botón 2",
-    "defecto": "Hablar por WhatsApp",
     "largo": false
    }
   ]
