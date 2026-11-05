@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
   const tel34 = tel.length === 9 ? "34" + tel : tel;
   const html = `<div style="font-family:Arial,sans-serif;font-size:15px;color:#14243A;max-width:560px">
     <h2 style="color:#0E2A47;margin:0 0 6px">Nueva solicitud desde la web</h2>
-    <p style="margin:0 0 14px;color:#5A6B7F">Un cliente ha rellenado «¿Qué coche estás buscando?». Ya está en la app, pestaña Clientes.</p>
+    <p style="margin:0 0 14px;color:#5A6B7F">Un cliente ha rellenado «Solicita tu búsqueda personalizada». Ya está en la app, pestaña Clientes.</p>
     <table style="border-collapse:collapse;margin-bottom:14px">${tabla}</table>
     <div style="background:#F3F6F9;border-radius:10px;padding:12px 14px;white-space:pre-line">${esc(d.notas || "Sin más detalles.")}</div>
     <p style="margin:16px 0 0">${tel ? `<a href="tel:+${tel34}" style="color:#178643;font-weight:bold">Llamar</a> · <a href="https://wa.me/${tel34}" style="color:#178643;font-weight:bold">WhatsApp</a>` : ""}${d.email ? ` · <a href="mailto:${esc(d.email)}" style="color:#178643;font-weight:bold">Responder por correo</a>` : ""}</p>

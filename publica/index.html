@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Huelsan Automoción · Búsqueda de coches por encargo</title>
-<meta name="description" content="Dinos qué coche quieres y cuánto quieres invertir: lo buscamos en España y Europa y nos encargamos de todo hasta la entrega. Murcia, Alicante, Huelva y Sevilla.">
+<title>Huelsan Automoción · Compraventa y búsqueda de vehículos</title>
+<meta name="description" content="Compraventa y búsqueda personalizada de vehículos: coches, furgonetas, motocicletas y otros vehículos. Atención en Murcia, Alicante, Huelva y Sevilla.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#0E2A47">
 <meta property="og:title" content="Huelsan Automoción">
-<meta property="og:description" content="El coche que buscas. El presupuesto que tienes. Nosotros lo encontramos.">
+<meta property="og:description" content="Compraventa y búsqueda personalizada de vehículos en España y Europa.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="es_ES">
 <style>
@@ -42,6 +42,7 @@ h3{font-size:19px;font-weight:700}
 .eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:12.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
 .eyebrow::before{content:"";width:26px;height:2px;background:var(--gold)}
 .lead{color:var(--muted);max-width:64ch;margin:12px 0 0;font-size:17px}
+.lead+.lead{margin-top:8px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;border:2px solid transparent;padding:13px 22px;border-radius:999px;font-weight:700;font-size:15.5px;cursor:pointer;text-decoration:none;transition:transform .12s,background .12s;line-height:1.2;text-align:center}
 .btn:hover{transform:translateY(-1px)}
 .btn.verde{background:var(--green);color:#fff;box-shadow:0 8px 20px rgba(30,158,82,.28)}
@@ -88,8 +89,6 @@ nav.menu a:hover{border-color:var(--green)}
 @media (max-width:760px){.hero::after{background:linear-gradient(180deg,rgba(9,28,49,.72),rgba(9,28,49,.9))}}
 .hero-in{padding-block:clamp(64px,10vw,124px) clamp(56px,8vw,96px)}
 .hero h1{font-size:clamp(34px,5.4vw,62px);font-weight:800;letter-spacing:-.025em;line-height:1.06;max-width:15em;color:#fff}
-.hero h1 span{display:block}
-.hero h1 .verde{color:#4CD38A}
 .hero p.sub{font-size:clamp(17px,1.9vw,20px);color:rgba(255,255,255,.88);max-width:46ch;margin:22px 0 30px}
 .hero .ctas{display:flex;gap:12px;flex-wrap:wrap}
 .hero .sellos{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:30px;font-weight:600;font-size:15px}
@@ -117,6 +116,7 @@ nav.menu a:hover{border-color:var(--green)}
 .tipos ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
 .tipos li{display:flex;gap:12px;align-items:center;font-weight:600;background:rgba(255,255,255,.07);border-radius:12px;padding:11px 14px}
 .tipos li svg{width:20px;height:20px;color:#4CD38A;flex:none}
+.tipos .tipos-nota{margin:0;color:rgba(255,255,255,.8);font-size:15px}
 
 /* proceso */
 .pasos{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
@@ -156,9 +156,7 @@ nav.menu a:hover{border-color:var(--green)}
 .aviso-stock b{font-size:19px}
 
 /* quiénes somos */
-.about{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:44px;align-items:start}
-@media (max-width:900px){.about{grid-template-columns:minmax(0,1fr)}}
-.about p{margin:0 0 14px;color:var(--muted);max-width:66ch}
+.about p{margin:0 0 14px;color:var(--muted);max-width:72ch}
 .about .destacado{color:var(--ink);font-weight:700}
 .firma{background:var(--gold-soft);border-left:4px solid var(--gold);border-radius:12px;padding:20px 22px;display:grid;gap:8px}
 .firma b{font-size:20px;line-height:1.3}
@@ -173,7 +171,7 @@ nav.menu a:hover{border-color:var(--green)}
 .form-zona h2{color:#fff}.form-zona .lead{color:rgba(255,255,255,.82)}
 .form-grid{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:40px;align-items:start}
 @media (max-width:960px){.form-grid{grid-template-columns:minmax(0,1fr)}}
-.form-lado{display:grid;gap:16px}
+.form-lado{display:grid;gap:16px;align-content:start}
 @media (min-width:961px){.form-lado{position:sticky;top:110px}}
 .form-lado .punto{display:flex;gap:12px;align-items:flex-start;color:rgba(255,255,255,.9)}
 .form-lado .punto svg{width:22px;height:22px;color:#4CD38A;flex:none;margin-top:2px}
@@ -335,129 +333,68 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
   <div class="hero" id="inicio">
     <div class="hero-foto"><img src="https://images.unsplash.com/photo-1627003694344-78dd6a3a7566?w=1920&q=70&auto=format&fit=crop" srcset="https://images.unsplash.com/photo-1627003694344-78dd6a3a7566?w=900&q=70&auto=format&fit=crop 900w, https://images.unsplash.com/photo-1627003694344-78dd6a3a7566?w=1400&q=70&auto=format&fit=crop 1400w, https://images.unsplash.com/photo-1627003694344-78dd6a3a7566?w=2200&q=70&auto=format&fit=crop 2200w" sizes="100vw" alt="Coche negro en una carretera de costa" fetchpriority="high"></div>
     <div class="wrap hero-in">
-      <h1><span data-t="inicio.titular1">El coche que buscas.</span><span data-t="inicio.titular2">El presupuesto que tienes.</span><span class="verde" data-t="inicio.titular3">Nosotros lo encontramos.</span></h1>
-      <p class="sub" data-t="inicio.texto">¿Buscas un coche y no encuentras exactamente lo que necesitas? Dinos qué vehículo quieres, qué características necesitas y cuánto quieres invertir: buscamos las mejores opciones en España y Europa y te acompañamos hasta la entrega.</p>
-      <div class="ctas"><a class="btn verde" href="#busqueda"><svg aria-hidden="true"><use href="#i-lupa"/></svg><span data-t="inicio.boton1">Cuéntanos qué coche buscas</span></a><a class="btn claro" href="#stock"><svg aria-hidden="true"><use href="#i-coche"/></svg><span data-t="inicio.boton2">Ver coches en stock</span></a></div>
+      <h1 data-t="inicio.titular">Buscamos el vehículo que necesitas.</h1>
+      <p class="sub" data-t="inicio.texto">Cuéntanos qué tipo de vehículo buscas, qué características necesitas y cuánto quieres invertir. Buscaremos opciones en España y Europa que se adapten a tus preferencias y gestionaremos todo el proceso hasta la entrega.</p>
+      <div class="ctas"><a class="btn verde" href="#busqueda"><svg aria-hidden="true"><use href="#i-lupa"/></svg><span data-t="inicio.boton1">Cuéntanos qué vehículo buscas</span></a><a class="btn claro" href="#stock"><svg aria-hidden="true"><use href="#i-coche"/></svg><span data-t="inicio.boton2">Ver vehículos en stock</span></a></div>
       <div class="sellos"><span><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="inicio.sello1">Búsqueda personalizada</span></span><span><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="inicio.sello2">Gestión integral</span></span><span><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="inicio.sello3">Atención cercana</span></span></div>
-      <div class="zonas"><svg aria-hidden="true"><use href="#i-pin"/></svg><span id="zonas-hero">Trabajamos en: Murcia · Alicante · Huelva · Sevilla</span></div>
+      <div class="zonas"><svg aria-hidden="true"><use href="#i-pin"/></svg><span id="zonas-hero">Trabajamos en Murcia, Alicante, Huelva y Sevilla.</span></div>
     </div>
     <span class="credito">Foto: <a href="https://unsplash.com/@tylerprahm" target="_blank" rel="noopener">Tyler Prahm</a> / <a href="https://unsplash.com" target="_blank" rel="noopener">Unsplash</a></span>
   </div>
 
-  <!-- 2 · búsqueda por encargo -->
-  <section id="encargo">
+  <!-- 2 · búsqueda por encargo: servicio, cómo funciona y formulario en un mismo bloque -->
+  <div id="encargo">
+  <section>
     <div class="wrap encargo">
       <div>
         <div class="eyebrow" data-t="encargo.antetitulo">Búsqueda por encargo</div>
-        <h2 style="margin:10px 0 18px" data-t="encargo.titulo">No te adaptes al coche que encuentres. Encuentra el coche que necesitas.</h2>
-        <p data-t="encargo.p1">Cada persona busca algo diferente. Algunos quieren un SUV familiar, otros un compacto para ciudad, un deportivo o un vehículo para trabajar.</p>
-        <p data-t="encargo.p2">Por eso, en Huelsan no nos limitamos a vender los coches que tenemos disponibles. Buscamos el vehículo que realmente quieres, adaptándonos a tus necesidades y a tu presupuesto.</p>
-        <p data-t="encargo.p3">Trabajamos con proveedores y profesionales del sector en España y Europa para encontrar alternativas que encajen contigo.</p>
-        <p class="fuerte" data-t="encargo.p4">Tú nos explicas lo que buscas. Nosotros hacemos el trabajo.</p>
-        <a class="btn verde" href="#busqueda" style="margin-top:8px"><span data-t="encargo.boton">Empezar mi búsqueda</span></a>
+        <h2 style="margin:10px 0 18px" data-t="encargo.titulo">Búsqueda personalizada de vehículos</h2>
+        <p data-t="encargo.p1">Ofrecemos un servicio de búsqueda personalizada para quienes buscan un vehículo con unas características concretas.</p>
+        <p data-t="encargo.p2">Nos indicas el tipo de vehículo, marca, modelo, características y presupuesto aproximado. Buscamos opciones a través de nuestros contactos y proveedores en España y Europa y te presentamos las alternativas que mejor se adapten a lo que necesitas.</p>
+        <p data-t="encargo.p3">Nos encargamos de gestionar la operación, el transporte y la documentación hasta la entrega del vehículo.</p>
       </div>
       <div class="tipos">
-        <h3 data-t="encargo.lista.titulo">¿Qué podemos buscar por ti?</h3>
+        <h3 data-t="encargo.lista.titulo">Tipos de vehículos</h3>
         <ul>
           <li><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="encargo.lista1">Turismos y compactos</span></li>
           <li><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="encargo.lista2">SUV y todoterrenos</span></li>
           <li><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="encargo.lista3">Berlinas y vehículos familiares</span></li>
-          <li><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="encargo.lista4">Deportivos y vehículos especiales</span></li>
-          <li><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="encargo.lista5">Vehículos comerciales</span></li>
-          <li><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="encargo.lista6">Coches de diferentes marcas, modelos y motorizaciones</span></li>
+          <li><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="encargo.lista4">Deportivos</span></li>
+          <li><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="encargo.lista5">Furgonetas y vehículos comerciales</span></li>
+          <li><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="encargo.lista6">Motocicletas</span></li>
+          <li><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="encargo.lista7">Otros tipos de vehículos</span></li>
         </ul>
+        <p class="tipos-nota" data-t="encargo.lista.nota">Trabajamos con diferentes marcas, modelos, motorizaciones y categorías de vehículos.</p>
       </div>
     </div>
   </section>
 
-  <!-- 3 · cómo funciona -->
   <section id="proceso" class="gris">
     <div class="wrap">
-      <div class="cab centro"><div class="eyebrow" data-t="proceso.antetitulo">Cómo funciona</div><h2 style="margin-top:10px" data-t="proceso.titulo">Encontrar tu próximo coche es más fácil de lo que imaginas.</h2></div>
+      <div class="cab centro"><h2 data-t="proceso.titulo">Cómo funciona nuestro servicio</h2></div>
       <ol class="pasos">
-        <li><span class="n">01</span><h3 data-t="proceso.paso1.titulo">Cuéntanos qué necesitas</h3><p data-t="proceso.paso1.texto">Dinos qué coche tienes en mente, qué características buscas y cuál es tu presupuesto máximo.</p></li>
-        <li><span class="n">02</span><h3 data-t="proceso.paso2.titulo">Nosotros lo buscamos</h3><p data-t="proceso.paso2.texto">Consultamos nuestras fuentes y contactos profesionales en España y Europa para localizar vehículos que se ajusten a tus preferencias.</p></li>
-        <li><span class="n">03</span><h3 data-t="proceso.paso3.titulo">Te presentamos las mejores opciones</h3><p data-t="proceso.paso3.texto">Seleccionamos alternativas y te explicamos sus características, estado, condiciones y coste de la operación.</p></li>
-        <li><span class="n">04</span><h3 data-t="proceso.paso4.titulo">Tú decides y nosotros nos encargamos</h3><p data-t="proceso.paso4.texto">Cuando eliges tu coche, gestionamos la operación, el transporte, la documentación y todo lo necesario para preparar su entrega.</p></li>
+        <li><span class="n">01</span><h3 data-t="proceso.paso1.titulo">Nos cuentas qué necesitas</h3><p data-t="proceso.paso1.texto">Nos indicas el tipo de vehículo que buscas, tus preferencias, características y presupuesto aproximado.</p></li>
+        <li><span class="n">02</span><h3 data-t="proceso.paso2.titulo">Buscamos opciones</h3><p data-t="proceso.paso2.texto">Consultamos nuestros contactos y proveedores en España y Europa para localizar vehículos que se ajusten a tus necesidades.</p></li>
+        <li><span class="n">03</span><h3 data-t="proceso.paso3.titulo">Te presentamos las alternativas</h3><p data-t="proceso.paso3.texto">Seleccionamos las opciones más interesantes y te facilitamos información sobre sus características, estado, condiciones y coste de la operación.</p></li>
+        <li><span class="n">04</span><h3 data-t="proceso.paso4.titulo">Gestionamos la operación</h3><p data-t="proceso.paso4.texto">Una vez elegido el vehículo, coordinamos la compra, el transporte y la documentación necesaria hasta preparar su entrega.</p></li>
       </ol>
-      <div class="centro-btn"><a class="btn verde" href="#busqueda"><span data-t="proceso.boton">Quiero que busquéis mi coche</span></a></div>
     </div>
   </section>
 
-  <!-- 4 · nuestra diferencia -->
-  <section id="diferencia">
-    <div class="wrap">
-      <div class="cab"><div class="eyebrow" data-t="dif.antetitulo">Nuestra diferencia</div><h2 style="margin-top:10px" data-t="dif.titulo">No queremos venderte cualquier coche. Queremos encontrar el adecuado para ti.</h2><p class="lead" data-t="dif.intro">Comprar un coche es una decisión importante. Por eso queremos que tengas información y acompañamiento durante todo el proceso.</p></div>
-      <div class="dif">
-        <div class="tarjeta"><span class="icono"><svg aria-hidden="true"><use href="#i-diana"/></svg></span><h3 data-t="dif.1.titulo">Búsqueda personalizada</h3><p data-t="dif.1.texto">No dependes únicamente de los vehículos publicados en nuestro stock. Buscamos según tus necesidades.</p></div>
-        <div class="tarjeta"><span class="icono"><svg aria-hidden="true"><use href="#i-mundo"/></svg></span><h3 data-t="dif.2.titulo">Acceso a más oportunidades</h3><p data-t="dif.2.texto">Trabajamos con profesionales y proveedores del mercado nacional y europeo.</p></div>
-        <div class="tarjeta"><span class="icono"><svg aria-hidden="true"><use href="#i-euro"/></svg></span><h3 data-t="dif.3.titulo">Presupuesto adaptado</h3><p data-t="dif.3.texto">Partimos de lo que quieres invertir para buscar opciones realistas.</p></div>
-        <div class="tarjeta"><span class="icono"><svg aria-hidden="true"><use href="#i-ojo"/></svg></span><h3 data-t="dif.4.titulo">Transparencia</h3><p data-t="dif.4.texto">Te explicamos las características, condiciones y costes de cada operación antes de tomar una decisión.</p></div>
-        <div class="tarjeta"><span class="icono"><svg aria-hidden="true"><use href="#i-llave"/></svg></span><h3 data-t="dif.5.titulo">Gestión integral</h3><p data-t="dif.5.texto">Te acompañamos en la compra, transporte, documentación y entrega.</p></div>
-        <div class="tarjeta"><span class="icono"><svg aria-hidden="true"><use href="#i-charla"/></svg></span><h3 data-t="dif.6.titulo">Trato directo</h3><p data-t="dif.6.texto">Hablamos contigo, escuchamos lo que necesitas y te asesoramos durante el proceso.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 5 · stock -->
-  <section id="stock" class="gris">
-    <div class="wrap">
-      <div class="cab"><div class="eyebrow" data-t="stock.antetitulo">Vehículos en stock</div><h2 style="margin-top:10px" data-t="stock.titulo">¿Prefieres un coche que ya esté disponible?</h2><p class="lead" data-t="stock.intro">Además de nuestro servicio de búsqueda personalizada, disponemos de vehículos en stock seleccionados. Consulta los vehículos publicados y descubre nuestras oportunidades.</p></div>
-      <div class="filtros" role="group" aria-label="Filtrar coches">
-        <label><span data-t="filtros.disponibilidad">Disponibilidad</span><select id="f-disp"><option value="" data-t="filtros.todos">Todos</option><option value="stock" data-t="estado.stock">En stock</option><option value="encargo" data-t="estado.encargo">Por encargo</option></select></label>
-        <label><span data-t="filtros.tipo">Tipo</span><select id="f-tipo"><option value="" data-t="filtros.todos">Todos</option></select></label>
-        <label><span data-t="filtros.combustible">Combustible</span><select id="f-comb"><option value="" data-t="filtros.todos">Todos</option></select></label>
-        <label><span data-t="filtros.anio">Año desde</span><select id="f-anio"><option value="" data-t="filtros.cualquiera">Cualquiera</option></select></label>
-      </div>
-      <div class="cars" id="cars"></div>
-      <div class="aviso-stock"><b data-t="stock.aviso">¿No encuentras lo que buscas? No te preocupes. Podemos buscarlo por encargo.</b><a class="btn verde" href="#busqueda"><span data-t="stock.boton">Buscar mi coche</span></a></div>
-    </div>
-  </section>
-
-  <!-- 6 · quiénes somos -->
-  <section id="quienes-somos">
-    <div class="wrap about">
-      <div>
-        <div class="eyebrow" data-t="quienes.antetitulo">Quiénes somos</div>
-        <h2 style="margin:10px 0 20px" data-t="quienes.titulo">Encontramos el coche que buscas. Nos encargamos de todo.</h2>
-        <p data-t="quienes.p1">En Huelsan Automoción creemos que encontrar un buen coche no debería convertirse en una tarea interminable.</p>
-        <p data-t="quienes.p2">Por eso ofrecemos un servicio de compraventa de vehículos de ocasión basado en la búsqueda personalizada. Queremos que puedas encontrar el coche que realmente necesitas, ajustado a tus preferencias y, sobre todo, a tu presupuesto.</p>
-        <p class="destacado" data-t="quienes.p3">Tú nos cuentas qué coche buscas y cuánto quieres invertir. Nosotros nos encargamos de encontrar las mejores opciones.</p>
-        <p data-t="quienes.p4">Trabajamos con proveedores y canales profesionales de compraventa en España y Europa, lo que nos permite acceder a una amplia variedad de vehículos y localizar alternativas que quizás no encontrarías en los portales habituales.</p>
-        <p data-t="quienes.p5">No nos limitamos a enseñarte anuncios. Estudiamos cada oportunidad, comprobamos la información disponible sobre el vehículo y te presentamos diferentes opciones para que puedas decidir con tranquilidad.</p>
-        <p data-t="quienes.p6">Una vez elegido el coche, gestionamos todo el proceso: compra, transporte, documentación, transferencia y preparación para la entrega.</p>
-        <p data-t="quienes.p7">También disponemos de vehículos en stock para quienes prefieren encontrar su próximo coche entre nuestras opciones disponibles.</p>
-      </div>
-      <div style="display:grid;gap:18px">
-        <div class="firma"><span class="eyebrow" data-t="quienes.servicio.antetitulo">Nuestro servicio</span><b data-t="quienes.servicio.titulo">Un servicio cercano, transparente y personalizado</b><p id="zona-txt">Trabajamos principalmente en Murcia, Alicante, Huelva y Sevilla, ofreciendo un trato directo y acompañando a nuestros clientes durante todo el proceso.</p></div>
-        <div class="valores">
-          <div><svg aria-hidden="true"><use href="#i-escudo"/></svg><span data-t="quienes.valor1">No queremos venderte cualquier coche. Queremos ayudarte a encontrar el adecuado, sin perder tiempo y conociendo desde el principio las condiciones de la operación.</span></div>
-          <div><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="quienes.valor2">Tu presupuesto, tus necesidades y nuestro trabajo para encontrar la mejor opción.</span></div>
-        </div>
-        <p class="lema-q" data-t="quienes.lema">Huelsan Automoción. Tu próximo coche empieza con una conversación.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- 7 · formulario -->
   <section id="busqueda" class="form-zona">
     <div class="wrap form-grid">
       <div class="form-lado">
-        <div class="eyebrow" data-t="form.antetitulo">Tu búsqueda</div>
-        <h2 data-t="form.titulo">¿Qué coche estás buscando?</h2>
-        <p class="lead" style="margin:0" data-t="form.intro">Cuéntanos qué necesitas y qué presupuesto tienes. Nosotros nos ponemos manos a la obra para encontrar las mejores opciones para ti.</p>
-        <div class="punto"><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="form.punto1">No necesitas tenerlo todo decidido. Cuanta más información nos des, mejor podremos orientarte.</span></div>
-        <div class="punto"><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="form.punto2">Sin compromiso de compra por enviar el formulario.</span></div>
-        <div class="punto"><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="form.punto3">Te contestamos personalmente, por teléfono o WhatsApp.</span></div>
+        <h2 data-t="form.titulo">Solicita tu búsqueda personalizada</h2>
+        <p class="lead" style="margin:0" data-t="form.intro">Cuéntanos qué vehículo estás buscando, qué características necesitas y cuál es tu presupuesto aproximado. Estudiaremos tu solicitud y buscaremos opciones que se adapten a tus preferencias.</p>
       </div>
       <form class="card" id="form" novalidate>
-        <fieldset class="pregunta"><legend><span class="num-p">1</span><span data-t="form.p1">¿Qué tipo de coche buscas?</span></legend><div class="opciones" id="op-tipo"></div></fieldset>
-        <label class="campo"><span class="tit"><span class="num-p">2</span><span data-t="form.p2">¿Qué marca o modelo te interesa?</span></span><input id="c-marca" maxlength="120" data-t-ph="form.p2.ejemplo" placeholder="Ej. BMW X3, Audi A4, Volkswagen Tiguan..."></label>
-        <fieldset class="pregunta"><legend><span class="num-p">3</span><span data-t="form.p3">¿Qué presupuesto tienes?</span></legend><div class="opciones" id="op-pres"></div></fieldset>
+        <fieldset class="pregunta"><legend><span class="num-p">1</span><span data-t="form.p1">¿Qué tipo de vehículo buscas?</span></legend><div class="opciones" id="op-tipo"></div></fieldset>
+        <label class="campo"><span class="tit"><span class="num-p">2</span><span data-t="form.p2">¿Qué marca o modelo te interesa?</span></span><input id="c-marca" maxlength="120" data-t-ph="form.p2.ejemplo" placeholder="Ej. BMW X3, Audi A4, Volkswagen Transporter, Yamaha TMAX..."></label>
+        <fieldset class="pregunta"><legend><span class="num-p">3</span><span data-t="form.p3">¿Qué presupuesto aproximado tienes?</span></legend><div class="opciones" id="op-pres"></div></fieldset>
         <fieldset class="pregunta"><legend><span class="num-p">4</span><span data-t="form.p4">¿Qué combustible prefieres?</span></legend><div class="opciones" id="op-comb"></div></fieldset>
         <fieldset class="pregunta"><legend><span class="num-p">5</span><span data-t="form.p5">¿Qué cambio prefieres?</span></legend><div class="opciones" id="op-cambio"></div></fieldset>
-        <label class="campo"><span class="tit"><span class="num-p">6</span><span data-t="form.p6">¿Hay alguna característica imprescindible?</span></span><textarea id="c-extra" maxlength="1200" data-t-ph="form.p6.ejemplo" placeholder="Año mínimo, kilómetros máximos, color, equipamiento, potencia, extras..."></textarea></label>
-        <fieldset class="pregunta"><legend><span class="num-p">7</span><span data-t="form.p7">¿Para cuándo necesitas el coche?</span></legend><div class="opciones" id="op-plazo"></div></fieldset>
+        <label class="campo"><span class="tit"><span class="num-p">6</span><span data-t="form.p6">¿Qué características buscas?</span></span><textarea id="c-extra" maxlength="1200" data-t-ph="form.p6.ejemplo" placeholder="Año mínimo, kilómetros máximos, equipamiento, potencia, color, número de plazas, etc."></textarea></label>
+        <fieldset class="pregunta"><legend><span class="num-p">7</span><span data-t="form.p7">¿Para cuándo necesitas el vehículo?</span></legend><div class="opciones" id="op-plazo"></div></fieldset>
         <label class="campo"><span class="tit"><span class="num-p">8</span><span data-t="form.p8">¿Dónde resides?</span></span><input id="c-reside" maxlength="80" autocomplete="address-level2" data-t-ph="form.p8.ejemplo" placeholder="Ej. Murcia"></label>
         <fieldset class="pregunta"><legend><span class="num-p">9</span><span data-t="form.p9">Datos de contacto</span></legend>
           <div class="fila3"><label class="campo"><span data-t="form.nombre">Nombre</span><input id="c-nombre" maxlength="80" autocomplete="name" required></label>
@@ -465,19 +402,61 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
             <label class="campo"><span data-t="form.email">Correo electrónico (opcional)</span><input id="c-email" type="email" maxlength="120" autocomplete="email"></label></div></fieldset>
         <div class="trampa" aria-hidden="true"><label>No rellenar<input id="c-web" tabindex="-1" autocomplete="off"></label></div>
         <label class="chk"><input type="checkbox" id="c-rgpd"><span data-t="form.rgpd" data-t-enlace="#privacidad">He leído y acepto la <a href="#privacidad">política de privacidad</a>.</span></label>
-        <div class="envio"><button class="btn verde" type="submit" id="c-enviar"><span data-t="form.boton">Enviar mi solicitud</span></button>
-          <p class="nota" data-t="form.nota">Estudiaremos tu solicitud y nos pondremos en contacto contigo para conocer mejor lo que necesitas. Sin compromiso de compra por enviar el formulario.</p>
+        <div class="envio"><button class="btn verde" type="submit" id="c-enviar"><span data-t="form.boton">Enviar solicitud</span></button>
+          <p class="nota" data-t="form.nota">Una vez recibamos tu solicitud, nos pondremos en contacto contigo para conocer mejor tus necesidades y comenzar la búsqueda.</p>
           <div class="resultado" id="c-res" role="status" hidden></div></div>
       </form>
     </div>
   </section>
+  </div>
 
-  <!-- 8 · área de servicio -->
-  <section id="contacto">
+  <!-- 3 · nuestro servicio -->
+  <section id="diferencia">
     <div class="wrap">
-      <div class="cab"><div class="eyebrow" data-t="zona.antetitulo">Área de servicio</div><h2 style="margin-top:10px" data-t="zona.titulo">Estamos cerca de ti. Buscamos en toda Europa.</h2><p class="lead" data-t="zona.intro">En Huelsan Automoción ofrecemos atención personalizada principalmente en Murcia, Alicante, Huelva y Sevilla.</p></div>
+      <div class="cab"><h2 data-t="dif.titulo">Nuestro servicio</h2></div>
+      <div class="dif">
+        <div class="tarjeta"><span class="icono"><svg aria-hidden="true"><use href="#i-diana"/></svg></span><h3 data-t="dif.1.titulo">Búsqueda personalizada</h3><p data-t="dif.1.texto">Buscamos vehículos según las preferencias, características y presupuesto de cada cliente.</p></div>
+        <div class="tarjeta"><span class="icono"><svg aria-hidden="true"><use href="#i-mundo"/></svg></span><h3 data-t="dif.2.titulo">Acceso a más opciones</h3><p data-t="dif.2.texto">Trabajamos con proveedores y profesionales del sector en España y Europa para localizar diferentes alternativas.</p></div>
+        <div class="tarjeta"><span class="icono"><svg aria-hidden="true"><use href="#i-euro"/></svg></span><h3 data-t="dif.3.titulo">Presupuesto adaptado</h3><p data-t="dif.3.texto">Tenemos en cuenta la inversión prevista para seleccionar vehículos que se ajusten a ella.</p></div>
+        <div class="tarjeta"><span class="icono"><svg aria-hidden="true"><use href="#i-ojo"/></svg></span><h3 data-t="dif.4.titulo">Transparencia</h3><p data-t="dif.4.texto">Facilitamos información sobre las características, condiciones y costes de cada operación antes de tomar una decisión.</p></div>
+        <div class="tarjeta"><span class="icono"><svg aria-hidden="true"><use href="#i-llave"/></svg></span><h3 data-t="dif.5.titulo">Gestión integral</h3><p data-t="dif.5.texto">Coordinamos la compra, el transporte, la documentación y la entrega del vehículo.</p></div>
+        <div class="tarjeta"><span class="icono"><svg aria-hidden="true"><use href="#i-charla"/></svg></span><h3 data-t="dif.6.titulo">Atención personalizada</h3><p data-t="dif.6.texto">Mantenemos un contacto directo con cada cliente durante las diferentes fases del proceso.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · stock -->
+  <section id="stock" class="gris">
+    <div class="wrap">
+      <div class="cab"><h2 data-t="stock.titulo">Vehículos disponibles en stock</h2><p class="lead" data-t="stock.intro">Disponemos de una selección de vehículos disponibles para quienes prefieren elegir entre nuestro stock actual. Consulta los anuncios y descubre las características de cada vehículo.</p></div>
+      <div class="filtros" role="group" aria-label="Filtrar vehículos">
+        <label><span data-t="filtros.disponibilidad">Disponibilidad</span><select id="f-disp"><option value="" data-t="filtros.todos">Todos</option><option value="stock" data-t="estado.stock">En stock</option><option value="encargo" data-t="estado.encargo">Por encargo</option></select></label>
+        <label><span data-t="filtros.tipo">Tipo</span><select id="f-tipo"><option value="" data-t="filtros.todos">Todos</option></select></label>
+        <label><span data-t="filtros.combustible">Combustible</span><select id="f-comb"><option value="" data-t="filtros.todos">Todos</option></select></label>
+        <label><span data-t="filtros.anio">Año desde</span><select id="f-anio"><option value="" data-t="filtros.cualquiera">Cualquiera</option></select></label>
+      </div>
+      <div class="cars" id="cars"></div>
+      <div class="aviso-stock"><b data-t="stock.aviso">Si buscas un vehículo con otras características, también podemos localizarlo a través de nuestro servicio de búsqueda personalizada.</b><a class="btn verde" href="#busqueda"><span data-t="stock.boton">Solicitar búsqueda personalizada</span></a></div>
+    </div>
+  </section>
+
+  <!-- 5 · quiénes somos -->
+  <section id="quienes-somos">
+    <div class="wrap about">
+      <h2 style="margin:0 0 20px" data-t="quienes.titulo">Quiénes somos</h2>
+      <p data-t="quienes.p1">Huelsan Automoción es una empresa dedicada a la compraventa y búsqueda personalizada de vehículos de ocasión.</p>
+      <p data-t="quienes.p2">Trabajamos para ofrecer a nuestros clientes diferentes alternativas de compra, tanto a través de nuestros vehículos en stock como mediante un servicio de búsqueda por encargo.</p>
+      <p data-t="quienes.p3">Colaboramos con proveedores y profesionales del sector en España y Europa, lo que nos permite acceder a una amplia variedad de vehículos y localizar opciones adaptadas a las necesidades de cada cliente.</p>
+      <p data-t="quienes.p4">Nuestro trabajo incluye la búsqueda y selección del vehículo, la comprobación de la información disponible y la gestión de la operación, el transporte y la documentación hasta su entrega.</p>
+      <p id="zona-txt">Trabajamos principalmente en Murcia, Alicante, Huelva y Sevilla, ofreciendo atención personalizada durante todo el proceso.</p>
+    </div>
+  </section>
+
+  <!-- 6 · área de servicio -->
+  <section id="contacto" class="gris">
+    <div class="wrap">
+      <div class="cab"><h2 data-t="zona.titulo">Nuestra área de servicio</h2><p class="lead" id="zona-intro">Ofrecemos atención personalizada principalmente en Murcia, Alicante, Huelva y Sevilla.</p><p class="lead" data-t="zona.europa">Buscamos vehículos en diferentes puntos de España y Europa para ofrecer alternativas adaptadas a las necesidades de nuestros clientes.</p></div>
       <div class="zonas-grid" id="zonas"></div>
-      <div class="europa"><p data-t="zona.europa">Aunque nuestra atención comercial se centra en estas zonas, buscamos oportunidades de vehículos en España y en distintos mercados europeos.</p><a class="btn verde" href="#busqueda"><span data-t="zona.boton">Contactar con Huelsan</span></a></div>
       <p class="nota" id="correo-txt" style="text-align:left;margin-top:14px"></p>
     </div>
   </section>
@@ -485,33 +464,32 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
   <!-- opiniones: solo aparece cuando hay reseñas reales cargadas desde la app -->
   <section id="opiniones" hidden>
     <div class="wrap">
-      <div class="cab centro"><div class="eyebrow" data-t="opiniones.antetitulo">Opiniones</div><h2 style="margin-top:10px" data-t="opiniones.titulo">Lo que dicen nuestros clientes</h2></div>
+      <div class="cab centro"><h2 data-t="opiniones.titulo">Opiniones de clientes</h2></div>
       <div class="resenas" id="resenas"></div>
     </div>
   </section>
 
-  <!-- 9 · preguntas frecuentes -->
+  <!-- 7 · preguntas frecuentes -->
   <section id="preguntas" class="gris">
     <div class="wrap">
-      <div class="cab centro"><div class="eyebrow" data-t="faq.antetitulo">Preguntas frecuentes</div><h2 style="margin-top:10px" data-t="faq.titulo">Resolvemos tus dudas</h2></div>
+      <div class="cab centro"><h2 data-t="faq.titulo">Preguntas frecuentes</h2></div>
       <div class="faq">
-        <details><summary data-t="faq.1.p">¿Tengo que elegir un coche de vuestro stock?</summary><p data-t="faq.1.r">No. Nuestro servicio principal consiste en buscar el vehículo que necesitas, aunque no esté publicado en nuestra web.</p></details>
-        <details><summary data-t="faq.2.p">¿Puedo deciros un presupuesto máximo?</summary><p data-t="faq.2.r">Por supuesto. De hecho, es uno de los puntos de partida de nuestro servicio. Buscamos alternativas que se ajusten a lo que quieres invertir.</p></details>
-        <details><summary data-t="faq.3.p">¿Buscáis coches fuera de España?</summary><p data-t="faq.3.r">Sí. Trabajamos con proveedores y profesionales del sector en España y Europa para localizar más opciones.</p></details>
-        <details><summary data-t="faq.4.p">¿Tengo que comprar el coche que me encontréis?</summary><p data-t="faq.4.r">No tienes obligación de comprar por solicitar una búsqueda. Te presentamos las alternativas y tú decides si alguna encaja con lo que buscas.</p></details>
-        <details><summary data-t="faq.5.p">¿Os encargáis del transporte y la documentación?</summary><p data-t="faq.5.r">Sí. Una vez acordada la operación, gestionamos el proceso de compra, transporte y documentación hasta preparar la entrega del vehículo.</p></details>
-        <details><summary data-t="faq.6.p">¿Trabajáis en toda España?</summary><p data-t="faq.6.r">Nuestra atención comercial se centra principalmente en Murcia, Alicante, Huelva y Sevilla, aunque podemos buscar vehículos en distintos puntos de España y Europa.</p></details>
+        <details><summary data-t="faq.1.p">¿Qué tipo de vehículos podéis buscar?</summary><p data-t="faq.1.r">Trabajamos con turismos, SUV, todoterrenos, furgonetas, vehículos comerciales, motocicletas y otros tipos de vehículos.</p></details>
+        <details><summary data-t="faq.2.p">¿Puedo solicitar un vehículo que no esté en vuestro stock?</summary><p data-t="faq.2.r">Sí. Nuestro servicio de búsqueda personalizada permite localizar vehículos según las características, marca, modelo y presupuesto que nos indiques.</p></details>
+        <details><summary data-t="faq.3.p">¿En qué zonas buscáis vehículos?</summary><p data-t="faq.3.r">Trabajamos con proveedores y profesionales en España y Europa, con atención comercial principalmente en Murcia, Alicante, Huelva y Sevilla.</p></details>
+        <details><summary data-t="faq.4.p">¿Cómo se realiza el proceso de compra?</summary><p data-t="faq.4.r">Una vez seleccionado el vehículo y acordadas las condiciones, gestionamos la operación, el transporte y la documentación necesaria hasta la entrega.</p></details>
+        <details><summary data-t="faq.5.p">¿Qué información necesito facilitar para iniciar una búsqueda?</summary><p data-t="faq.5.r">Principalmente el tipo de vehículo, marca o modelo de interés, características deseadas y presupuesto aproximado. Cuanta más información tengamos, mejor podremos orientar la búsqueda.</p></details>
+        <details><summary data-t="faq.6.p">¿Tengo que comprar el vehículo que me presentéis?</summary><p data-t="faq.6.r">La solicitud inicial no supone ningún compromiso de compra. Te presentamos las alternativas y tú decides si alguna se ajusta a lo que buscas.</p></details>
       </div>
     </div>
   </section>
 
-  <!-- 10 · llamada final -->
+  <!-- 8 · contacto final -->
   <section class="final">
     <div class="wrap">
-      <h2 data-t="final.titulo">Tu próximo coche puede estar más cerca de lo que piensas.</h2>
-      <p data-t="final.texto">No pierdas horas buscando entre miles de anuncios. Cuéntanos qué coche quieres, cuánto quieres gastar y qué necesitas. Nosotros nos encargamos de encontrar las mejores opciones.</p>
-      <div class="ctas"><a class="btn verde" href="#busqueda"><span data-t="final.boton1">Buscadme mi próximo coche</span></a><a class="btn claro" href="#contacto" id="final-wa"><svg aria-hidden="true"><use href="#i-wa"/></svg><span data-t="final.boton2">Hablar por WhatsApp</span></a></div>
-      <div class="lema" data-t="final.lema">Huelsan Automoción. El coche que buscas. Nosotros lo encontramos.</div>
+      <h2 data-t="final.titulo">Contacta con Huelsan Automoción</h2>
+      <p data-t="final.texto">Si buscas un coche, furgoneta, motocicleta u otro tipo de vehículo, contacta con nosotros y cuéntanos qué necesitas.</p>
+      <div class="ctas"><a class="btn verde" href="#contacto"><span data-t="final.boton1">Contactar</span></a><a class="btn claro" href="#contacto" id="final-wa"><svg aria-hidden="true"><use href="#i-wa"/></svg><span data-t="final.boton2">Hablar por WhatsApp</span></a></div>
     </div>
   </section>
 </main>
@@ -522,9 +500,9 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
   <div class="wrap">
     <div class="foot">
       <div><a class="brand" href="#inicio" aria-label="Huelsan Automoción"><svg class="logo-sym" viewBox="3 3 58 49" aria-hidden="true" style="color:#fff"><path d="M8.6 49.5 A27 27 0 1 1 55.4 49.5" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><path d="M55.4 22.5 A27 27 0 0 1 56.47 43.41" fill="none" class="lgs" stroke-width="4.5" stroke-linecap="round"/><path d="M13.340 45.510 L16.660 50.490 L17.500 49.874 L17.500 42.998 Z" class="lgf"/><path d="M28.500 41.806 L35.500 36.672 L35.500 32.130 L28.500 36.357 Z" class="lgf"/><path d="M46.500 28.604 L48.960 26.800 L47.640 24.800 L46.500 25.488 Z" class="lgf"/><rect x="19" y="22" width="8" height="28" fill="currentColor"/><rect x="37" y="22" width="8" height="28" fill="currentColor"/><circle cx="15" cy="48" r="3.0" fill="currentColor"/></svg><span><b>HUELSAN</b><small>Automoción</small></span></a>
-        <p data-t="pie.texto1">Huelsan Automoción – Compraventa y búsqueda personalizada de vehículos.</p><p data-t="pie.texto2">Búsqueda de coches por encargo en España y Europa.</p><p id="pie-zonas">Murcia · Alicante · Huelva · Sevilla.</p></div>
-      <div><h4 data-t="pie.enlaces">Enlaces</h4><nav aria-label="Secciones del pie"><a href="#inicio" data-t="menu.inicio">Inicio</a><a href="#quienes-somos" data-t="menu.quienes">Quiénes somos</a><a href="#encargo" data-t="menu.encargo">Búsqueda por encargo</a><a href="#stock" data-t="pie.stock">Coches en stock</a><a href="#contacto" data-t="menu.contacto">Contacto</a></nav></div>
-      <div><h4 data-t="pie.legal">Legal</h4><nav aria-label="Información legal"><a href="#privacidad" data-t="pie.privacidad">Política de privacidad</a><a href="#aviso-legal" data-t="pie.aviso">Aviso legal</a><a href="#cookies" data-t="pie.cookies">Política de cookies</a><a href="#fotos-info" data-t="pie.fotos">Fotos e información de los coches</a></nav></div>
+        <p data-t="pie.texto1">Huelsan Automoción – Compraventa y búsqueda personalizada de vehículos.</p><p data-t="pie.texto2">Búsqueda de vehículos por encargo en España y Europa.</p><p id="pie-zonas">Murcia · Alicante · Huelva · Sevilla.</p></div>
+      <div><h4 data-t="pie.enlaces">Enlaces</h4><nav aria-label="Secciones del pie"><a href="#inicio" data-t="menu.inicio">Inicio</a><a href="#quienes-somos" data-t="menu.quienes">Quiénes somos</a><a href="#encargo" data-t="menu.encargo">Búsqueda por encargo</a><a href="#stock" data-t="pie.stock">Vehículos en stock</a><a href="#contacto" data-t="menu.contacto">Contacto</a></nav></div>
+      <div><h4 data-t="pie.legal">Legal</h4><nav aria-label="Información legal"><a href="#privacidad" data-t="pie.privacidad">Política de privacidad</a><a href="#aviso-legal" data-t="pie.aviso">Aviso legal</a><a href="#cookies" data-t="pie.cookies">Política de cookies</a><a href="#fotos-info" data-t="pie.fotos">Fotos e información de los vehículos</a></nav></div>
     </div>
     <div class="legalpie" id="pie-emp"></div>
   </div>
@@ -606,9 +584,10 @@ function contacto(){
   $("#zonas").innerHTML=base.map(({ciudad,c})=>`<div class="zona"><span class="pin"><svg aria-hidden="true"><use href="#i-pin"/></svg></span><b>${esc(ciudad)}</b>
     ${c?`${c.nombre?`<span>${esc(c.nombre)}</span>`:""}${c.telefono?`<a href="${esc(telHref(c.telefono))}">${esc(telTxt(c.telefono))}</a>`:""}${c.whatsapp?`<a href="${esc(waHref(c.whatsapp,saludo()))}" target="_blank" rel="noopener">WhatsApp</a>`:""}`:`<span>${esc(T("zona.atencion","Atención personalizada"))}</span>`}</div>`).join("");
   const lista=base.map(x=>x.ciudad);const zt=lista.length>1?lista.slice(0,-1).join(", ")+" y "+lista.at(-1):lista[0];
-  $("#zonas-hero").textContent=T("inicio.zonas","Trabajamos en: {zonas}").replace(/\{zonas\}/g,lista.join(" · "));
+  $("#zonas-hero").textContent=T("inicio.zonas","Trabajamos en {zonas}.").replace(/\{zonas\}/g,zt);
+  $("#zona-intro").textContent=T("zona.intro","Ofrecemos atención personalizada principalmente en {zonas}.").replace(/\{zonas\}/g,zt);
   $("#pie-zonas").textContent=lista.join(" · ")+".";
-  $("#zona-txt").textContent=T("quienes.zona","Trabajamos principalmente en {zonas}, ofreciendo un trato directo y acompañando a nuestros clientes durante todo el proceso.").replace(/\{zonas\}/g,zt);
+  $("#zona-txt").textContent=T("quienes.zona","Trabajamos principalmente en {zonas}, ofreciendo atención personalizada durante todo el proceso.").replace(/\{zonas\}/g,zt);
   $("#correo-txt").innerHTML=EMPRESA.email?`${esc(T("zona.correo","También puedes escribirnos a"))} <a href="mailto:${esc(EMPRESA.email)}">${esc(EMPRESA.email)}</a>.`:"";
   $("#pie-emp").innerHTML=[EMPRESA.razonSocial||EMPRESA.nombre,EMPRESA.nif?"NIF "+EMPRESA.nif:null,EMPRESA.domicilio].filter(Boolean).map(esc).join(" · ")+" · © "+new Date().getFullYear();
 }
@@ -632,17 +611,17 @@ function pintarCoches(){
     <div class="b"><div class="t">${esc(titulo(c))}</div>${c.version?`<div class="v">${esc(c.version)}</div>`:""}
       <div class="sp tnum">${[c.anio,c.km!=null?num(c.km)+" km":null,c.combustible,c.cv?c.cv+" CV":null].filter(Boolean).map(x=>`<span>${esc(x)}</span>`).join("")}</div>
       <div class="p tnum">${c.precio?eur(c.precio):esc(T("coches.consultar","Consultar precio"))}</div></div></button>`).join("")
-    :`<div class="empty"><strong>${esc(COCHES.length?T("coches.sinresultados.titulo","Ningún coche con estos filtros"):T("coches.vacio.titulo","Estamos preparando nuevos coches"))}</strong>${esc(COCHES.length?T("coches.sinresultados.texto","Prueba con otros filtros o cuéntanos qué buscas."):T("coches.vacio.texto","Mientras tanto, cuéntanos qué buscas y lo encontramos por ti."))}</div>`}
+    :`<div class="empty"><strong>${esc(COCHES.length?T("coches.sinresultados.titulo","Ningún vehículo con estos filtros"):T("coches.vacio.titulo","Próximamente publicaremos nuevos vehículos"))}</strong>${esc(COCHES.length?T("coches.sinresultados.texto","Prueba con otros filtros."):T("coches.vacio.texto","Si buscas un vehículo concreto, puedes solicitar una búsqueda personalizada."))}</div>`}
 ["#f-disp","#f-tipo","#f-comb","#f-anio"].forEach(s=>$(s).addEventListener("change",pintarCoches));
 $("#cars").innerHTML=`<div class="empty"><strong>Cargando coches…</strong></div>`;
 
 /* ---------- formulario de búsqueda ---------- */
 // Cada opción: [texto, valor para la app] — tipos y combustibles usan los mismos nombres que la ficha de cliente de la app
 const OPC={
-  tipo:{multi:true,v:[["SUV / Todoterreno",["SUV","4x4"]],["Berlina",["Berlina"]],["Compacto",["Compacto"]],["Familiar",["Familiar"]],["Deportivo",["Deportivo"]],["Comercial",["Comercial","Furgoneta"]],["Otro / Me da igual",[]]]},
+  tipo:{multi:true,v:[["Turismo",["Utilitario","Compacto"]],["SUV / Todoterreno",["SUV","4x4"]],["Berlina",["Berlina"]],["Familiar",["Familiar"]],["Deportivo",["Deportivo"]],["Furgoneta",["Furgoneta"]],["Motocicleta",[]],["Vehículo comercial",["Comercial"]],["Otro",[]]]},
   pres:{v:[["Menos de 10.000 €",10000],["Entre 10.000 y 15.000 €",15000],["Entre 15.000 y 20.000 €",20000],["Entre 20.000 y 25.000 €",25000],["Entre 25.000 y 35.000 €",35000],["Más de 35.000 €",null],["Otro presupuesto",null]]},
-  comb:{v:[["Gasolina",["Gasolina"]],["Diésel",["Diésel"]],["Híbrido",["Híbrido"]],["Híbrido enchufable",["Híbrido enchufable"]],["Eléctrico",["Eléctrico"]],["Indiferente",[]]]},
-  cambio:{v:[["Automático"],["Manual"],["Indiferente"]]},
+  comb:{v:[["Gasolina",["Gasolina"]],["Diésel",["Diésel"]],["Híbrido",["Híbrido"]],["Híbrido enchufable",["Híbrido enchufable"]],["Eléctrico",["Eléctrico"]],["Otro / Indiferente",[]],["No aplica",[]]]},
+  cambio:{v:[["Automático"],["Manual"],["Indiferente"],["No aplica"]]},
   plazo:{v:[["Lo antes posible"],["En las próximas semanas"],["En uno o dos meses"],["Sin prisa, estoy buscando"]]}};
 function pintarOpciones(){for(const[k,o]of Object.entries(OPC))$("#op-"+k).innerHTML=o.v.map(([t],i)=>`<label><input type="${o.multi?"checkbox":"radio"}" name="op-${k}" value="${i}"><span data-t="form.op.${k}.${i+1}">${esc(T(`form.op.${k}.${i+1}`,t))}</span></label>`).join("")}
 pintarOpciones();
@@ -667,7 +646,7 @@ $("#form").addEventListener("submit",async e=>{
     const r=await fetch(SB_URL+"/rest/v1/rpc/enviar_solicitud",{method:"POST",headers:{...H,"Content-Type":"application/json"},body:JSON.stringify({s:sol})});
     const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.message||T("form.error.envio","No se ha podido enviar la solicitud."));
     if(j&&j.id)fetch(SB_URL+"/functions/v1/aviso-solicitud",{method:"POST",headers:{"Content-Type":"application/json",apikey:SB_KEY},body:JSON.stringify({id:j.id})}).catch(()=>{});
-    $("#form").reset();res.className="resultado ok";res.textContent=T("form.ok","¡Gracias! Hemos recibido tu solicitud. Te llamaremos o escribiremos muy pronto para conocer mejor lo que necesitas.");res.hidden=false;res.scrollIntoView({block:"center"});
+    $("#form").reset();res.className="resultado ok";res.textContent=T("form.ok","Hemos recibido tu solicitud. Nos pondremos en contacto contigo próximamente.");res.hidden=false;res.scrollIntoView({block:"center"});
   }catch(err){res.className="resultado mal";res.textContent=err.message+" "+T("form.alternativa","También puedes escribirnos por WhatsApp.");res.hidden=false}
   finally{b.disabled=false}});
 
@@ -689,8 +668,8 @@ function pintarFicha(){
     <div class="fside"><div class="fprice"><b class="tnum">${c.precio?eur(c.precio):esc(T("coches.consultar","Consultar precio"))}</b></div>
       <dl class="kv tnum">${datos.map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
       ${c.equipamiento?`<div class="equip"><b style="color:var(--ink)">Equipamiento:</b> ${esc(c.equipamiento)}</div>`:""}
-      ${c.disponibilidad==="encargo"?`<p class="legalfoto" style="margin:0">${esc(T("ficha.encargo","Coche disponible por encargo durante pocos días. El precio final te lo confirmamos al consultarnos."))}</p>`:""}
-      <button class="btn verde" type="button" id="finteres">${esc(T("ficha.boton","Me interesa este coche"))}</button></div></div></div>`;
+      ${c.disponibilidad==="encargo"?`<p class="legalfoto" style="margin:0">${esc(T("ficha.encargo","Vehículo disponible por encargo durante unos días. El precio final se confirma al consultarnos."))}</p>`:""}
+      <button class="btn verde" type="button" id="finteres">${esc(T("ficha.boton","Me interesa este vehículo"))}</button></div></div></div>`;
   $("#fclose").focus({preventScroll:true})}
 const VIS={on:false};
 function abrirVisor(){VIS.on=true;pintarVisor()}
@@ -711,7 +690,7 @@ document.addEventListener("click",e=>{const t=e.target;
   if(t.closest("#galmain")){abrirVisor();return}
   const th=t.closest("[data-foto]");if(th){fotoI=+th.dataset.foto;pintarFicha();return}
   if(t.closest("#finteres")&&ficha){const c=ficha;$("#c-marca").value=`${titulo(c)}${c.version?" "+c.version:""}${c.anio?" ("+c.anio+")":""}`;
-    const x=$("#c-extra");x.value=(x.value?x.value+"\n":"")+T("form.interes","Me interesa el coche publicado en la web")+`: ${titulo(c)}${c.km!=null?", "+num(c.km)+" km":""}${c.precio?", "+eur(c.precio):""}.`;
+    const x=$("#c-extra");x.value=(x.value?x.value+"\n":"")+T("form.interes","Me interesa el vehículo publicado en la web")+`: ${titulo(c)}${c.km!=null?", "+num(c.km)+" km":""}${c.precio?", "+eur(c.precio):""}.`;
     cerrarFicha();location.hash="busqueda";setTimeout(()=>$("#c-nombre").focus({preventScroll:true}),450);return}
   if(t.closest("#ficha a[href^='#']"))cerrarFicha();
 });
@@ -732,7 +711,7 @@ const LEGAL={
 <h3>Legislación aplicable</h3><p>Este aviso se rige por la legislación española. Si eres consumidor, para cualquier controversia serán competentes los juzgados de tu domicilio.</p>`,
 "privacidad":()=>`<h2>Política de privacidad</h2><p class="meta">Última actualización: ${esc(EMPRESA.actualizado)}</p>
 <h3>Responsable del tratamiento</h3><p>${E("razonSocial")} (${esc(EMPRESA.nombre)}), NIF ${E("nif")}, con domicilio en ${E("domicilio")}. Contacto: ${E("email")}.</p>
-<h3>Qué datos tratamos</h3><p>Los que nos das en el formulario «¿Qué coche estás buscando?»: nombre, teléfono, correo electrónico si lo indicas, localidad de residencia y lo que nos cuentes sobre el coche que buscas (tipo, marca o modelo, presupuesto, combustible, cambio, plazo y características). También los que nos envíes por WhatsApp, correo electrónico o teléfono al consultarnos. Esta web no tiene cuentas de usuario.</p>
+<h3>Qué datos tratamos</h3><p>Los que nos das en el formulario «Solicita tu búsqueda personalizada»: nombre, teléfono, correo electrónico si lo indicas, localidad de residencia y lo que nos cuentes sobre el vehículo que buscas (tipo, marca o modelo, presupuesto, combustible, cambio, plazo y características). También los que nos envíes por WhatsApp, correo electrónico o teléfono al consultarnos. Esta web no tiene cuentas de usuario.</p>
 <h3>Para qué los usamos</h3><ul><li>Responder a tu solicitud, buscar vehículos que encajen con lo que necesitas y enviarte propuestas.</li><li>Preparar el presupuesto y, si compras, el contrato y los trámites de transferencia.</li></ul><p>No los usamos para enviarte publicidad de otros productos ni tomamos decisiones automatizadas con ellos.</p>
 <h3>Base legal</h3><p>Tu consentimiento al enviar el formulario o la consulta y la aplicación de medidas precontractuales a petición tuya (artículo 6.1, letras a y b, del Reglamento (UE) 2016/679, RGPD). Si compras un vehículo, también el cumplimiento del contrato y de nuestras obligaciones legales, como las fiscales y las de Tráfico.</p>
 <h3>Cuánto tiempo los guardamos</h3><p>Mientras gestionamos tu búsqueda y, como máximo, un año después de nuestro último contacto si no llegas a comprar. Si compras, durante los plazos que exige la ley.</p>
@@ -747,7 +726,7 @@ const LEGAL={
 <h3>Fotografías</h3><p>Las fotografías de cada anuncio corresponden al propio vehículo anunciado. Las matrículas aparecen difuminadas para proteger los datos de los anteriores titulares. Pueden existir diferencias de color o de iluminación respecto al vehículo real.</p>
 <p>Las fotos de los vehículos son propiedad de ${esc(EMPRESA.nombre)} o se usan con autorización. No pueden reproducirse ni utilizarse en otros anuncios sin permiso por escrito. La foto de portada de la web es una imagen genérica de Unsplash y no corresponde a ningún vehículo en venta.</p>
 <h3>Datos de los vehículos</h3><p>Kilómetros, equipamiento, potencia y demás datos son orientativos y no tienen valor contractual. Te confirmamos por escrito el estado, el kilometraje y el precio final antes de cualquier compra.</p>
-<h3>Coches por encargo</h3><p>Los vehículos marcados «Por encargo» todavía no son de nuestra propiedad: son coches que podemos adquirir para ti en canales de venta profesional durante un plazo limitado. Su disponibilidad y su precio final dependen de que podamos cerrar la compra.</p>
+<h3>Vehículos por encargo</h3><p>Los vehículos marcados «Por encargo» todavía no son de nuestra propiedad: son vehículos que podemos adquirir para ti en canales de venta profesional durante un plazo limitado. Su disponibilidad y su precio final dependen de que podamos cerrar la compra.</p>
 <h3>Garantía</h3><p>Los vehículos de ocasión que vendemos a consumidores incluyen la garantía legal establecida en el Real Decreto Legislativo 1/2007 (Ley General para la Defensa de los Consumidores y Usuarios), cuyo plazo mínimo para bienes de segunda mano es de un año.</p>`};
 function ruta(){const h=decodeURIComponent(location.hash.slice(1));const legal=LEGAL[h];
   $("#principal").hidden=!!legal;$("#vista-legal").hidden=!legal;

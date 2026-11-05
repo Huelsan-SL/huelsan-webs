@@ -6,13 +6,13 @@
    {
     "clave": "seo.titulo",
     "etiqueta": "Título de la pestaña y de Google",
-    "defecto": "Huelsan Automoción · Búsqueda de coches por encargo",
+    "defecto": "Huelsan Automoción · Compraventa y búsqueda de vehículos",
     "largo": false
    },
    {
     "clave": "seo.descripcion",
     "etiqueta": "Descripción en Google",
-    "defecto": "Dinos qué coche quieres y cuánto quieres invertir: lo buscamos en España y Europa y nos encargamos de todo hasta la entrega. Murcia, Alicante, Huelva y Sevilla.",
+    "defecto": "Compraventa y búsqueda personalizada de vehículos: coches, furgonetas, motocicletas y otros vehículos. Atención en Murcia, Alicante, Huelva y Sevilla.",
     "largo": true
    }
   ]
@@ -64,40 +64,27 @@
   "ancla": "inicio",
   "campos": [
    {
-    "clave": "inicio.titular1",
-    "etiqueta": "Titular, línea 1",
-    "defecto": "El coche que buscas.",
+    "clave": "inicio.titular",
+    "etiqueta": "Titular",
+    "defecto": "Buscamos el vehículo que necesitas.",
     "largo": false
-   },
-   {
-    "clave": "inicio.titular2",
-    "etiqueta": "Titular, línea 2",
-    "defecto": "El presupuesto que tienes.",
-    "largo": false
-   },
-   {
-    "clave": "inicio.titular3",
-    "etiqueta": "Titular, línea 3",
-    "defecto": "Nosotros lo encontramos.",
-    "largo": false,
-    "ayuda": "se muestra en verde"
    },
    {
     "clave": "inicio.texto",
     "etiqueta": "Texto bajo el titular",
-    "defecto": "¿Buscas un coche y no encuentras exactamente lo que necesitas? Dinos qué vehículo quieres, qué características necesitas y cuánto quieres invertir: buscamos las mejores opciones en España y Europa y te acompañamos hasta la entrega.",
+    "defecto": "Cuéntanos qué tipo de vehículo buscas, qué características necesitas y cuánto quieres invertir. Buscaremos opciones en España y Europa que se adapten a tus preferencias y gestionaremos todo el proceso hasta la entrega.",
     "largo": true
    },
    {
     "clave": "inicio.boton1",
     "etiqueta": "Botón principal",
-    "defecto": "Cuéntanos qué coche buscas",
+    "defecto": "Cuéntanos qué vehículo buscas",
     "largo": false
    },
    {
     "clave": "inicio.boton2",
     "etiqueta": "Botón secundario",
-    "defecto": "Ver coches en stock",
+    "defecto": "Ver vehículos en stock",
     "largo": false
    },
    {
@@ -121,7 +108,7 @@
    {
     "clave": "inicio.zonas",
     "etiqueta": "Frase de zonas",
-    "defecto": "Trabajamos en: {zonas}",
+    "defecto": "Trabajamos en {zonas}.",
     "largo": false,
     "ayuda": "{zonas} se sustituye por las zonas de los contactos"
    }
@@ -140,43 +127,31 @@
    {
     "clave": "encargo.titulo",
     "etiqueta": "Título",
-    "defecto": "No te adaptes al coche que encuentres. Encuentra el coche que necesitas.",
-    "largo": true
+    "defecto": "Búsqueda personalizada de vehículos",
+    "largo": false
    },
    {
     "clave": "encargo.p1",
     "etiqueta": "Párrafo 1",
-    "defecto": "Cada persona busca algo diferente. Algunos quieren un SUV familiar, otros un compacto para ciudad, un deportivo o un vehículo para trabajar.",
+    "defecto": "Ofrecemos un servicio de búsqueda personalizada para quienes buscan un vehículo con unas características concretas.",
     "largo": true
    },
    {
     "clave": "encargo.p2",
     "etiqueta": "Párrafo 2",
-    "defecto": "Por eso, en Huelsan no nos limitamos a vender los coches que tenemos disponibles. Buscamos el vehículo que realmente quieres, adaptándonos a tus necesidades y a tu presupuesto.",
+    "defecto": "Nos indicas el tipo de vehículo, marca, modelo, características y presupuesto aproximado. Buscamos opciones a través de nuestros contactos y proveedores en España y Europa y te presentamos las alternativas que mejor se adapten a lo que necesitas.",
     "largo": true
    },
    {
     "clave": "encargo.p3",
     "etiqueta": "Párrafo 3",
-    "defecto": "Trabajamos con proveedores y profesionales del sector en España y Europa para encontrar alternativas que encajen contigo.",
+    "defecto": "Nos encargamos de gestionar la operación, el transporte y la documentación hasta la entrega del vehículo.",
     "largo": true
-   },
-   {
-    "clave": "encargo.p4",
-    "etiqueta": "Frase destacada",
-    "defecto": "Tú nos explicas lo que buscas. Nosotros hacemos el trabajo.",
-    "largo": false
-   },
-   {
-    "clave": "encargo.boton",
-    "etiqueta": "Botón",
-    "defecto": "Empezar mi búsqueda",
-    "largo": false
    },
    {
     "clave": "encargo.lista.titulo",
     "etiqueta": "Título de la lista",
-    "defecto": "¿Qué podemos buscar por ti?",
+    "defecto": "Tipos de vehículos",
     "largo": false
    },
    {
@@ -200,20 +175,32 @@
    {
     "clave": "encargo.lista4",
     "etiqueta": "Lista: elemento 4",
-    "defecto": "Deportivos y vehículos especiales",
+    "defecto": "Deportivos",
     "largo": false
    },
    {
     "clave": "encargo.lista5",
     "etiqueta": "Lista: elemento 5",
-    "defecto": "Vehículos comerciales",
+    "defecto": "Furgonetas y vehículos comerciales",
     "largo": false
    },
    {
     "clave": "encargo.lista6",
     "etiqueta": "Lista: elemento 6",
-    "defecto": "Coches de diferentes marcas, modelos y motorizaciones",
+    "defecto": "Motocicletas",
     "largo": false
+   },
+   {
+    "clave": "encargo.lista7",
+    "etiqueta": "Lista: elemento 7",
+    "defecto": "Otros tipos de vehículos",
+    "largo": false
+   },
+   {
+    "clave": "encargo.lista.nota",
+    "etiqueta": "Frase bajo la lista",
+    "defecto": "Trabajamos con diferentes marcas, modelos, motorizaciones y categorías de vehículos.",
+    "largo": true
    }
   ]
  },
@@ -222,70 +209,58 @@
   "ancla": "proceso",
   "campos": [
    {
-    "clave": "proceso.antetitulo",
-    "etiqueta": "Antetítulo",
-    "defecto": "Cómo funciona",
-    "largo": false
-   },
-   {
     "clave": "proceso.titulo",
     "etiqueta": "Título",
-    "defecto": "Encontrar tu próximo coche es más fácil de lo que imaginas.",
+    "defecto": "Cómo funciona nuestro servicio",
     "largo": false
    },
    {
     "clave": "proceso.paso1.titulo",
     "etiqueta": "Paso 1: título",
-    "defecto": "Cuéntanos qué necesitas",
+    "defecto": "Nos cuentas qué necesitas",
     "largo": false
    },
    {
     "clave": "proceso.paso1.texto",
     "etiqueta": "Paso 1: texto",
-    "defecto": "Dinos qué coche tienes en mente, qué características buscas y cuál es tu presupuesto máximo.",
+    "defecto": "Nos indicas el tipo de vehículo que buscas, tus preferencias, características y presupuesto aproximado.",
     "largo": true
    },
    {
     "clave": "proceso.paso2.titulo",
     "etiqueta": "Paso 2: título",
-    "defecto": "Nosotros lo buscamos",
+    "defecto": "Buscamos opciones",
     "largo": false
    },
    {
     "clave": "proceso.paso2.texto",
     "etiqueta": "Paso 2: texto",
-    "defecto": "Consultamos nuestras fuentes y contactos profesionales en España y Europa para localizar vehículos que se ajusten a tus preferencias.",
+    "defecto": "Consultamos nuestros contactos y proveedores en España y Europa para localizar vehículos que se ajusten a tus necesidades.",
     "largo": true
    },
    {
     "clave": "proceso.paso3.titulo",
     "etiqueta": "Paso 3: título",
-    "defecto": "Te presentamos las mejores opciones",
+    "defecto": "Te presentamos las alternativas",
     "largo": false
    },
    {
     "clave": "proceso.paso3.texto",
     "etiqueta": "Paso 3: texto",
-    "defecto": "Seleccionamos alternativas y te explicamos sus características, estado, condiciones y coste de la operación.",
+    "defecto": "Seleccionamos las opciones más interesantes y te facilitamos información sobre sus características, estado, condiciones y coste de la operación.",
     "largo": true
    },
    {
     "clave": "proceso.paso4.titulo",
     "etiqueta": "Paso 4: título",
-    "defecto": "Tú decides y nosotros nos encargamos",
+    "defecto": "Gestionamos la operación",
     "largo": false
    },
    {
     "clave": "proceso.paso4.texto",
     "etiqueta": "Paso 4: texto",
-    "defecto": "Cuando eliges tu coche, gestionamos la operación, el transporte, la documentación y todo lo necesario para preparar su entrega.",
+    "defecto": "Una vez elegido el vehículo, coordinamos la compra, el transporte y la documentación necesaria hasta preparar su entrega.",
     "largo": true
-   },
-   {
-    "clave": "proceso.boton",
-    "etiqueta": "Botón",
-    "defecto": "Quiero que busquéis mi coche",
-    "largo": false
    }
   ]
  },
@@ -294,22 +269,10 @@
   "ancla": "dif",
   "campos": [
    {
-    "clave": "dif.antetitulo",
-    "etiqueta": "Antetítulo",
-    "defecto": "Nuestra diferencia",
-    "largo": false
-   },
-   {
     "clave": "dif.titulo",
     "etiqueta": "Título",
-    "defecto": "No queremos venderte cualquier coche. Queremos encontrar el adecuado para ti.",
-    "largo": true
-   },
-   {
-    "clave": "dif.intro",
-    "etiqueta": "Introducción",
-    "defecto": "Comprar un coche es una decisión importante. Por eso queremos que tengas información y acompañamiento durante todo el proceso.",
-    "largo": true
+    "defecto": "Nuestro servicio",
+    "largo": false
    },
    {
     "clave": "dif.1.titulo",
@@ -320,19 +283,19 @@
    {
     "clave": "dif.1.texto",
     "etiqueta": "Ventaja 1: texto",
-    "defecto": "No dependes únicamente de los vehículos publicados en nuestro stock. Buscamos según tus necesidades.",
+    "defecto": "Buscamos vehículos según las preferencias, características y presupuesto de cada cliente.",
     "largo": true
    },
    {
     "clave": "dif.2.titulo",
     "etiqueta": "Ventaja 2: título",
-    "defecto": "Acceso a más oportunidades",
+    "defecto": "Acceso a más opciones",
     "largo": false
    },
    {
     "clave": "dif.2.texto",
     "etiqueta": "Ventaja 2: texto",
-    "defecto": "Trabajamos con profesionales y proveedores del mercado nacional y europeo.",
+    "defecto": "Trabajamos con proveedores y profesionales del sector en España y Europa para localizar diferentes alternativas.",
     "largo": true
    },
    {
@@ -344,8 +307,8 @@
    {
     "clave": "dif.3.texto",
     "etiqueta": "Ventaja 3: texto",
-    "defecto": "Partimos de lo que quieres invertir para buscar opciones realistas.",
-    "largo": false
+    "defecto": "Tenemos en cuenta la inversión prevista para seleccionar vehículos que se ajusten a ella.",
+    "largo": true
    },
    {
     "clave": "dif.4.titulo",
@@ -356,7 +319,7 @@
    {
     "clave": "dif.4.texto",
     "etiqueta": "Ventaja 4: texto",
-    "defecto": "Te explicamos las características, condiciones y costes de cada operación antes de tomar una decisión.",
+    "defecto": "Facilitamos información sobre las características, condiciones y costes de cada operación antes de tomar una decisión.",
     "largo": true
    },
    {
@@ -368,19 +331,19 @@
    {
     "clave": "dif.5.texto",
     "etiqueta": "Ventaja 5: texto",
-    "defecto": "Te acompañamos en la compra, transporte, documentación y entrega.",
-    "largo": false
+    "defecto": "Coordinamos la compra, el transporte, la documentación y la entrega del vehículo.",
+    "largo": true
    },
    {
     "clave": "dif.6.titulo",
     "etiqueta": "Ventaja 6: título",
-    "defecto": "Trato directo",
+    "defecto": "Atención personalizada",
     "largo": false
    },
    {
     "clave": "dif.6.texto",
     "etiqueta": "Ventaja 6: texto",
-    "defecto": "Hablamos contigo, escuchamos lo que necesitas y te asesoramos durante el proceso.",
+    "defecto": "Mantenemos un contacto directo con cada cliente durante las diferentes fases del proceso.",
     "largo": true
    }
   ]
@@ -390,33 +353,27 @@
   "ancla": "stock",
   "campos": [
    {
-    "clave": "stock.antetitulo",
-    "etiqueta": "Antetítulo",
-    "defecto": "Vehículos en stock",
-    "largo": false
-   },
-   {
     "clave": "stock.titulo",
     "etiqueta": "Título",
-    "defecto": "¿Prefieres un coche que ya esté disponible?",
+    "defecto": "Vehículos disponibles en stock",
     "largo": false
    },
    {
     "clave": "stock.intro",
     "etiqueta": "Introducción",
-    "defecto": "Además de nuestro servicio de búsqueda personalizada, disponemos de vehículos en stock seleccionados. Consulta los vehículos publicados y descubre nuestras oportunidades.",
+    "defecto": "Disponemos de una selección de vehículos disponibles para quienes prefieren elegir entre nuestro stock actual. Consulta los anuncios y descubre las características de cada vehículo.",
     "largo": true
    },
    {
     "clave": "stock.aviso",
     "etiqueta": "Aviso bajo el listado",
-    "defecto": "¿No encuentras lo que buscas? No te preocupes. Podemos buscarlo por encargo.",
+    "defecto": "Si buscas un vehículo con otras características, también podemos localizarlo a través de nuestro servicio de búsqueda personalizada.",
     "largo": true
    },
    {
     "clave": "stock.boton",
     "etiqueta": "Botón",
-    "defecto": "Buscar mi coche",
+    "defecto": "Solicitar búsqueda personalizada",
     "largo": false
    }
   ]
@@ -501,26 +458,26 @@
    {
     "clave": "coches.sinresultados.titulo",
     "etiqueta": "Filtros sin resultados: título",
-    "defecto": "Ningún coche con estos filtros",
+    "defecto": "Ningún vehículo con estos filtros",
     "largo": false
    },
    {
     "clave": "coches.vacio.titulo",
     "etiqueta": "Sin coches publicados: título",
-    "defecto": "Estamos preparando nuevos coches",
+    "defecto": "Próximamente publicaremos nuevos vehículos",
     "largo": false
    },
    {
     "clave": "coches.sinresultados.texto",
     "etiqueta": "Filtros sin resultados: texto",
-    "defecto": "Prueba con otros filtros o cuéntanos qué buscas.",
+    "defecto": "Prueba con otros filtros.",
     "largo": false
    },
    {
     "clave": "coches.vacio.texto",
     "etiqueta": "Sin coches publicados: texto",
-    "defecto": "Mientras tanto, cuéntanos qué buscas y lo encontramos por ti.",
-    "largo": false
+    "defecto": "Si buscas un vehículo concreto, puedes solicitar una búsqueda personalizada.",
+    "largo": true
    }
   ]
  },
@@ -549,13 +506,13 @@
    {
     "clave": "ficha.encargo",
     "etiqueta": "Aviso en coches por encargo",
-    "defecto": "Coche disponible por encargo durante pocos días. El precio final te lo confirmamos al consultarnos.",
+    "defecto": "Vehículo disponible por encargo durante unos días. El precio final se confirma al consultarnos.",
     "largo": true
    },
    {
     "clave": "ficha.boton",
     "etiqueta": "Botón de interés",
-    "defecto": "Me interesa este coche",
+    "defecto": "Me interesa este vehículo",
     "largo": false
    }
   ]
@@ -565,93 +522,39 @@
   "ancla": "quienes",
   "campos": [
    {
-    "clave": "quienes.antetitulo",
-    "etiqueta": "Antetítulo",
-    "defecto": "Quiénes somos",
-    "largo": false
-   },
-   {
     "clave": "quienes.titulo",
     "etiqueta": "Título",
-    "defecto": "Encontramos el coche que buscas. Nos encargamos de todo.",
+    "defecto": "Quiénes somos",
     "largo": false
    },
    {
     "clave": "quienes.p1",
     "etiqueta": "Párrafo 1",
-    "defecto": "En Huelsan Automoción creemos que encontrar un buen coche no debería convertirse en una tarea interminable.",
+    "defecto": "Huelsan Automoción es una empresa dedicada a la compraventa y búsqueda personalizada de vehículos de ocasión.",
     "largo": true
    },
    {
     "clave": "quienes.p2",
     "etiqueta": "Párrafo 2",
-    "defecto": "Por eso ofrecemos un servicio de compraventa de vehículos de ocasión basado en la búsqueda personalizada. Queremos que puedas encontrar el coche que realmente necesitas, ajustado a tus preferencias y, sobre todo, a tu presupuesto.",
+    "defecto": "Trabajamos para ofrecer a nuestros clientes diferentes alternativas de compra, tanto a través de nuestros vehículos en stock como mediante un servicio de búsqueda por encargo.",
     "largo": true
    },
    {
     "clave": "quienes.p3",
     "etiqueta": "Párrafo 3",
-    "defecto": "Tú nos cuentas qué coche buscas y cuánto quieres invertir. Nosotros nos encargamos de encontrar las mejores opciones.",
+    "defecto": "Colaboramos con proveedores y profesionales del sector en España y Europa, lo que nos permite acceder a una amplia variedad de vehículos y localizar opciones adaptadas a las necesidades de cada cliente.",
     "largo": true
    },
    {
     "clave": "quienes.p4",
     "etiqueta": "Párrafo 4",
-    "defecto": "Trabajamos con proveedores y canales profesionales de compraventa en España y Europa, lo que nos permite acceder a una amplia variedad de vehículos y localizar alternativas que quizás no encontrarías en los portales habituales.",
+    "defecto": "Nuestro trabajo incluye la búsqueda y selección del vehículo, la comprobación de la información disponible y la gestión de la operación, el transporte y la documentación hasta su entrega.",
     "largo": true
-   },
-   {
-    "clave": "quienes.p5",
-    "etiqueta": "Párrafo 5",
-    "defecto": "No nos limitamos a enseñarte anuncios. Estudiamos cada oportunidad, comprobamos la información disponible sobre el vehículo y te presentamos diferentes opciones para que puedas decidir con tranquilidad.",
-    "largo": true
-   },
-   {
-    "clave": "quienes.p6",
-    "etiqueta": "Párrafo 6",
-    "defecto": "Una vez elegido el coche, gestionamos todo el proceso: compra, transporte, documentación, transferencia y preparación para la entrega.",
-    "largo": true
-   },
-   {
-    "clave": "quienes.p7",
-    "etiqueta": "Párrafo 7",
-    "defecto": "También disponemos de vehículos en stock para quienes prefieren encontrar su próximo coche entre nuestras opciones disponibles.",
-    "largo": true
-   },
-   {
-    "clave": "quienes.servicio.antetitulo",
-    "etiqueta": "Recuadro: antetítulo",
-    "defecto": "Nuestro servicio",
-    "largo": false
-   },
-   {
-    "clave": "quienes.servicio.titulo",
-    "etiqueta": "Recuadro: título",
-    "defecto": "Un servicio cercano, transparente y personalizado",
-    "largo": false
-   },
-   {
-    "clave": "quienes.valor1",
-    "etiqueta": "Recuadro de valores 1",
-    "defecto": "No queremos venderte cualquier coche. Queremos ayudarte a encontrar el adecuado, sin perder tiempo y conociendo desde el principio las condiciones de la operación.",
-    "largo": true
-   },
-   {
-    "clave": "quienes.valor2",
-    "etiqueta": "Recuadro de valores 2",
-    "defecto": "Tu presupuesto, tus necesidades y nuestro trabajo para encontrar la mejor opción.",
-    "largo": true
-   },
-   {
-    "clave": "quienes.lema",
-    "etiqueta": "Frase final",
-    "defecto": "Huelsan Automoción. Tu próximo coche empieza con una conversación.",
-    "largo": false
    },
    {
     "clave": "quienes.zona",
     "etiqueta": "Frase de zonas",
-    "defecto": "Trabajamos principalmente en {zonas}, ofreciendo un trato directo y acompañando a nuestros clientes durante todo el proceso.",
+    "defecto": "Trabajamos principalmente en {zonas}, ofreciendo atención personalizada durante todo el proceso.",
     "largo": true,
     "ayuda": "{zonas} se sustituye por las zonas de los contactos"
    }
@@ -662,63 +565,39 @@
   "ancla": "form",
   "campos": [
    {
-    "clave": "form.antetitulo",
-    "etiqueta": "Antetítulo",
-    "defecto": "Tu búsqueda",
-    "largo": false
-   },
-   {
     "clave": "form.titulo",
     "etiqueta": "Título",
-    "defecto": "¿Qué coche estás buscando?",
+    "defecto": "Solicita tu búsqueda personalizada",
     "largo": false
    },
    {
     "clave": "form.intro",
     "etiqueta": "Introducción",
-    "defecto": "Cuéntanos qué necesitas y qué presupuesto tienes. Nosotros nos ponemos manos a la obra para encontrar las mejores opciones para ti.",
+    "defecto": "Cuéntanos qué vehículo estás buscando, qué características necesitas y cuál es tu presupuesto aproximado. Estudiaremos tu solicitud y buscaremos opciones que se adapten a tus preferencias.",
     "largo": true
-   },
-   {
-    "clave": "form.punto1",
-    "etiqueta": "Punto 1 junto al formulario",
-    "defecto": "No necesitas tenerlo todo decidido. Cuanta más información nos des, mejor podremos orientarte.",
-    "largo": true
-   },
-   {
-    "clave": "form.punto2",
-    "etiqueta": "Punto 2 junto al formulario",
-    "defecto": "Sin compromiso de compra por enviar el formulario.",
-    "largo": false
-   },
-   {
-    "clave": "form.punto3",
-    "etiqueta": "Punto 3 junto al formulario",
-    "defecto": "Te contestamos personalmente, por teléfono o WhatsApp.",
-    "largo": false
    },
    {
     "clave": "form.p1",
     "etiqueta": "Pregunta 1",
-    "defecto": "¿Qué tipo de coche buscas?",
+    "defecto": "¿Qué tipo de vehículo buscas?",
     "largo": false
    },
    {
     "clave": "form.op.tipo.1",
     "etiqueta": "Pregunta 1 (tipo): opción 1",
-    "defecto": "SUV / Todoterreno",
+    "defecto": "Turismo",
     "largo": false
    },
    {
     "clave": "form.op.tipo.2",
     "etiqueta": "Pregunta 1 (tipo): opción 2",
-    "defecto": "Berlina",
+    "defecto": "SUV / Todoterreno",
     "largo": false
    },
    {
     "clave": "form.op.tipo.3",
     "etiqueta": "Pregunta 1 (tipo): opción 3",
-    "defecto": "Compacto",
+    "defecto": "Berlina",
     "largo": false
    },
    {
@@ -736,13 +615,25 @@
    {
     "clave": "form.op.tipo.6",
     "etiqueta": "Pregunta 1 (tipo): opción 6",
-    "defecto": "Comercial",
+    "defecto": "Furgoneta",
     "largo": false
    },
    {
     "clave": "form.op.tipo.7",
     "etiqueta": "Pregunta 1 (tipo): opción 7",
-    "defecto": "Otro / Me da igual",
+    "defecto": "Motocicleta",
+    "largo": false
+   },
+   {
+    "clave": "form.op.tipo.8",
+    "etiqueta": "Pregunta 1 (tipo): opción 8",
+    "defecto": "Vehículo comercial",
+    "largo": false
+   },
+   {
+    "clave": "form.op.tipo.9",
+    "etiqueta": "Pregunta 1 (tipo): opción 9",
+    "defecto": "Otro",
     "largo": false
    },
    {
@@ -754,7 +645,7 @@
    {
     "clave": "form.p3",
     "etiqueta": "Pregunta 3",
-    "defecto": "¿Qué presupuesto tienes?",
+    "defecto": "¿Qué presupuesto aproximado tienes?",
     "largo": false
    },
    {
@@ -838,7 +729,13 @@
    {
     "clave": "form.op.comb.6",
     "etiqueta": "Pregunta 4 (combustible): opción 6",
-    "defecto": "Indiferente",
+    "defecto": "Otro / Indiferente",
+    "largo": false
+   },
+   {
+    "clave": "form.op.comb.7",
+    "etiqueta": "Pregunta 4 (combustible): opción 7",
+    "defecto": "No aplica",
     "largo": false
    },
    {
@@ -866,15 +763,21 @@
     "largo": false
    },
    {
+    "clave": "form.op.cambio.4",
+    "etiqueta": "Pregunta 5 (cambio): opción 4",
+    "defecto": "No aplica",
+    "largo": false
+   },
+   {
     "clave": "form.p6",
     "etiqueta": "Pregunta 6",
-    "defecto": "¿Hay alguna característica imprescindible?",
+    "defecto": "¿Qué características buscas?",
     "largo": false
    },
    {
     "clave": "form.p7",
     "etiqueta": "Pregunta 7",
-    "defecto": "¿Para cuándo necesitas el coche?",
+    "defecto": "¿Para cuándo necesitas el vehículo?",
     "largo": false
    },
    {
@@ -941,25 +844,25 @@
    {
     "clave": "form.boton",
     "etiqueta": "Botón",
-    "defecto": "Enviar mi solicitud",
+    "defecto": "Enviar solicitud",
     "largo": false
    },
    {
     "clave": "form.nota",
     "etiqueta": "Texto bajo el botón",
-    "defecto": "Estudiaremos tu solicitud y nos pondremos en contacto contigo para conocer mejor lo que necesitas. Sin compromiso de compra por enviar el formulario.",
+    "defecto": "Una vez recibamos tu solicitud, nos pondremos en contacto contigo para conocer mejor tus necesidades y comenzar la búsqueda.",
     "largo": true
    },
    {
     "clave": "form.p2.ejemplo",
     "etiqueta": "Ejemplo dentro del campo 2",
-    "defecto": "Ej. BMW X3, Audi A4, Volkswagen Tiguan...",
+    "defecto": "Ej. BMW X3, Audi A4, Volkswagen Transporter, Yamaha TMAX...",
     "largo": false
    },
    {
     "clave": "form.p6.ejemplo",
     "etiqueta": "Ejemplo dentro del campo 6",
-    "defecto": "Año mínimo, kilómetros máximos, color, equipamiento, potencia, extras...",
+    "defecto": "Año mínimo, kilómetros máximos, equipamiento, potencia, color, número de plazas, etc.",
     "largo": true
    },
    {
@@ -1001,7 +904,7 @@
    {
     "clave": "form.ok",
     "etiqueta": "Mensaje al enviar",
-    "defecto": "¡Gracias! Hemos recibido tu solicitud. Te llamaremos o escribiremos muy pronto para conocer mejor lo que necesitas.",
+    "defecto": "Hemos recibido tu solicitud. Nos pondremos en contacto contigo próximamente.",
     "largo": true
    },
    {
@@ -1013,7 +916,7 @@
    {
     "clave": "form.interes",
     "etiqueta": "Nota al pulsar «Me interesa» en un coche",
-    "defecto": "Me interesa el coche publicado en la web",
+    "defecto": "Me interesa el vehículo publicado en la web",
     "largo": false
    }
   ]
@@ -1023,40 +926,29 @@
   "ancla": "zona",
   "campos": [
    {
-    "clave": "zona.antetitulo",
-    "etiqueta": "Antetítulo",
-    "defecto": "Área de servicio",
-    "largo": false
-   },
-   {
     "clave": "zona.titulo",
     "etiqueta": "Título",
-    "defecto": "Estamos cerca de ti. Buscamos en toda Europa.",
+    "defecto": "Nuestra área de servicio",
     "largo": false
-   },
-   {
-    "clave": "zona.intro",
-    "etiqueta": "Introducción",
-    "defecto": "En Huelsan Automoción ofrecemos atención personalizada principalmente en Murcia, Alicante, Huelva y Sevilla.",
-    "largo": true
    },
    {
     "clave": "zona.europa",
     "etiqueta": "Recuadro Europa",
-    "defecto": "Aunque nuestra atención comercial se centra en estas zonas, buscamos oportunidades de vehículos en España y en distintos mercados europeos.",
+    "defecto": "Buscamos vehículos en diferentes puntos de España y Europa para ofrecer alternativas adaptadas a las necesidades de nuestros clientes.",
     "largo": true
-   },
-   {
-    "clave": "zona.boton",
-    "etiqueta": "Botón",
-    "defecto": "Contactar con Huelsan",
-    "largo": false
    },
    {
     "clave": "zona.atencion",
     "etiqueta": "Ciudad sin contacto asignado",
     "defecto": "Atención personalizada",
     "largo": false
+   },
+   {
+    "clave": "zona.intro",
+    "etiqueta": "Introducción",
+    "defecto": "Ofrecemos atención personalizada principalmente en {zonas}.",
+    "largo": false,
+    "ayuda": "{zonas} se sustituye por las zonas de los contactos"
    },
    {
     "clave": "zona.correo",
@@ -1089,15 +981,9 @@
   "ancla": "opiniones",
   "campos": [
    {
-    "clave": "opiniones.antetitulo",
-    "etiqueta": "Antetítulo",
-    "defecto": "Opiniones",
-    "largo": false
-   },
-   {
     "clave": "opiniones.titulo",
     "etiqueta": "Título",
-    "defecto": "Lo que dicen nuestros clientes",
+    "defecto": "Opiniones de clientes",
     "largo": false
    }
   ]
@@ -1107,87 +993,81 @@
   "ancla": "faq",
   "campos": [
    {
-    "clave": "faq.antetitulo",
-    "etiqueta": "Antetítulo",
-    "defecto": "Preguntas frecuentes",
-    "largo": false
-   },
-   {
     "clave": "faq.titulo",
     "etiqueta": "Título",
-    "defecto": "Resolvemos tus dudas",
+    "defecto": "Preguntas frecuentes",
     "largo": false
    },
    {
     "clave": "faq.1.p",
     "etiqueta": "Pregunta 1",
-    "defecto": "¿Tengo que elegir un coche de vuestro stock?",
+    "defecto": "¿Qué tipo de vehículos podéis buscar?",
     "largo": false
    },
    {
     "clave": "faq.1.r",
     "etiqueta": "Respuesta 1",
-    "defecto": "No. Nuestro servicio principal consiste en buscar el vehículo que necesitas, aunque no esté publicado en nuestra web.",
+    "defecto": "Trabajamos con turismos, SUV, todoterrenos, furgonetas, vehículos comerciales, motocicletas y otros tipos de vehículos.",
     "largo": true
    },
    {
     "clave": "faq.2.p",
     "etiqueta": "Pregunta 2",
-    "defecto": "¿Puedo deciros un presupuesto máximo?",
+    "defecto": "¿Puedo solicitar un vehículo que no esté en vuestro stock?",
     "largo": false
    },
    {
     "clave": "faq.2.r",
     "etiqueta": "Respuesta 2",
-    "defecto": "Por supuesto. De hecho, es uno de los puntos de partida de nuestro servicio. Buscamos alternativas que se ajusten a lo que quieres invertir.",
+    "defecto": "Sí. Nuestro servicio de búsqueda personalizada permite localizar vehículos según las características, marca, modelo y presupuesto que nos indiques.",
     "largo": true
    },
    {
     "clave": "faq.3.p",
     "etiqueta": "Pregunta 3",
-    "defecto": "¿Buscáis coches fuera de España?",
+    "defecto": "¿En qué zonas buscáis vehículos?",
     "largo": false
    },
    {
     "clave": "faq.3.r",
     "etiqueta": "Respuesta 3",
-    "defecto": "Sí. Trabajamos con proveedores y profesionales del sector en España y Europa para localizar más opciones.",
+    "defecto": "Trabajamos con proveedores y profesionales en España y Europa, con atención comercial principalmente en Murcia, Alicante, Huelva y Sevilla.",
     "largo": true
    },
    {
     "clave": "faq.4.p",
     "etiqueta": "Pregunta 4",
-    "defecto": "¿Tengo que comprar el coche que me encontréis?",
+    "defecto": "¿Cómo se realiza el proceso de compra?",
     "largo": false
    },
    {
     "clave": "faq.4.r",
     "etiqueta": "Respuesta 4",
-    "defecto": "No tienes obligación de comprar por solicitar una búsqueda. Te presentamos las alternativas y tú decides si alguna encaja con lo que buscas.",
+    "defecto": "Una vez seleccionado el vehículo y acordadas las condiciones, gestionamos la operación, el transporte y la documentación necesaria hasta la entrega.",
     "largo": true
    },
    {
     "clave": "faq.5.p",
     "etiqueta": "Pregunta 5",
-    "defecto": "¿Os encargáis del transporte y la documentación?",
+    "defecto": "¿Qué información necesito facilitar para iniciar una búsqueda?",
     "largo": false
    },
    {
     "clave": "faq.5.r",
     "etiqueta": "Respuesta 5",
-    "defecto": "Sí. Una vez acordada la operación, gestionamos el proceso de compra, transporte y documentación hasta preparar la entrega del vehículo.",
+    "defecto": "Principalmente el tipo de vehículo, marca o modelo de interés, características deseadas y presupuesto aproximado. Cuanta más información tengamos, mejor podremos orientar la búsqueda.",
     "largo": true
    },
    {
     "clave": "faq.6.p",
     "etiqueta": "Pregunta 6",
-    "defecto": "¿Trabajáis en toda España?",
+    "defecto": "¿Tengo que comprar el vehículo que me presentéis?",
     "largo": false
    },
    {
     "clave": "faq.6.r",
     "etiqueta": "Respuesta 6",
-    "defecto": "Nuestra atención comercial se centra principalmente en Murcia, Alicante, Huelva y Sevilla, aunque podemos buscar vehículos en distintos puntos de España y Europa.",
+    "defecto": "La solicitud inicial no supone ningún compromiso de compra. Te presentamos las alternativas y tú decides si alguna se ajusta a lo que buscas.",
     "largo": true
    }
   ]
@@ -1199,31 +1079,25 @@
    {
     "clave": "final.titulo",
     "etiqueta": "Título",
-    "defecto": "Tu próximo coche puede estar más cerca de lo que piensas.",
+    "defecto": "Contacta con Huelsan Automoción",
     "largo": false
    },
    {
     "clave": "final.texto",
     "etiqueta": "Texto",
-    "defecto": "No pierdas horas buscando entre miles de anuncios. Cuéntanos qué coche quieres, cuánto quieres gastar y qué necesitas. Nosotros nos encargamos de encontrar las mejores opciones.",
+    "defecto": "Si buscas un coche, furgoneta, motocicleta u otro tipo de vehículo, contacta con nosotros y cuéntanos qué necesitas.",
     "largo": true
    },
    {
     "clave": "final.boton1",
     "etiqueta": "Botón 1",
-    "defecto": "Buscadme mi próximo coche",
+    "defecto": "Contactar",
     "largo": false
    },
    {
     "clave": "final.boton2",
     "etiqueta": "Botón 2",
     "defecto": "Hablar por WhatsApp",
-    "largo": false
-   },
-   {
-    "clave": "final.lema",
-    "etiqueta": "Frase final",
-    "defecto": "Huelsan Automoción. El coche que buscas. Nosotros lo encontramos.",
     "largo": false
    }
   ]
@@ -1241,7 +1115,7 @@
    {
     "clave": "pie.texto2",
     "etiqueta": "Texto 2",
-    "defecto": "Búsqueda de coches por encargo en España y Europa.",
+    "defecto": "Búsqueda de vehículos por encargo en España y Europa.",
     "largo": false
    },
    {
@@ -1253,7 +1127,7 @@
    {
     "clave": "pie.stock",
     "etiqueta": "Enlace «Coches en stock»",
-    "defecto": "Coches en stock",
+    "defecto": "Vehículos en stock",
     "largo": false
    },
    {
@@ -1282,8 +1156,8 @@
    },
    {
     "clave": "pie.fotos",
-    "etiqueta": "Enlace «Fotos e información de los coches»",
-    "defecto": "Fotos e información de los coches",
+    "etiqueta": "Enlace «Fotos e información de los vehículos»",
+    "defecto": "Fotos e información de los vehículos",
     "largo": false
    }
   ]

@@ -1,4 +1,4 @@
--- Huelsan Automoción · solicitudes del formulario «¿Qué coche estás buscando?» de la web pública
+-- Huelsan Automoción · solicitudes del formulario «Solicita tu búsqueda personalizada» de la web pública
 -- Pegar entero en Supabase → SQL Editor → New query → Run. Se puede ejecutar más de una vez sin romper nada.
 --
 -- La web pública no puede escribir en las tablas: solo puede llamar a esta función, que comprueba
