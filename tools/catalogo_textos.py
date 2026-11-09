@@ -29,6 +29,7 @@ SECCIONES = [
     ("form", "Formulario «¿Qué coche estás buscando?»"),
     ("zona", "Área de servicio y contacto"),
     ("whatsapp", "WhatsApp"),
+    ("redes", "Redes sociales (el bloque solo aparece si hay alguna en Datos de empresa)"),
     ("opiniones", "Opiniones (el bloque solo aparece cuando hay opiniones)"),
     ("faq", "Preguntas frecuentes"),
     ("final", "Llamada final"),
@@ -61,8 +62,16 @@ ETIQ = {
     "filtros.todos": "Opción «todos»", "filtros.cualquiera": "Opción «cualquier año»",
     "final.lema": "Frase final", "pie.texto1": "Texto 1", "pie.texto2": "Texto 2", "pie.stock": "Enlace «Coches en stock»",
     "pie.enlaces": "Título «Enlaces»", "pie.legal": "Título «Legal»",
+    # formulario (10/11/2026: todas las preguntas obligatorias)
+    "form.obligatorio": "Aviso «todas las preguntas son obligatorias»",
+    "form.p1": "Pregunta 1 (tipo)", "form.p2m": "Pregunta 2 (marca)", "form.p3m": "Pregunta 3 (modelo)", "form.p3": "Pregunta 4 (presupuesto)",
+    "form.pkm": "Pregunta 5 (kilometraje)", "form.panio": "Pregunta 6 (antigüedad)", "form.p4": "Pregunta 7 (combustible)", "form.p5": "Pregunta 8 (cambio)",
+    "form.pcv": "Pregunta 9 (potencia)", "form.pcil": "Pregunta 10 (cilindrada)", "form.p7": "Pregunta 11 (plazo)", "form.p8": "Pregunta 12 (residencia)",
+    "form.p6": "Pregunta 13 (características)", "form.p9": "Pregunta 14 (contacto)", "form.email2": "Campo correo",
+    "form.p2m.ejemplo": "Ejemplo dentro de la pregunta 2", "form.p3m.ejemplo": "Ejemplo dentro de la pregunta 3", "form.p6b.ejemplo": "Ejemplo dentro de la pregunta 13",
+    "ficha.compartir": "Botón «Compartir este coche»", "ficha.copiado": "Aviso «enlace copiado»",
 }
-PREG_FORM = {"tipo": "1 (tipo)", "pres": "3 (presupuesto)", "comb": "4 (combustible)", "cambio": "5 (cambio)", "plazo": "7 (plazo)"}
+PREG_FORM = {"tipo": "1 (tipo)", "pres": "4 (presupuesto)", "km": "5 (kilometraje)", "antig": "6 (antigüedad)", "comb": "7 (combustible)", "cambio": "8 (cambio)", "pot": "9 (potencia)", "cil": "10 (cilindrada)", "plazo": "11 (plazo)"}
 PALABRA = {"antetitulo": "Antetítulo", "titulo": "Título", "intro": "Introducción", "texto": "Texto", "boton": "Botón",
            "boton1": "Botón 1", "boton2": "Botón 2", "nombre": "Campo nombre", "telefono": "Campo teléfono", "email": "Campo correo"}
 

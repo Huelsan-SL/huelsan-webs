@@ -71,11 +71,13 @@ function filaRes(r={}){const e=+r.estrellas||5;return`<div class="op"><div class
   <label>Estrellas<select data-r="estrellas">${[5,4,3,2,1].map(n=>`<option value="${n}" ${n===e?"selected":""}>${"★".repeat(n)}</option>`).join("")}</select></label>
   <label>Fecha<input data-r="fecha" maxlength="20" value="${esc(r.fecha)}" placeholder="Ej. Octubre 2026"></label>
   <label>Dónde la dejó<input data-r="fuente" maxlength="30" value="${esc(r.fuente)}" placeholder="Ej. Google"></label></div>
-  <label>Opinión<textarea data-r="texto" rows="3" maxlength="600">${esc(r.texto)}</textarea></label>
-  <div><button type="button" class="sec mini" data-rquitar>Quitar</button></div></div>`}
+  <label>Opinión<textarea data-r="texto" rows="3" maxlength="1200">${esc(r.texto)}</textarea></label>
+  ${["id","coche","localidad"].map(k=>r[k]?`<input type="hidden" data-r="${k}" value="${esc(r[k])}">`:"").join("")}
+  <div>${r.id?`<span style="font-size:12.5px;opacity:.75">Llegó por el cuestionario de reseñas${r.coche?" · "+esc(r.coche):""}. </span>`:""}<button type="button" class="sec mini" data-rquitar>Quitar</button></div></div>`}
 function pintarRes(lista=resGuardadas()){$("#res-lista").innerHTML=lista.length?lista.map(filaRes).join(""):`<p>Todavía no hay opiniones.</p>`}
-function leerRes(){return[...document.querySelectorAll("#res-lista .op")].map(o=>{const r={};o.querySelectorAll("[data-r]").forEach(i=>{r[i.dataset.r]=i.value.trim()});r.estrellas=+r.estrellas||5;return r}).filter(r=>r.nombre&&r.texto)}
-const cambiosRes=()=>JSON.stringify(leerRes())!==JSON.stringify(resGuardadas());
+function leerRes(){return[...document.querySelectorAll("#res-lista .op")].map(o=>{const r={};o.querySelectorAll("[data-r]").forEach(i=>{r[i.dataset.r]=i.value.trim()});r.estrellas=+r.estrellas||5;for(const k of["id","coche","localidad"])if(!r[k])delete r[k];return r}).filter(r=>r.nombre&&r.texto)}
+const canon=l=>JSON.stringify(l.map(r=>Object.entries(r).filter(([,v])=>v!==""&&v!=null).map(([k,v])=>[k,k==="estrellas"?+v:String(v)]).sort()));
+const cambiosRes=()=>canon(leerRes())!==canon(resGuardadas());
 const actual=k=>k.startsWith("@")?(DOC[k.slice(1)]||""):((DOC.textos||{})[k]||"");
 const defecto=k=>{for(const s of CAT)for(const c of s.campos)if(c.clave===k)return c.defecto||"";return""};
 function pintar(){

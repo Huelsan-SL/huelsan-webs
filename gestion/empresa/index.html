@@ -46,6 +46,19 @@ button:disabled{opacity:.6}
       <div id="contactos" style="display:grid;gap:14px"></div>
       <button type="button" id="add-c" style="justify-self:start;background:transparent;color:inherit;border:1px solid var(--line)">Añadir persona</button>
     </fieldset>
+    <fieldset><legend>Redes sociales (salen en la web, en «Área de servicio» y en el pie)</legend>
+      <p style="margin:0;color:var(--muted);font-size:13.5px">Pega el enlace de cada perfil (o @usuario). Las que dejes en blanco no aparecen. En «Google» pon el enlace para dejar reseñas de vuestra ficha de Google: el cuestionario de opinión lo ofrece a los clientes que os ponen 4 o 5 estrellas.</p>
+      <div class="two">
+        <label>Instagram<input data-red="instagram" placeholder="https://www.instagram.com/huelsanautomocion"></label>
+        <label>Facebook<input data-red="facebook" placeholder="https://www.facebook.com/…"></label>
+        <label>TikTok<input data-red="tiktok" placeholder="@huelsanautomocion"></label>
+        <label>YouTube<input data-red="youtube" placeholder="https://www.youtube.com/@…"></label>
+        <label>X (Twitter)<input data-red="x" placeholder="@…"></label>
+        <label>LinkedIn<input data-red="linkedin" placeholder="https://www.linkedin.com/company/…"></label>
+        <label>Google (enlace para reseñas)<input data-red="google" placeholder="https://g.page/r/…/review"></label>
+        <label>WhatsApp <small>número o enlace</small><input data-red="whatsapp" placeholder="600 000 000"></label>
+      </div>
+    </fieldset>
     <fieldset><legend>Textos de la web</legend>
       <p style="margin:0">El titular, «Quiénes somos» y el resto de textos de la web se editan en <a href="../textos/">Textos de la web</a>.</p>
     </fieldset>
@@ -66,6 +79,7 @@ const f=document.getElementById("f"),msg=(t,c)=>{const m=document.getElementById
   const ref=db.doc("web/empresa");
   try{const sn=await ref.get();const d=sn.exists?sn.data():{};for(const k of CAMPOS)if(d[k]!=null)f.elements[k].value=d[k];
     const cs=Array.isArray(d.contactos)&&d.contactos.length?d.contactos:(d.telefono||d.whatsapp?[{telefono:d.telefono,whatsapp:d.whatsapp,zona:d.zona}]:[{}]);cs.forEach(filaC);
+    const rd=d.redes||{};document.querySelectorAll("[data-red]").forEach(i=>i.value=rd[i.dataset.red]||"");
     msg(sn.exists&&d.actualizado?"Última actualización: "+d.actualizado:"Aún no hay datos guardados.")}
   catch(e){msg("No se han podido cargar los datos: "+e.message,"bad")}
   document.getElementById("guardar").disabled=false;
@@ -75,6 +89,7 @@ const f=document.getElementById("f"),msg=(t,c)=>{const m=document.getElementById
       c.whatsapp=c.whatsapp.replace(/\D/g,"");if(/^\d{9}$/.test(c.whatsapp))c.whatsapp="34"+c.whatsapp;r.querySelector("[data-c=whatsapp]").value=c.whatsapp;return c}).filter(c=>c.nombre||c.telefono||c.whatsapp);
     // compatibilidad: primer contacto en los campos sueltos
     d.telefono=d.contactos[0]?d.contactos[0].telefono:"";d.whatsapp=d.contactos[0]?d.contactos[0].whatsapp:"";d.zona=d.contactos.map(c=>c.zona).filter(Boolean).join(" y ");
+    d.redes={};document.querySelectorAll("[data-red]").forEach(i=>{const v=i.value.trim();if(v)d.redes[i.dataset.red]=v});
     d.actualizado=new Date().toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit",year:"numeric"});
     try{try{await ref.update(d)}catch(err){if(err.code!=="not-found")throw err;await ref.set(d)}msg("Guardado. Ya se ve en huelsanautomocion.com (recarga la web).","ok")}
     catch(err){msg("No se ha podido guardar: "+err.message,"bad")}finally{b.disabled=false}});

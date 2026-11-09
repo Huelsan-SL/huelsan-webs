@@ -1,8 +1,8 @@
 /* Huelsan · Gestión: permite instalar la app en el móvil y abrirla aunque falle la conexión.
    Siempre intenta la red primero (así nunca se queda una versión vieja) y solo usa la copia si no hay red.
    No toca los datos: Supabase, BCA y Gemini van siempre directos. */
-const CACHE = "huelsan-gestion-v2";
-const BASE = ["/", "/index.html", "/adaptador.js", "/favicon.svg", "/manifest.webmanifest", "/iconos/icono-192.png"];
+const CACHE = "huelsan-gestion-v3";
+const BASE = ["/", "/index.html", "/adaptador.js", "/extra.js", "/favicon.svg", "/manifest.webmanifest", "/iconos/icono-192.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(BASE)).catch(() => {}).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
