@@ -1252,7 +1252,15 @@ async function mergeData(subastas,lots){
   for(const subasta of subastas){S.subastas.set(subasta.id,{...(S.subastas.get(subasta.id)||{}),...subasta}); if(S.db)await S.db.doc("subastas/"+subasta.id).set(S.subastas.get(subasta.id));}
   const PRE=window.HUELSAN_HIST?await HUELSAN_HIST.precargar(lots.map(x=>x.id)).catch(()=>new Map()):new Map();
   for(const l0 of lots){const l={...l0};for(const k of["estado","publico","importadoEn","notas","fotos","precioCompra","precioVenta","gastos","pujaMax","mercado","precioRemate"])delete l[k];
-    const cur=S.lots.get(l.id);
+    let cur=S.lots.get(l.id);
+    // BCA a veces da otro LotId al mismo coche en la misma subasta: se fusiona con el que ya había (bastidor + subasta)
+    if(!cur&&l.vin&&l.subastaId){const dup=[...S.lots.values()].find(x=>x.vin===l.vin&&x.subastaId===l.subastaId&&x.id!==l.id);
+      if(dup){const ids=[...new Set([...(dup.idsBCA||[]),dup.id,l.id])];
+        const nuestro=["comprado","stock","vendido"].includes(dup.estado)||dup.publico||dup.facturaVenta||dup.folleto||dup.folletos;
+        if(nuestro){l.id=dup.id;l.idsBCA=ids;cur=dup}
+        else{const man=dup.manual||{};const doc={...dup};for(const[k,v]of Object.entries(l))if(v!=null&&v!==""&&!man[k]&&!(k==="tipo"&&dup.tipoManual))doc[k]=v;
+          doc.id=l.id;doc.idsBCA=ids;for(const k of Object.keys(doc))if(doc[k]===undefined)doc[k]=null;
+          S.lots.delete(dup.id);S.lots.set(l.id,doc);if(S.db)await S.db.doc("lotes/"+l.id).set(doc);act++;continue}}}
     if(cur){const patch={};const man=cur.manual||{};for(const[k,v]of Object.entries(l)){if(v!=null&&v!==""&&!man[k]&&JSON.stringify(cur[k])!==JSON.stringify(v))patch[k]=v}
       if(cur.tipoManual)delete patch.tipo;
       if(Object.keys(patch).length){S.lots.set(l.id,{...cur,...patch});if(S.db)await S.db.doc("lotes/"+l.id).update(patch);act++}}
