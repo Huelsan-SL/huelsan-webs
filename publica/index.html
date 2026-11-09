@@ -7,12 +7,31 @@
 <meta name="description" content="Compraventa y búsqueda personalizada de vehículos: coches, furgonetas, motocicletas y otros vehículos. Atención en Andalucía, Murcia y Alicante.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap">
+<link rel="canonical" href="https://huelsanautomocion.com/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-48.png" sizes="48x48" type="image/png">
+<link rel="icon" href="icono-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 <meta name="theme-color" content="#0E2A47">
-<meta property="og:title" content="Huelsan Automoción">
-<meta property="og:description" content="Compraventa y búsqueda personalizada de vehículos en España y Europa.">
+<!-- Vista previa al compartir el enlace (WhatsApp, Facebook, LinkedIn, X…) -->
+<meta property="og:site_name" content="Huelsan Automoción">
+<meta property="og:title" content="Huelsan Automoción · El coche que buscas, al precio que tienes">
+<meta property="og:description" content="Compraventa y búsqueda personalizada de vehículos en España y Europa. Cuéntanos qué buscas y lo encontramos por ti.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="es_ES">
+<meta property="og:url" content="https://huelsanautomocion.com/">
+<meta property="og:image" content="https://huelsanautomocion.com/og-imagen.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Logotipo de Huelsan Automoción">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Huelsan Automoción · El coche que buscas, al precio que tienes">
+<meta name="twitter:description" content="Compraventa y búsqueda personalizada de vehículos en España y Europa.">
+<meta name="twitter:image" content="https://huelsanautomocion.com/og-imagen.png">
+<!-- Datos para Google: nombre, logotipo y zona (el logotipo aparece junto al nombre en los resultados) -->
+<script type="application/ld+json" id="ld-empresa">{"@context":"https://schema.org","@type":"AutoDealer","name":"Huelsan Automoción","url":"https://huelsanautomocion.com/","logo":"https://huelsanautomocion.com/logo-512.png","image":"https://huelsanautomocion.com/og-imagen.png","description":"Compraventa y búsqueda personalizada de vehículos en España y Europa.","areaServed":["Andalucía","Región de Murcia","Alicante"]}</script>
 <style>
 /* Layout: cabecera blanca fija (logo, menú, WhatsApp); portada a sangre con foto y velo azul marino; secciones alternas blanco / gris azulado a 1180 px; formulario de búsqueda como pieza central; pie azul marino. Ficha del coche y páginas legales como capas. */
 :root{
@@ -141,8 +160,26 @@ nav.menu a:hover{border-color:var(--green)}
 .dif .tarjeta{border-top:3px solid var(--green)}
 
 /* stock */
-.filtros{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:22px}
-.filtros label{display:grid;gap:4px;font-size:12.5px;font-weight:700;color:var(--muted);flex:1 1 150px;max-width:220px;min-width:0}
+.buscador{display:grid;gap:12px;margin-bottom:22px}
+.busq-fila{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+.busq-texto{flex:1 1 280px;position:relative;display:block;min-width:0}
+.busq-texto svg{position:absolute;left:14px;top:50%;width:18px;height:18px;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.busq-texto input{width:100%;padding:12px 14px 12px 42px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font:inherit;min-width:0}
+.btn-filtros{display:none;align-items:center;gap:8px;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font:inherit;font-weight:700;color:var(--ink);cursor:pointer}
+.btn-filtros svg{width:18px;height:18px}.btn-filtros b{background:var(--green);color:#fff;border-radius:999px;font-size:12px;min-width:20px;height:20px;display:inline-grid;place-items:center;padding:0 6px}
+.orden{display:grid;gap:4px;font-size:12.5px;font-weight:700;color:var(--muted);flex:0 1 200px;min-width:0}
+.orden select{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);min-width:0}
+.resumen-f{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px;color:var(--muted)}
+.resumen-f #f-total{font-weight:700;color:var(--ink)}
+.chips-f{display:flex;flex-wrap:wrap;gap:6px}
+.chip-f{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 6px 4px 11px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer}
+.chip-f span{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--soft);font-size:11px}
+.limpiar{background:none;border:0;color:var(--green2);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;padding:4px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width:760px){.btn-filtros{display:inline-flex}.filtros{display:none}.filtros.abierto{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.filtros.abierto label{max-width:none}.orden{flex:1 1 140px}}
+.filtros{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+.filtros label{display:grid;gap:4px;font-size:12.5px;font-weight:700;color:var(--muted);flex:1 1 150px;max-width:200px;min-width:0}
+.filtros select:disabled{opacity:.55}
 .filtros select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);min-width:0}
 .cars{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(270px,100%),1fr));gap:18px}
 .car{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr;width:100%;align-content:start;cursor:pointer;text-align:left;padding:0;transition:transform .15s,box-shadow .15s;color:inherit}
@@ -159,6 +196,12 @@ nav.menu a:hover{border-color:var(--green)}
 .car .p{font-size:22px;font-weight:800;margin-top:4px;color:var(--precio)}
 .empty{border:1px dashed var(--line);border-radius:18px;padding:32px;text-align:center;color:var(--muted);grid-column:1/-1;background:var(--surface)}
 .empty strong{display:block;color:var(--ink);font-size:18px;margin-bottom:4px}
+#form [aria-invalid="true"]{border-color:#C0392B!important;box-shadow:0 0 0 3px rgba(192,57,43,.15)}
+#form .chk input[aria-invalid="true"]{outline:2px solid #C0392B;outline-offset:2px}
+.oblig{margin:0 0 4px;font-size:13px;color:var(--muted)}
+.desc-venta{white-space:pre-line;font-size:15px;line-height:1.6;color:var(--ink);background:var(--soft);border-radius:14px;padding:14px 16px;margin-bottom:6px}
+.btn-compartir{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:none;border:1px solid var(--line);border-radius:12px;padding:10px 14px;font:inherit;font-weight:700;color:var(--ink);cursor:pointer;margin-top:8px;width:100%}
+.btn-compartir svg{width:18px;height:18px}
 .aviso-stock{margin-top:26px;display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center;justify-content:space-between;background:#0E2A47;color:#fff;border-radius:20px;padding:22px 26px}
 .aviso-stock b{font-size:19px}
 
@@ -220,6 +263,7 @@ form.card{background:var(--surface);color:var(--ink);border-radius:22px;padding:
 .europa p{margin:0;color:var(--muted);max-width:70ch}
 
 /* opiniones */
+.resena-coche{font-size:13px;color:var(--muted);margin-top:2px}
 .resenas{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr));gap:18px}
 .resena{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;display:grid;gap:10px;margin:0}
 .estrellas{color:#E8A93B;letter-spacing:2px;font-size:18px}
@@ -254,6 +298,14 @@ footer{background:#081A2E;color:#B6C3D2;padding-block:48px 40px;font-size:14.5px
 .foot nav{display:grid;gap:7px}
 .foot a{color:#DCE5EE;text-decoration:none}.foot a:hover{text-decoration:underline}
 .foot p{margin:10px 0 0}
+.redes{display:flex;flex-wrap:wrap;gap:10px}
+.redes a{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--surface);border:1px solid var(--line);color:var(--navy)}
+.redes a:hover{border-color:var(--green);color:var(--green2)}
+.redes svg{width:22px;height:22px}
+.redes.pie{margin-top:16px}.redes.pie a{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);color:#fff;width:40px;height:40px}
+.redes-bloque{margin-top:28px;display:flex;flex-wrap:wrap;gap:16px 28px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px 22px}
+.redes-bloque h3{margin:0 0 4px}.redes-bloque p{margin:0;color:var(--muted)}
+.redes-bloque[hidden]{display:none}
 .legalpie{border-top:1px solid rgba(255,255,255,.1);margin-top:30px;padding-top:18px;font-size:13px;color:#8EA0B4}
 
 /* ficha */
@@ -309,6 +361,16 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-filtro" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-compartir" viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="r-instagram" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.3" fill="currentColor"/></symbol>
+  <symbol id="r-facebook" viewBox="0 0 24 24"><path d="M14 8h3V4h-3a4 4 0 0 0-4 4v3H7v4h3v7h4v-7h3l1-4h-4V8z" fill="currentColor"/></symbol>
+  <symbol id="r-tiktok" viewBox="0 0 24 24"><path d="M15 3c.4 2.6 2 4.2 4.5 4.5v3.3a8 8 0 0 1-4.4-1.4V15a6 6 0 1 1-6-6h.6v3.4a2.7 2.7 0 1 0 2 2.6V3H15z" fill="currentColor"/></symbol>
+  <symbol id="r-youtube" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="4" fill="currentColor"/><path d="M10 9v6l5-3z" fill="#fff"/></symbol>
+  <symbol id="r-x" viewBox="0 0 24 24"><path d="M4 4l16 16M20 4L4 20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="r-linkedin" viewBox="0 0 24 24"><rect x="3" y="9" width="4" height="12" fill="currentColor"/><circle cx="5" cy="5" r="2.2" fill="currentColor"/><path d="M10 9h4v2c.8-1.4 2.2-2.2 4-2.2 2.6 0 3 2 3 4.4V21h-4v-6.6c0-1.2-.3-2.2-1.6-2.2-1.4 0-1.4 1.1-1.4 2.2V21h-4z" fill="currentColor"/></symbol>
+  <symbol id="r-google" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z" fill="currentColor"/></symbol>
+  <symbol id="r-whatsapp" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 8.5c.3-.6.8-.5 1-.1l.8 1.8c.1.3 0 .6-.2.8l-.5.6c.6 1.2 1.6 2.2 2.8 2.8l.6-.5c.2-.2.5-.3.8-.2l1.8.8c.4.2.5.7-.1 1.1-1 .9-2.4.9-4-.1A10 10 0 0 1 9 11.4c-.8-1.3-.6-2.3 0-2.9z" fill="currentColor"/></symbol>
   <symbol id="i-lupa" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Zm5.3-2.2L21 21"/></symbol>
   <symbol id="i-coche" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M3 15.5v-3l2-5.2A2 2 0 0 1 6.9 6h10.2a2 2 0 0 1 1.9 1.3l2 5.2v3a1 1 0 0 1-1 1h-1.5m-13 0H4a1 1 0 0 1-1-1M3.5 12h17"/><circle cx="7" cy="16.5" r="1.8" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="16.5" r="1.8" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
   <symbol id="i-pin" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></symbol>
@@ -397,22 +459,28 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
         <p class="lead" style="margin:0" data-t="form.intro">Cuéntanos qué vehículo estás buscando, qué características necesitas y cuál es tu presupuesto aproximado. Estudiaremos tu solicitud y buscaremos opciones que se adapten a tus preferencias.</p>
       </div>
       <form class="card" id="form" novalidate>
+        <p class="oblig" data-t="form.obligatorio">Todas las preguntas son obligatorias.</p>
         <div class="fila2">
-          <label class="campo"><span class="tit"><span class="num-p">1</span><span data-t="form.p1">¿Qué tipo de vehículo buscas?</span></span><select id="op-tipo"></select></label>
-          <label class="campo"><span class="tit"><span class="num-p">2</span><span data-t="form.p2">¿Qué marca o modelo te interesa?</span></span><input id="c-marca" maxlength="120" data-t-ph="form.p2.ejemplo" placeholder="Ej. BMW X3, Audi A4, Volkswagen Transporter, Yamaha TMAX..."></label>
-          <label class="campo"><span class="tit"><span class="num-p">3</span><span data-t="form.p3">¿Qué presupuesto aproximado tienes?</span></span><select id="op-pres"></select></label>
-          <label class="campo"><span class="tit"><span class="num-p">4</span><span data-t="form.p4">¿Qué combustible prefieres?</span></span><select id="op-comb"></select></label>
-          <label class="campo"><span class="tit"><span class="num-p">5</span><span data-t="form.p5">¿Qué cambio prefieres?</span></span><select id="op-cambio"></select></label>
-          <label class="campo"><span class="tit"><span class="num-p">6</span><span data-t="form.p7">¿Para cuándo necesitas el vehículo?</span></span><select id="op-plazo"></select></label>
+          <label class="campo"><span class="tit"><span class="num-p">1</span><span data-t="form.p1">¿Qué tipo de vehículo buscas?</span></span><select id="op-tipo" required></select></label>
+          <label class="campo"><span class="tit"><span class="num-p">2</span><span data-t="form.p2m">¿Qué marca te interesa?</span></span><input id="c-marca" maxlength="60" required autocomplete="off" data-t-ph="form.p2m.ejemplo" placeholder="Ej. BMW, Audi, Volkswagen, Yamaha…"></label>
+          <label class="campo"><span class="tit"><span class="num-p">3</span><span data-t="form.p3m">¿Qué modelo?</span></span><input id="c-modelo" maxlength="60" required autocomplete="off" data-t-ph="form.p3m.ejemplo" placeholder="Ej. X3, A4, Transporter, TMAX… (o «Cualquiera»)"></label>
+          <label class="campo"><span class="tit"><span class="num-p">4</span><span data-t="form.p3">¿Qué presupuesto aproximado tienes?</span></span><select id="op-pres" required></select></label>
+          <label class="campo"><span class="tit"><span class="num-p">5</span><span data-t="form.pkm">¿Kilometraje máximo?</span></span><select id="op-km" required></select></label>
+          <label class="campo"><span class="tit"><span class="num-p">6</span><span data-t="form.panio">¿Antigüedad máxima?</span></span><select id="op-antig" required></select></label>
+          <label class="campo"><span class="tit"><span class="num-p">7</span><span data-t="form.p4">¿Qué combustible prefieres?</span></span><select id="op-comb" required></select></label>
+          <label class="campo"><span class="tit"><span class="num-p">8</span><span data-t="form.p5">¿Qué cambio prefieres?</span></span><select id="op-cambio" required></select></label>
+          <label class="campo"><span class="tit"><span class="num-p">9</span><span data-t="form.pcv">¿Qué potencia mínima?</span></span><select id="op-pot" required></select></label>
+          <label class="campo"><span class="tit"><span class="num-p">10</span><span data-t="form.pcil">¿Qué cilindrada?</span></span><select id="op-cil" required></select></label>
+          <label class="campo"><span class="tit"><span class="num-p">11</span><span data-t="form.p7">¿Para cuándo necesitas el vehículo?</span></span><select id="op-plazo" required></select></label>
+          <label class="campo"><span class="tit"><span class="num-p">12</span><span data-t="form.p8">¿Dónde resides?</span></span><input id="c-reside" maxlength="80" required autocomplete="address-level2" data-t-ph="form.p8.ejemplo" placeholder="Ej. Murcia"></label>
         </div>
-        <label class="campo"><span class="tit"><span class="num-p">7</span><span data-t="form.p6">¿Qué características buscas?</span></span><textarea id="c-extra" maxlength="1200" data-t-ph="form.p6.ejemplo" placeholder="Año mínimo, kilómetros máximos, equipamiento, potencia, color, número de plazas, etc."></textarea></label>
-        <label class="campo"><span class="tit"><span class="num-p">8</span><span data-t="form.p8">¿Dónde resides?</span></span><input id="c-reside" maxlength="80" autocomplete="address-level2" data-t-ph="form.p8.ejemplo" placeholder="Ej. Murcia"></label>
-        <fieldset class="pregunta"><legend><span class="num-p">9</span><span data-t="form.p9">Datos de contacto</span></legend>
+        <label class="campo"><span class="tit"><span class="num-p">13</span><span data-t="form.p6">¿Qué características buscas?</span></span><textarea id="c-extra" maxlength="1200" required data-t-ph="form.p6b.ejemplo" placeholder="Equipamiento, color, número de plazas, etiqueta DGT, uso que le vas a dar… Si no tienes preferencias, escribe «Ninguna en especial»."></textarea></label>
+        <fieldset class="pregunta"><legend><span class="num-p">14</span><span data-t="form.p9">Datos de contacto</span></legend>
           <div class="fila3"><label class="campo"><span data-t="form.nombre">Nombre</span><input id="c-nombre" maxlength="80" autocomplete="name" required></label>
             <label class="campo"><span data-t="form.telefono">Teléfono</span><input id="c-tel" type="tel" maxlength="20" autocomplete="tel" required></label>
-            <label class="campo"><span data-t="form.email">Correo electrónico (opcional)</span><input id="c-email" type="email" maxlength="120" autocomplete="email"></label></div></fieldset>
+            <label class="campo"><span data-t="form.email2">Correo electrónico</span><input id="c-email" type="email" maxlength="120" autocomplete="email" required></label></div></fieldset>
         <div class="trampa" aria-hidden="true"><label>No rellenar<input id="c-web" tabindex="-1" autocomplete="off"></label></div>
-        <label class="chk"><input type="checkbox" id="c-rgpd"><span data-t="form.rgpd" data-t-enlace="#privacidad">He leído y acepto la <a href="#privacidad">política de privacidad</a>.</span></label>
+        <label class="chk"><input type="checkbox" id="c-rgpd" required><span data-t="form.rgpd" data-t-enlace="#privacidad">He leído y acepto la <a href="#privacidad">política de privacidad</a>.</span></label>
         <div class="envio"><button class="btn verde" type="submit" id="c-enviar"><span data-t="form.boton">Enviar solicitud</span></button>
           <p class="nota" data-t="form.nota">Una vez recibamos tu solicitud, nos pondremos en contacto contigo para conocer mejor tus necesidades y comenzar la búsqueda.</p>
           <div class="resultado" id="c-res" role="status" hidden></div></div>
@@ -440,11 +508,26 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
   <section id="stock" class="gris">
     <div class="wrap">
       <div class="cab"><h2 data-t="stock.titulo">Vehículos disponibles en stock</h2><p class="lead" data-t="stock.intro">Disponemos de una selección de vehículos disponibles para quienes prefieren elegir entre nuestro stock actual. Consulta los anuncios y descubre las características de cada vehículo.</p></div>
-      <div class="filtros" role="group" aria-label="Filtrar vehículos">
-        <label><span data-t="filtros.disponibilidad">Disponibilidad</span><select id="f-disp"><option value="" data-t="filtros.todos">Todos</option><option value="stock" data-t="estado.stock">En stock</option><option value="encargo" data-t="estado.encargo">Por encargo</option></select></label>
-        <label><span data-t="filtros.tipo">Tipo</span><select id="f-tipo"><option value="" data-t="filtros.todos">Todos</option></select></label>
-        <label><span data-t="filtros.combustible">Combustible</span><select id="f-comb"><option value="" data-t="filtros.todos">Todos</option></select></label>
-        <label><span data-t="filtros.anio">Año desde</span><select id="f-anio"><option value="" data-t="filtros.cualquiera">Cualquiera</option></select></label>
+      <div class="buscador">
+        <div class="busq-fila">
+          <label class="busq-texto"><span class="sr" data-t="filtros.buscar">Buscar</span><svg aria-hidden="true"><use href="#i-lupa"/></svg><input type="search" id="f-q" autocomplete="off" data-t-ph="filtros.buscar.ejemplo" placeholder="Busca por marca, modelo o versión"></label>
+          <button type="button" class="btn-filtros" id="f-abrir" aria-expanded="false" aria-controls="filtros"><svg aria-hidden="true"><use href="#i-filtro"/></svg><span data-t="filtros.boton">Filtros</span><b id="f-n" hidden></b></button>
+          <label class="orden"><span data-t="filtros.ordenar">Ordenar</span><select id="f-orden">
+            <option value="" data-t="filtros.orden.relevancia">Destacados</option><option value="precio-asc" data-t="filtros.orden.precio.asc">Precio: más barato</option><option value="precio-desc" data-t="filtros.orden.precio.desc">Precio: más caro</option><option value="km-asc" data-t="filtros.orden.km">Menos kilómetros</option><option value="anio-desc" data-t="filtros.orden.anio">Más nuevo</option><option value="nuevo" data-t="filtros.orden.recientes">Últimos publicados</option></select></label>
+        </div>
+        <div class="filtros" id="filtros" role="group" aria-label="Filtrar vehículos">
+          <label><span data-t="filtros.marca">Marca</span><select id="f-marca"><option value="" data-t="filtros.todas">Todas</option></select></label>
+          <label><span data-t="filtros.modelo">Modelo</span><select id="f-modelo" disabled><option value="" data-t="filtros.todos">Todos</option></select></label>
+          <label><span data-t="filtros.precio">Precio hasta</span><select id="f-precio"><option value="" data-t="filtros.cualquiera">Cualquiera</option></select></label>
+          <label><span data-t="filtros.km">Kilómetros hasta</span><select id="f-km"><option value="" data-t="filtros.cualquiera">Cualquiera</option></select></label>
+          <label><span data-t="filtros.anio">Año desde</span><select id="f-anio"><option value="" data-t="filtros.cualquiera">Cualquiera</option></select></label>
+          <label><span data-t="filtros.combustible">Combustible</span><select id="f-comb"><option value="" data-t="filtros.todos">Todos</option></select></label>
+          <label><span data-t="filtros.cambio">Cambio</span><select id="f-cambio"><option value="" data-t="filtros.indiferente">Indiferente</option><option value="Automático" data-t="filtros.cambio.auto">Automático</option><option value="Manual" data-t="filtros.cambio.manual">Manual</option></select></label>
+          <label><span data-t="filtros.tipo">Carrocería</span><select id="f-tipo"><option value="" data-t="filtros.todos">Todos</option></select></label>
+          <label><span data-t="filtros.potencia">Potencia desde</span><select id="f-cv"><option value="" data-t="filtros.cualquiera">Cualquiera</option></select></label>
+          <label><span data-t="filtros.disponibilidad">Disponibilidad</span><select id="f-disp"><option value="" data-t="filtros.todos">Todos</option><option value="stock" data-t="estado.stock">En stock</option><option value="encargo" data-t="estado.encargo">Por encargo</option></select></label>
+        </div>
+        <div class="resumen-f"><span id="f-total" class="tnum" aria-live="polite"></span><span class="chips-f" id="f-chips"></span><button type="button" class="limpiar" id="f-limpiar" hidden data-t="filtros.limpiar">Quitar filtros</button></div>
       </div>
       <div class="cars" id="cars"></div>
       <div class="aviso-stock"><b data-t="stock.aviso">Si buscas un vehículo con otras características, también podemos localizarlo a través de nuestro servicio de búsqueda personalizada.</b><a class="btn verde" href="#busqueda"><span data-t="stock.boton">Solicitar búsqueda personalizada</span></a></div>
@@ -468,6 +551,7 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
     <div class="wrap">
       <div class="cab"><h2 data-t="zona.titulo">Nuestra área de servicio</h2><p class="lead" id="zona-intro">Ofrecemos atención personalizada principalmente en Andalucía, Murcia y Alicante.</p><p class="lead" data-t="zona.europa">Buscamos vehículos en diferentes puntos de España y Europa para ofrecer alternativas adaptadas a las necesidades de nuestros clientes.</p></div>
       <div class="zonas-grid" id="zonas"></div>
+      <div class="redes-bloque" id="redes-bloque" hidden><div><h3 data-t="redes.titulo">Síguenos en redes sociales</h3><p data-t="redes.texto">Publicamos los coches nuevos, entregas a clientes y consejos de compra.</p></div><div class="redes" id="redes"></div></div>
     </div>
   </section>
 
@@ -510,7 +594,7 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
   <div class="wrap">
     <div class="foot">
       <div><a class="brand" href="#inicio" aria-label="Huelsan Automoción"><svg class="logo-sym" viewBox="3 3 58 49" aria-hidden="true" style="color:#fff"><path d="M8.6 49.5 A27 27 0 1 1 55.4 49.5" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><path d="M55.4 22.5 A27 27 0 0 1 56.47 43.41" fill="none" class="lgs" stroke-width="4.5" stroke-linecap="round"/><path d="M13.340 45.510 L16.660 50.490 L17.500 49.874 L17.500 42.998 Z" class="lgf"/><path d="M28.500 41.806 L35.500 36.672 L35.500 32.130 L28.500 36.357 Z" class="lgf"/><path d="M46.500 28.604 L48.960 26.800 L47.640 24.800 L46.500 25.488 Z" class="lgf"/><rect x="19" y="22" width="8" height="28" fill="currentColor"/><rect x="37" y="22" width="8" height="28" fill="currentColor"/><circle cx="15" cy="48" r="3.0" fill="currentColor"/></svg><span><b>HUELSAN</b><small>Automoción</small></span></a>
-        <p data-t="pie.texto1">Huelsan Automoción – Compraventa y búsqueda personalizada de vehículos.</p><p data-t="pie.texto2">Búsqueda de vehículos por encargo en España y Europa.</p><p id="pie-zonas">Andalucía · Murcia · Alicante.</p></div>
+        <p data-t="pie.texto1">Huelsan Automoción – Compraventa y búsqueda personalizada de vehículos.</p><p data-t="pie.texto2">Búsqueda de vehículos por encargo en España y Europa.</p><p id="pie-zonas">Andalucía · Murcia · Alicante.</p><div class="redes pie" id="pie-redes"></div></div>
       <div><h4 data-t="pie.enlaces">Enlaces</h4><nav aria-label="Secciones del pie"><a href="#inicio" data-t="menu.inicio">Inicio</a><a href="#quienes-somos" data-t="menu.quienes">Quiénes somos</a><a href="#encargo" data-t="menu.encargo">Búsqueda por encargo</a><a href="#stock" data-t="pie.stock">Vehículos en stock</a><a href="#busqueda" data-t="menu.contacto">Contacto</a></nav></div>
       <div><h4 data-t="pie.legal">Legal</h4><nav aria-label="Información legal"><a href="#privacidad" data-t="pie.privacidad">Política de privacidad</a><a href="#aviso-legal" data-t="pie.aviso">Aviso legal</a><a href="#cookies" data-t="pie.cookies">Política de cookies</a><a href="#fotos-info" data-t="pie.fotos">Fotos e información de los vehículos</a></nav></div>
     </div>
@@ -527,7 +611,8 @@ const EMPRESA={
   email:"", telefono:"", whatsapp:"", zona:"",
   contactos:[],                         // [{nombre, telefono, whatsapp, zona}]
   textos:{},                            // textos editados en la app; vacío = texto por defecto
-  resenas:[],                           // opiniones reales de clientes, añadidas desde la app
+  resenas:[],                           // opiniones reales de clientes, aprobadas en la app (Reseñas)
+  redes:{},                             // {instagram, facebook, tiktok, youtube, x, linkedin, google, whatsapp}: enlaces, en Datos de empresa
   actualizado:"05/11/2026"
 };
 const PEND=t=>`<span class="pend">[${t} pendiente]</span>`;
@@ -570,6 +655,7 @@ async function cargarEmpresa(){
   for(const[k,v]of Object.entries(f.data)){if(!(k in EMPRESA)||v==null)continue;
     if(k==="textos"){if(v&&typeof v==="object")EMPRESA.textos=v;continue}
     if(k==="resenas"){if(Array.isArray(v))EMPRESA.resenas=v.filter(x=>x&&x.texto&&x.nombre);continue}
+    if(k==="redes"){if(v&&typeof v==="object")EMPRESA.redes=v;continue}
     if(k==="contactos"){if(Array.isArray(v))EMPRESA.contactos=v.filter(c=>c&&(c.telefono||c.whatsapp)).map(c=>({nombre:String(c.nombre||"").trim(),telefono:String(c.telefono||"").trim(),whatsapp:String(c.whatsapp||"").replace(/\D/g,""),zona:String(c.zona||"").trim()}));continue}
     if(String(v).trim()!=="")EMPRESA[k]=k==="whatsapp"?String(v).replace(/\D/g,""):String(v).trim()}
   aplicarTextos();
@@ -590,26 +676,89 @@ function contacto(){
 }
 function resenas(){
   const rs=EMPRESA.resenas||[];$("#opiniones").hidden=!rs.length;if(!rs.length)return;
-  $("#resenas").innerHTML=rs.map(r=>{const n=Math.max(1,Math.min(5,Math.round(+r.estrellas||5)));return`<figure class="resena"><div class="estrellas" role="img" aria-label="${n} de 5 estrellas">${"★".repeat(n)}${"☆".repeat(5-n)}</div><blockquote><p>${esc(r.texto)}</p></blockquote><figcaption><b>${esc(r.nombre)}</b> <small>${esc([r.fuente,r.fecha].filter(Boolean).join(" · "))}</small></figcaption></figure>`}).join("");
+  $("#resenas").innerHTML=rs.map(r=>{const n=Math.max(1,Math.min(5,Math.round(+r.estrellas||5)));return`<figure class="resena"><div class="estrellas" role="img" aria-label="${n} de 5 estrellas">${"★".repeat(n)}${"☆".repeat(5-n)}</div><blockquote><p>${esc(r.texto)}</p></blockquote><figcaption><b>${esc(r.nombre)}</b>${r.localidad?` <small>· ${esc(r.localidad)}</small>`:""}${r.coche?`<div class="resena-coche">${esc(r.coche)}</div>`:""} <small>${esc([r.fuente,r.fecha].filter(Boolean).join(" · "))}</small></figcaption></figure>`}).join("");
 }
 
+/* ---------- redes sociales (Datos de empresa → Redes sociales); el bloque no aparece si no hay ninguna ---------- */
+const REDES=[["instagram","Instagram"],["facebook","Facebook"],["tiktok","TikTok"],["youtube","YouTube"],["x","X"],["linkedin","LinkedIn"],["google","Google (reseñas)"],["whatsapp","WhatsApp"]];
+function urlRed(k,u){u=String(u||"").trim();if(!u)return"";if(k==="whatsapp"&&/^\+?[\d\s]{9,}$/.test(u)){const d=u.replace(/\D/g,"");return"https://wa.me/"+(d.length===9?"34"+d:d)}
+  if(/^@/.test(u)){const h=u.slice(1);u=({instagram:"https://www.instagram.com/",tiktok:"https://www.tiktok.com/@",x:"https://x.com/",youtube:"https://www.youtube.com/@",facebook:"https://www.facebook.com/"}[k]||"")+h}
+  if(!/^https:\/\//i.test(u))u="https://"+u.replace(/^http:\/\//i,"");try{return new URL(u).protocol==="https:"?u:""}catch(e){return""}}
+function redes(){const r=EMPRESA.redes||{};const l=REDES.map(([k,n])=>[k,n,urlRed(k,r[k])]).filter(x=>x[2]);
+  const html=l.map(([k,n,u])=>`<a href="${esc(u)}" target="_blank" rel="noopener me" aria-label="${esc(n)}" title="${esc(n)}"><svg aria-hidden="true"><use href="#r-${k}"/></svg></a>`).join("");
+  $("#redes").innerHTML=html;$("#pie-redes").innerHTML=html;$("#redes-bloque").hidden=!l.length;
+  try{const ld=$("#ld-empresa"),j=JSON.parse(ld.textContent);j.sameAs=l.filter(([k])=>k!=="whatsapp").map(x=>x[2]);if(!j.sameAs.length)delete j.sameAs;ld.textContent=JSON.stringify(j)}catch(e){}}
+
 /* ---------- coches ---------- */
-const opts=(sel,vals)=>{const s=$(sel);vals.forEach(v=>{const o=document.createElement("option");o.textContent=v;s.appendChild(o)})};
+/* Filtros al estilo de los grandes portales (coches.net, Flexicar…): buscador de texto, marca → modelo, precio, km, año,
+   combustible, cambio, carrocería, potencia y disponibilidad; orden; recuento; chips de filtros activos y «Quitar filtros».
+   Los desplegables solo ofrecen valores que existen en el stock. */
+const esAuto=c=>/autom/i.test(c.cambio||"")||/\b(aut|autom\w*|dsg|tiptronic|s[ -]?tronic|steptronic|eat\d?|edc|dct|xtronic|cvt|powershift|at\d)\b/i.test([c.version,c.modelo].join(" "));
+const cambioDe=c=>c.cambio?(/autom/i.test(c.cambio)?"Automático":"Manual"):(esAuto(c)?"Automático":null);
+const norm=t=>String(t||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g," ").trim();
+const FIL=["f-marca","f-modelo","f-precio","f-km","f-anio","f-comb","f-cambio","f-tipo","f-cv","f-disp"];
+const v=id=>$("#"+id).value;
+function llenar(id,vals,fmt=x=>x){const s=$("#"+id),cur=s.value,first=s.options[0].outerHTML;s.innerHTML=first+vals.map(x=>`<option value="${esc(x)}">${esc(fmt(x))}</option>`).join("");if(vals.map(String).includes(cur))s.value=cur}
+function escalones(vals,pasos){if(!vals.length)return[];const max=Math.max(...vals),r=pasos.filter(p=>vals.some(x=>x<=p));const i=r.findIndex(p=>p>=max);return i<0?r:r.slice(0,i+1)}
 function opcionesFiltros(){
-  opts("#f-tipo",[...new Set(COCHES.map(c=>c.tipo).filter(Boolean))].sort());
-  opts("#f-comb",[...new Set(COCHES.map(c=>c.combustible).filter(Boolean))].sort());
-  opts("#f-anio",[...new Set(COCHES.map(c=>c.anio).filter(Boolean))].sort((a,b)=>b-a).map(String));
+  const C=COCHES;
+  llenar("f-marca",[...new Set(C.map(c=>c.marca).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")));
+  opcionesModelo();
+  const pr=C.map(c=>+c.precio).filter(x=>x>0);llenar("f-precio",escalones(pr,[3000,5000,8000,10000,12000,15000,20000,25000,30000,40000,50000,75000,100000]),x=>num(x)+" €");
+  const km=C.filter(c=>c.km!=null).map(c=>+c.km);llenar("f-km",escalones(km,[10000,25000,50000,75000,100000,125000,150000,200000,250000]),x=>num(x)+" km");
+  llenar("f-anio",[...new Set(C.map(c=>c.anio).filter(Boolean))].sort((a,b)=>b-a).map(String));
+  llenar("f-comb",[...new Set(C.map(c=>c.combustible).filter(Boolean))].sort());
+  llenar("f-tipo",[...new Set(C.map(c=>c.tipo).filter(Boolean))].sort());
+  const cvs=C.map(c=>+c.cv).filter(x=>x>0);llenar("f-cv",[75,90,100,110,130,150,180,200,250,300].filter(p=>cvs.some(x=>x>=p)),x=>x+" CV");
+  // con muy pocos coches, ocultamos los filtros que no sirven para nada
+  for(const id of ["f-precio","f-km","f-cv","f-tipo","f-comb"]){const s=$("#"+id);s.closest("label").hidden=s.options.length<=2&&!s.value}
+  $("#f-cambio").closest("label").hidden=new Set(C.map(cambioDe).filter(Boolean)).size<2&&!v("f-cambio");
 }
+function opcionesModelo(){const m=v("f-marca"),s=$("#f-modelo");llenar("f-modelo",m?[...new Set(COCHES.filter(c=>c.marca===m).map(c=>c.modelo).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")):[]);s.disabled=!m;if(!m)s.value=""}
+function filtrar(ignorar){
+  const q=norm(v("f-q")).split(" ").filter(Boolean),f={};FIL.forEach(id=>f[id]=id===ignorar?"":v(id));
+  return COCHES.filter(c=>{
+    if(q.length){const t=norm([c.marca,c.modelo,c.version,c.combustible,c.tipo,c.anio,c.color,cambioDe(c)].join(" ")),tc=t.replace(/ /g,"");if(!q.every(w=>t.includes(w)||tc.includes(w)))return false}
+    if(f["f-marca"]&&c.marca!==f["f-marca"])return false;
+    if(f["f-modelo"]&&c.modelo!==f["f-modelo"])return false;
+    if(f["f-precio"]&&!(c.precio>0&&c.precio<=+f["f-precio"]))return false;
+    if(f["f-km"]&&!(c.km!=null&&c.km<=+f["f-km"]))return false;
+    if(f["f-anio"]&&!((c.anio||0)>=+f["f-anio"]))return false;
+    if(f["f-comb"]&&c.combustible!==f["f-comb"])return false;
+    if(f["f-cambio"]&&cambioDe(c)!==f["f-cambio"])return false;
+    if(f["f-tipo"]&&c.tipo!==f["f-tipo"])return false;
+    if(f["f-cv"]&&!((c.cv||0)>=+f["f-cv"]))return false;
+    if(f["f-disp"]&&c.disponibilidad!==f["f-disp"])return false;
+    return true})}
+function ordenar(l){const o=v("f-orden"),n=x=>x==null?Infinity:+x;
+  const r=[...l];if(o==="precio-asc")r.sort((a,b)=>n(a.precio)-n(b.precio));else if(o==="precio-desc")r.sort((a,b)=>(+b.precio||0)-(+a.precio||0));
+  else if(o==="km-asc")r.sort((a,b)=>n(a.km)-n(b.km));else if(o==="anio-desc")r.sort((a,b)=>(b.anio||0)-(a.anio||0));
+  else if(o==="nuevo")r.sort((a,b)=>String(b.actualizado||"").localeCompare(String(a.actualizado||"")));return r}
+function chipsActivos(){const out=[];const et={"f-precio":x=>T("filtros.chip.precio","Hasta {v}").replace("{v}",num(x)+" €"),"f-km":x=>T("filtros.chip.km","Hasta {v}").replace("{v}",num(x)+" km"),"f-anio":x=>T("filtros.chip.anio","Desde {v}").replace("{v}",x),"f-cv":x=>T("filtros.chip.cv","Desde {v}").replace("{v}",x+" CV"),"f-disp":x=>DISP[x]||x};
+  if(v("f-q"))out.push(["f-q","«"+v("f-q")+"»"]);
+  FIL.forEach(id=>{const x=v(id);if(x)out.push([id,(et[id]||(y=>y))(x)])});return out}
 function pintarCoches(){
-  const disp=$("#f-disp").value,tipo=$("#f-tipo").value,comb=$("#f-comb").value,anio=+$("#f-anio").value||0;
-  const lista=COCHES.filter(c=>(!disp||c.disponibilidad===disp)&&(!tipo||c.tipo===tipo)&&(!comb||c.combustible===comb)&&(!anio||(c.anio||0)>=anio));
+  const lista=ordenar(filtrar()),act=chipsActivos();
+  $("#f-total").textContent=COCHES.length?(lista.length===1?T("filtros.total1","1 vehículo"):T("filtros.total","{n} vehículos").replace("{n}",lista.length)):"";
+  $("#f-chips").innerHTML=act.map(([id,t])=>`<button type="button" class="chip-f" data-quitar="${id}" aria-label="Quitar filtro ${esc(t)}">${esc(t)}<span aria-hidden="true">✕</span></button>`).join("");
+  $("#f-limpiar").hidden=!act.length;
+  const nf=act.filter(([id])=>id!=="f-q").length;$("#f-n").hidden=!nf;$("#f-n").textContent=nf;
   $("#cars").innerHTML=lista.length?lista.map(c=>`<button type="button" class="car" data-ficha="${esc(c.id)}" aria-label="Ver ${esc(titulo(c))}">
     <div class="ph">${c.fotos[0]?`<img src="${esc(c.fotos[0])}" alt="" loading="lazy">`:""}<span class="badge ${esc(c.disponibilidad)}">${esc(DISP[c.disponibilidad]||"")}</span>${c.fotos.length>1?`<span class="nfotos">${c.fotos.length} ${esc(T("coches.fotos","fotos"))}</span>`:""}</div>
     <div class="b"><div class="t">${esc(titulo(c))}</div>${c.version?`<div class="v">${esc(c.version)}</div>`:""}
-      <div class="sp tnum">${[c.anio,c.km!=null?num(c.km)+" km":null,c.combustible,c.cv?c.cv+" CV":null].filter(Boolean).map(x=>`<span>${esc(x)}</span>`).join("")}</div>
+      <div class="sp tnum">${[c.anio,c.km!=null?num(c.km)+" km":null,c.combustible,cambioDe(c),c.cv?c.cv+" CV":null].filter(Boolean).map(x=>`<span>${esc(x)}</span>`).join("")}</div>
       <div class="p tnum">${c.precio?eur(c.precio):esc(T("coches.consultar","Consultar precio"))}</div></div></button>`).join("")
-    :`<div class="empty"><strong>${esc(COCHES.length?T("coches.sinresultados.titulo","Ningún vehículo con estos filtros"):T("coches.vacio.titulo","Próximamente publicaremos nuevos vehículos"))}</strong>${esc(COCHES.length?T("coches.sinresultados.texto","Prueba con otros filtros."):T("coches.vacio.texto","Si buscas un vehículo concreto, puedes solicitar una búsqueda personalizada."))}</div>`}
-["#f-disp","#f-tipo","#f-comb","#f-anio"].forEach(s=>$(s).addEventListener("change",pintarCoches));
+    :`<div class="empty"><strong>${esc(COCHES.length?T("coches.sinresultados.titulo","Ningún vehículo con estos filtros"):T("coches.vacio.titulo","Próximamente publicaremos nuevos vehículos"))}</strong>${esc(COCHES.length?T("coches.sinresultados.texto","Prueba con otros filtros o deja que lo busquemos por ti."):T("coches.vacio.texto","Si buscas un vehículo concreto, puedes solicitar una búsqueda personalizada."))}<div style="margin-top:14px"><button type="button" class="btn verde" id="f-encargo">${esc(T("coches.sinresultados.boton","Búscamelo"))}</button></div></div>`}
+FIL.forEach(id=>$("#"+id).addEventListener("change",()=>{if(id==="f-marca")opcionesModelo();pintarCoches()}));
+$("#f-orden").addEventListener("change",pintarCoches);
+let qT;$("#f-q").addEventListener("input",()=>{clearTimeout(qT);qT=setTimeout(pintarCoches,200)});
+$("#f-abrir").addEventListener("click",()=>{const f=$("#filtros"),a=!f.classList.contains("abierto");f.classList.toggle("abierto",a);$("#f-abrir").setAttribute("aria-expanded",a)});
+$("#f-limpiar").addEventListener("click",()=>{$("#f-q").value="";FIL.forEach(id=>$("#"+id).value="");opcionesModelo();pintarCoches()});
+$("#f-chips").addEventListener("click",e=>{const b=e.target.closest("[data-quitar]");if(!b)return;const id=b.dataset.quitar;$("#"+id).value="";if(id==="f-marca")opcionesModelo();pintarCoches()});
+// sin resultados: pasa lo filtrado al formulario de búsqueda personalizada
+document.addEventListener("click",e=>{if(!e.target.closest("#f-encargo"))return;
+  if(v("f-marca"))$("#c-marca").value=v("f-marca");if(v("f-modelo"))$("#c-modelo").value=v("f-modelo");else if(v("f-q")&&!v("f-marca"))$("#c-marca").value=v("f-q");
+  location.hash="busqueda"});
 $("#cars").innerHTML=`<div class="empty"><strong>Cargando coches…</strong></div>`;
 
 /* ---------- formulario de búsqueda ---------- */
@@ -619,24 +768,40 @@ const OPC={
   pres:{v:[["Menos de 10.000 €",10000],["Entre 10.000 y 15.000 €",15000],["Entre 15.000 y 20.000 €",20000],["Entre 20.000 y 25.000 €",25000],["Entre 25.000 y 35.000 €",35000],["Más de 35.000 €",null],["Otro presupuesto",null]]},
   comb:{v:[["Gasolina",["Gasolina"]],["Diésel",["Diésel"]],["Híbrido",["Híbrido"]],["Híbrido enchufable",["Híbrido enchufable"]],["Eléctrico",["Eléctrico"]],["Otro / Indiferente",[]],["No aplica",[]]]},
   cambio:{v:[["Automático"],["Manual"],["Indiferente"],["No aplica"]]},
+  km:{v:[["Hasta 50.000 km",50000],["Hasta 100.000 km",100000],["Hasta 150.000 km",150000],["Hasta 200.000 km",200000],["Indiferente",null]]},
+  antig:{v:[["Menos de 3 años",3],["Menos de 5 años",5],["Menos de 8 años",8],["Menos de 10 años",10],["Menos de 15 años",15],["Indiferente",null]]},
+  pot:{v:[["Indiferente",null],["Más de 100 CV",100],["Más de 130 CV",130],["Más de 150 CV",150],["Más de 200 CV",200],["Más de 250 CV",250],["Más de 300 CV",300]]},
+  cil:{v:[["Indiferente",null,null],["Hasta 1.2 l",null,1.2],["De 1.2 a 1.6 l",1.2,1.6],["De 1.6 a 2.0 l",1.6,2.0],["Más de 2.0 l",2.0,null]]},
   plazo:{v:[["Lo antes posible"],["En las próximas semanas"],["En uno o dos meses"],["Sin prisa, estoy buscando"]]}};
 function pintarOpciones(){for(const[k,o]of Object.entries(OPC)){const el=$("#op-"+k);el.innerHTML=`<option value="" data-t="form.elegir">${esc(T("form.elegir","Elige una opción"))}</option>`+o.v.map(([t],i)=>`<option value="${i}" data-t="form.op.${k}.${i+1}">${esc(T(`form.op.${k}.${i+1}`,t))}</option>`).join("");el.classList.add("vacio");el.onchange=()=>el.classList.toggle("vacio",el.value==="")}}
 pintarOpciones();
 const elegidos=k=>{const v=$("#op-"+k).value;return v===""?[]:[+v]};
 const textoOp=(k,i)=>T(`form.op.${k}.${i+1}`,OPC[k].v[i][0]);
+// Todas las preguntas son obligatorias: se marca en rojo la primera que falte y se explica qué falta
+const FALTA={"op-tipo":["form.error.tipo","Elige el tipo de vehículo"],"c-marca":["form.error.marca","Escribe la marca que te interesa"],"c-modelo":["form.error.modelo","Escribe el modelo (o «Cualquiera»)"],
+  "op-pres":["form.error.pres","Elige tu presupuesto"],"op-km":["form.error.km","Elige el kilometraje máximo"],"op-antig":["form.error.antig","Elige la antigüedad máxima"],"op-comb":["form.error.comb","Elige el combustible"],
+  "op-cambio":["form.error.cambio","Elige el tipo de cambio"],"op-pot":["form.error.pot","Elige la potencia"],"op-cil":["form.error.cil","Elige la cilindrada"],"op-plazo":["form.error.plazo","Dinos para cuándo lo necesitas"],
+  "c-reside":["form.error.reside","Dinos dónde resides"],"c-extra":["form.error.extra","Cuéntanos qué características buscas"],"c-nombre":["form.error.nombre","Escribe tu nombre"],"c-tel":["form.error.telefono","Escribe un teléfono de contacto"],
+  "c-email":["form.error.email","Escribe un correo electrónico válido"],"c-rgpd":["form.error.rgpd","Acepta la política de privacidad para continuar"]};
+function campoMal(id){const el=$("#"+id);if(el.type==="checkbox")return!el.checked;const x=el.value.trim();
+  if(id==="c-tel")return x.replace(/\D/g,"").length<9;if(id==="c-email")return!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x);if(id==="c-marca"||id==="c-nombre"||id==="c-reside")return x.length<2;if(id==="c-extra")return x.length<3;return x===""}
+$("#form").addEventListener("input",e=>{const el=e.target;if(el.getAttribute("aria-invalid")==="true"&&!campoMal(el.id))el.removeAttribute("aria-invalid")});
+$("#form").addEventListener("change",e=>{const el=e.target;if(el.getAttribute("aria-invalid")==="true"&&!campoMal(el.id))el.removeAttribute("aria-invalid")});
 $("#form").addEventListener("submit",async e=>{
   e.preventDefault();const res=$("#c-res");res.hidden=true;
+  const malos=Object.keys(FALTA).filter(campoMal);document.querySelectorAll("#form [aria-invalid]").forEach(x=>x.removeAttribute("aria-invalid"));
+  malos.forEach(id=>$("#"+id).setAttribute("aria-invalid","true"));
+  if(malos.length){const id=malos[0];toast(T(FALTA[id][0],FALTA[id][1])+(malos.length>1?" "+T("form.error.mas","(faltan {n} respuestas)").replace("{n}",malos.length):""));$("#"+id).focus();return}
   const nombre=$("#c-nombre").value.trim(),tel=$("#c-tel").value.trim(),email=$("#c-email").value.trim();
-  if(nombre.length<2){toast(T("form.error.nombre","Escribe tu nombre"));$("#c-nombre").focus();return}
-  if(tel.replace(/\D/g,"").length<9){toast(T("form.error.telefono","Escribe un teléfono de contacto"));$("#c-tel").focus();return}
-  if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){toast(T("form.error.email","Revisa el correo electrónico"));$("#c-email").focus();return}
-  if(!$("#c-rgpd").checked){toast(T("form.error.rgpd","Acepta la política de privacidad para continuar"));$("#c-rgpd").focus();return}
   const tipos=elegidos("tipo"),pres=elegidos("pres")[0],comb=elegidos("comb")[0],cambio=elegidos("cambio")[0],plazo=elegidos("plazo")[0];
-  const sol={nombre,telefono:tel,email,marca:$("#c-marca").value.trim(),
+  const km=elegidos("km")[0],an=elegidos("antig")[0],pot=elegidos("pot")[0],cil=elegidos("cil")[0];
+  const sol={v:2,nombre,telefono:tel,email,marca:$("#c-marca").value.trim(),modelo:$("#c-modelo").value.trim(),
     tipos:[...new Set(tipos.flatMap(i=>OPC.tipo.v[i][1]))],tiposTexto:tipos.map(i=>textoOp("tipo",i)),
     presupuestoMax:pres!=null?OPC.pres.v[pres][1]:null,presupuesto:pres!=null?textoOp("pres",pres):"",
     combustibles:comb!=null?OPC.comb.v[comb][1]:[],combustible:comb!=null?textoOp("comb",comb):"",
     cambio:cambio!=null?textoOp("cambio",cambio):"",plazo:plazo!=null?textoOp("plazo",plazo):"",
+    km:textoOp("km",km),kmMax:OPC.km.v[km][1],antiguedad:textoOp("antig",an),antiguedadMax:OPC.antig.v[an][1],
+    potencia:textoOp("pot",pot),cvMin:OPC.pot.v[pot][1],cilindrada:textoOp("cil",cil),motorMin:OPC.cil.v[cil][1],motorMax:OPC.cil.v[cil][2],
     extra:$("#c-extra").value.trim(),residencia:$("#c-reside").value.trim(),privacidad:true,web:$("#c-web").value};
   const b=$("#c-enviar");b.disabled=true;
   try{
@@ -650,23 +815,26 @@ $("#form").addEventListener("submit",async e=>{
 /* ---------- ficha y visor ---------- */
 let ficha=null,fotoI=0;
 function abrirFicha(id){const c=COCHES.find(x=>String(x.id)===String(id));if(!c)return;ficha=c;fotoI=0;pintarFicha()}
-function cerrarFicha(){ficha=null;cerrarVisor();["#fscrim","#ficha"].forEach(s=>{const e=$(s);e&&e.remove()});document.body.style.overflow=""}
+function cerrarFicha(){if(ficha&&/^#coche-/.test(location.hash))history.replaceState(null,"",location.pathname+"#stock");ficha=null;cerrarVisor();["#fscrim","#ficha"].forEach(s=>{const e=$(s);e&&e.remove()});document.body.style.overflow=""}
 function pintarFicha(){
   const c=ficha;let sc=$("#fscrim"),f=$("#ficha");
   if(!sc){sc=document.createElement("div");sc.id="fscrim";sc.className="scrim";document.body.appendChild(sc)}
   if(!f){f=document.createElement("div");f.id="ficha";f.className="ficha";f.setAttribute("role","dialog");f.setAttribute("aria-modal","true");document.body.appendChild(f)}
   document.body.style.overflow="hidden";
-  const datos=[["Marca",c.marca],["Modelo",c.modelo],["Versión",c.version],["Año",c.anio],["Kilómetros",c.km!=null?num(c.km)+" km":null],["Combustible",c.combustible],["Potencia",c.cv?c.cv+" CV":null],["Motor",c.motor?String(c.motor).replace(".",",")+" l":null],["Cambio",c.cambio],["Tipo",c.tipo],["Plazas",c.plazas],["Color",c.color]].filter(([,v])=>v!=null&&v!=="");
+  const datos=[["Marca",c.marca],["Modelo",c.modelo],["Versión",c.version],["Año",c.anio],["Kilómetros",c.km!=null?num(c.km)+" km":null],["Combustible",c.combustible],["Potencia",c.cv?c.cv+" CV":null],["Motor",c.motor?String(c.motor).replace(".",",")+" l":null],["Cambio",c.cambio||cambioDe(c)],["Tipo",c.tipo],["Plazas",c.plazas],["Color",c.color]].filter(([,v])=>v!=null&&v!=="");
   f.setAttribute("aria-label",titulo(c));
   f.innerHTML=`<div class="ficha-in"><div class="fh"><div><span class="tag ${esc(c.disponibilidad)}">${esc(DISP[c.disponibilidad]||"")}</span><h3 style="margin-top:8px">${esc(titulo(c))}</h3></div><button class="xbtn" id="fclose" aria-label="Cerrar">✕</button></div>
     <div class="fbody"><div>${c.fotos.length?`<button type="button" class="gal-main" id="galmain" aria-label="Ver fotos a pantalla completa"><img src="${esc(c.fotos[fotoI])}" alt="${esc(titulo(c))}, foto ${fotoI+1}">${c.fotos.length>1?`<span class="nfotos">${fotoI+1} / ${c.fotos.length}</span>`:""}</button>
       ${c.fotos.length>1?`<div class="thumbs">${c.fotos.map((u,i)=>`<button type="button" data-foto="${i}" aria-label="Foto ${i+1}" ${i===fotoI?'aria-current="true"':""}><img src="${esc(u)}" alt=""></button>`).join("")}</div>`:""}
       <p class="legalfoto">${esc(T("ficha.aviso.fotos","Fotos del propio vehículo. Matrículas ocultadas por protección de datos. Imágenes y datos orientativos, sin valor contractual."))} <a href="#fotos-info">${esc(T("ficha.mas.info","Más información"))}</a>.</p>`:`<div class="empty">${esc(T("ficha.sinfotos","Fotos disponibles bajo petición."))}</div>`}</div>
     <div class="fside"><div class="fprice"><b class="tnum">${c.precio?eur(c.precio):esc(T("coches.consultar","Consultar precio"))}</b></div>
+      ${c.descripcion?`<div class="desc-venta">${esc(c.descripcion)}</div>`:""}
       <dl class="kv tnum">${datos.map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
       ${c.equipamiento?`<div class="equip"><b style="color:var(--ink)">Equipamiento:</b> ${esc(c.equipamiento)}</div>`:""}
       ${c.disponibilidad==="encargo"?`<p class="legalfoto" style="margin:0">${esc(T("ficha.encargo","Vehículo disponible por encargo durante unos días. El precio final se confirma al consultarnos."))}</p>`:""}
-      <button class="btn verde" type="button" id="finteres">${esc(T("ficha.boton","Me interesa este vehículo"))}</button></div></div></div>`;
+      <button class="btn verde" type="button" id="finteres">${esc(T("ficha.boton","Me interesa este vehículo"))}</button>
+      <button class="btn-compartir" type="button" id="fcompartir"><svg aria-hidden="true"><use href="#i-compartir"/></svg>${esc(T("ficha.compartir","Compartir este coche"))}</button></div></div></div>`;
+  if(location.hash!=="#coche-"+c.id)history.replaceState(null,"","#coche-"+c.id);
   $("#fclose").focus({preventScroll:true})}
 const VIS={on:false};
 function abrirVisor(){VIS.on=true;pintarVisor()}
@@ -685,9 +853,11 @@ document.addEventListener("click",e=>{const t=e.target;
   if(t.id==="fscrim"||t.closest("#fclose")||t.id==="ficha"){cerrarFicha();return}
   if(t.closest("#galmain")){abrirVisor();return}
   const th=t.closest("[data-foto]");if(th){fotoI=+th.dataset.foto;pintarFicha();return}
-  if(t.closest("#finteres")&&ficha){const c=ficha;$("#c-marca").value=`${titulo(c)}${c.version?" "+c.version:""}${c.anio?" ("+c.anio+")":""}`;
+  if(t.closest("#finteres")&&ficha){const c=ficha;$("#c-marca").value=c.marca||"";$("#c-modelo").value=(c.version&&norm(c.version).startsWith(norm(c.modelo))?c.version:[c.modelo,c.version].filter(Boolean).join(" ")).slice(0,60);
     const x=$("#c-extra");x.value=(x.value?x.value+"\n":"")+T("form.interes","Me interesa el vehículo publicado en la web")+`: ${titulo(c)}${c.km!=null?", "+num(c.km)+" km":""}${c.precio?", "+eur(c.precio):""}.`;
     cerrarFicha();location.hash="busqueda";setTimeout(()=>$("#c-nombre").focus({preventScroll:true}),450);return}
+  if(t.closest("#fcompartir")&&ficha){const c=ficha,u=location.origin+location.pathname+"#coche-"+c.id,txt=`${titulo(c)}${c.anio?" ("+c.anio+")":""}${c.precio?" · "+eur(c.precio):""}`;
+    if(navigator.share)navigator.share({title:titulo(c),text:txt,url:u}).catch(()=>{});else navigator.clipboard.writeText(u).then(()=>toast(T("ficha.copiado","Enlace copiado")),()=>prompt("Copia el enlace",u));return}
   if(t.closest("#ficha a[href^='#']"))cerrarFicha();
 });
 document.addEventListener("keydown",e=>{
@@ -724,6 +894,7 @@ const LEGAL={
 <h3>Vehículos por encargo</h3><p>Los vehículos marcados «Por encargo» todavía no son de nuestra propiedad: son vehículos que podemos adquirir para ti en canales de venta profesional durante un plazo limitado. Su disponibilidad y su precio final dependen de que podamos cerrar la compra.</p>
 <h3>Garantía</h3><p>Los vehículos de ocasión que vendemos a consumidores incluyen la garantía legal establecida en el Real Decreto Legislativo 1/2007 (Ley General para la Defensa de los Consumidores y Usuarios), cuyo plazo mínimo para bienes de segunda mano es de un año.</p>`};
 function ruta(){const h=decodeURIComponent(location.hash.slice(1));const legal=LEGAL[h];
+  if(/^coche-/.test(h)){if(COCHES.length){const id=h.slice(6);if(!ficha||ficha.id!==id){const c=COCHES.find(x=>String(x.id)===id);if(c){const st=$("#stock");st&&st.scrollIntoView();abrirFicha(id)}else history.replaceState(null,"","#stock")}}return}
   $("#principal").hidden=!!legal;$("#vista-legal").hidden=!legal;
   if(legal){$("#legal-txt").innerHTML=legal()+`<p style="margin-top:28px"><a class="btn verde" href="#inicio">Volver al inicio</a></p>`;scrollTo(0,0);requestAnimationFrame(()=>scrollTo(0,0))}
   else if(h){const el=document.getElementById(h);if(el)requestAnimationFrame(()=>el.scrollIntoView())}}
@@ -731,7 +902,7 @@ addEventListener("hashchange",ruta);ruta();
 
 contacto();
 Promise.all([cargarCoches().catch(e=>{console.warn("No se pudieron cargar los coches",e)}),cargarEmpresa().catch(()=>{})])
-  .finally(()=>{opcionesFiltros();pintarCoches();contacto();resenas();if(LEGAL[decodeURIComponent(location.hash.slice(1))])ruta()});
+  .finally(()=>{opcionesFiltros();pintarCoches();contacto();resenas();redes();const h=decodeURIComponent(location.hash.slice(1));if(LEGAL[h]||/^coche-/.test(h))ruta()});
 </script>
 </body>
 </html>
