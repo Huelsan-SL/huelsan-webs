@@ -58,7 +58,8 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fecha=iso=>iso?new Date(iso).toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit",year:"numeric"}):"";
 const msg=(t,c)=>{const m=$("#msg");m.textContent=t||"";m.className=c||""};
-const WEB=/^prueba--/.test(location.hostname)?"https://prueba--huelsan-automocion.netlify.app":"https://huelsanautomocion.com";
+// el cuestionario está publicado en la web real (10/11/2026): los enlaces para clientes apuntan siempre allí
+const WEB="https://huelsanautomocion.com";
 const url=c=>WEB+"/opinion/?c="+c;
 let COCHES=[];
 const nombreCoche=l=>{const t=[l.marca,(l.derivado||l.modelo||"")].filter(Boolean);const m=String(l.marca||""),d=String(l.derivado||l.modelo||"");return(m&&d.toLowerCase().startsWith(m.toLowerCase()+" ")?d:t.join(" "))+(l.anio?" "+l.anio:"")};
@@ -121,7 +122,7 @@ $("#nueva").addEventListener("submit",async e=>{e.preventDefault();const f=e.tar
     $("#coche-otro").hidden=true;copiar(url(id),"Enlace creado y copiado: envíaselo al cliente.")}catch(err){msg("No se ha podido crear: "+(err.message||err),"bad")}});
 (async()=>{
   db=await window.claude.use("db");cargarCoches();
-  if(WEB!=="https://huelsanautomocion.com")$("#nueva").insertAdjacentHTML("beforeend",`<p class="meta" style="margin:0">Estás en la vista previa: los enlaces apuntan a la web de prueba (solo se abre con la cuenta de Netlify). Con la web publicada apuntarán a huelsanautomocion.com.</p>`);
+
   db.collection("resenas").onSnapshot(s=>{R=new Map(s.docs.map(d=>[d.id,{...d.data(),id:d.id}]));if($("#msg").textContent==="Cargando…")msg("");
     if(primera&&![...R.values()].some(r=>r.estado==="recibida")&&[...R.values()].some(r=>r.estado==="invitada"))tab="invitada";primera=false;pintar()},err=>msg("No se han podido cargar: "+(err.message||err),"bad"));
 })();
