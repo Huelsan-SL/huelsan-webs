@@ -10,7 +10,8 @@ const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: 
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 const num = (n: unknown) => n == null || n === "" ? "" : String(Math.round(Number(n))).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 const fecha = (s: unknown) => { if (!s) return ""; const d = new Date(String(s)); if (isNaN(+d)) return ""; return d.toLocaleString("es-ES", { timeZone: "Europe/Madrid", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); };
-const APP = "https://gestion.huelsanautomocion.com";
+// App de trabajo (desde el 10/11/2026 se trabaja en la gestión de prueba)
+const APP = "https://prueba--huelsan-gestion.netlify.app";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
