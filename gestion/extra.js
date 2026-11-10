@@ -494,8 +494,19 @@ function ampliarFicha(){
 /* Datos del coche editables (coches añadidos a mano y coches nuestros): todo lo que sale en la web.
    Se guardan con el mecanismo de la app (data-e, marcados como corregidos a mano para que BCA no los pise). */
 const ETIQ_DGT=["0","ECO","C","B","Sin etiqueta"];
-// ubicaciones ya usadas, para elegirlas sin volver a escribirlas (escribe «Pueblo, Provincia» para que el filtro de la web las agrupe bien)
-const ubicacionesUsadas=()=>[...new Set([...S.lots.values()].map(x=>String(x.ubicacionVenta||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
+/* Ubicaciones para la venta: lista compartida en ajustes «config/ubicaciones» ({lista:[…]}).
+   Se elige en un desplegable; «＋ Añadir ubicación nueva…» la añade a la lista para todos. */
+const UBIC_INICIALES=["Huelva","Murcia"];
+X.ubics=UBIC_INICIALES.slice();X.ubicNueva=false;
+const listaUbics=l=>{const cur=String(l&&l.ubicacionVenta||"").trim();const u=[...X.ubics];if(cur&&!u.includes(cur))u.push(cur);return u.sort((a,b)=>a.localeCompare(b,"es"))};
+(async()=>{const db=window.claude?await window.claude.use("db").catch(()=>null):null;if(!db)return;
+  let creada=false;
+  db.doc("config/ubicaciones").onSnapshot(sn=>{const d=sn&&sn.exists&&sn.data&&sn.data();
+    if(d&&Array.isArray(d.lista)){X.ubics=d.lista.filter(x=>typeof x==="string"&&x.trim());if(S.open&&!enfoque())renderDrawer()}
+    else if(!creada&&sn&&!sn.exists){creada=true;db.doc("config/ubicaciones").set({lista:UBIC_INICIALES.slice()}).catch(()=>{})}},()=>{});
+})();
+async function guardarUbics(lista){X.ubics=[...new Set(lista.map(x=>x.trim()).filter(Boolean))];
+  try{await guardar("config/ubicaciones",{lista:X.ubics},false)}catch(e){toast("No se ha podido guardar la lista: "+(e.message||e))}}
 function seccionDatos(l){const v=k=>esc(l[k]??"");const sel=(k,ops,ph="—")=>`<select data-e="${k}" data-kind="text"><option value="">${ph}</option>${ops.map(o=>`<option ${l[k]===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
   const manual=!l.subasta&&!l.url;
   return`<h3>${manual?"Datos del coche":"Datos del coche para la web"}</h3>
@@ -514,7 +525,9 @@ function seccionDatos(l){const v=k=>esc(l[k]??"");const sel=(k,ops,ph="—")=>`<
     <label>Plazas<input type="number" data-e="plazas" min="1" max="9" value="${v("plazas")}"></label>
     <label>Color<input data-e="color" data-kind="text" value="${v("color")}"></label>
     <label>Etiqueta DGT${sel("etiquetaDGT",ETIQ_DGT,"Sin dato")}</label>
-    ${isOwned(l)||manual?`<label class="wide">Ubicación para la venta <span class="muted" style="font-weight:400">(dónde se puede ver el coche; no es la de la subasta)</span><input data-e="ubicacionVenta" data-kind="text" list="xd-ubics" value="${v("ubicacionVenta")}" placeholder="Ej.: Aljaraque, Huelva"><datalist id="xd-ubics">${ubicacionesUsadas().map(u=>`<option value="${esc(u)}">`).join("")}</datalist></label>`:""}
+    ${isOwned(l)||manual?`<label class="wide">Ubicación para la venta <span class="muted" style="font-weight:400">(dónde se puede ver el coche; no es la de la subasta)</span>
+      <select id="xd-ubic"><option value="">Sin ubicación</option>${listaUbics(l).map(u=>`<option ${l.ubicacionVenta===u?"selected":""}>${esc(u)}</option>`).join("")}<option value="__nueva">＋ Añadir ubicación nueva…</option></select></label>
+      ${X.ubicNueva?`<div class="wide row" style="grid-column:1/-1"><input id="xd-ubic-txt" placeholder="Ej.: Sevilla" style="flex:1 1 200px;min-width:0" maxlength="60"><button type="button" class="btn sm primary" id="xd-ubic-add">Añadir y usar</button><button type="button" class="btn sm" id="xd-ubic-no">Cancelar</button></div>`:""}`:""}
     ${manual?`<label>Matrícula <span class="muted" style="font-weight:400">(no sale en la web)</span><input data-e="matricula" data-kind="text" value="${v("matricula")}"></label>
     <label>Fecha de matriculación<input type="date" data-e="fechaMatric" data-kind="text" value="${esc(String(l.fechaMatric||"").slice(0,10))}"></label>
     <label class="wide">Bastidor <span class="muted" style="font-weight:400">(no sale en la web)</span><input data-e="vin" data-kind="text" value="${v("vin")}"></label>`:""}
@@ -555,6 +568,14 @@ document.addEventListener("click",async e=>{const t=e.target;if(!t.closest("#dra
   if(t.closest("#xr-crear")){const nom=($("#xr-nombre")||{}).value||"";try{const r=await window.HUELSAN_RESENA_NUEVA(nom.trim(),titleOf(l)+(l.anio?" "+l.anio:""),l.id);X.resLink={id:r.id,url:r.url,lote:l.id};renderDrawer();copiar(r.url)}catch(err){toast("No se ha podido crear: "+(err.message||err))}return}
   const rc=t.closest("[data-xrcopiar]");if(rc){copiar(urlResena(rc.dataset.xrcopiar));return}
 });
+document.addEventListener("change",async e=>{const t=e.target;if(t.id!=="xd-ubic"||!S.open)return;const l=S.lots.get(S.open);if(!l)return;
+  if(t.value==="__nueva"){X.ubicNueva=true;renderDrawer();const i=$("#xd-ubic-txt");i&&i.focus({preventScroll:true});return}
+  X.ubicNueva=false;await saveLot(l.id,{ubicacionVenta:t.value||null,manual:{...(l.manual||{}),ubicacionVenta:true}})});
+async function anadirUbic(){const i=$("#xd-ubic-txt"),l=S.open&&S.lots.get(S.open);if(!i||!l)return;const v=i.value.trim().replace(/\s+/g," ");if(!v){i.focus();return}
+  const ya=X.ubics.find(x=>x.toLowerCase()===v.toLowerCase());if(!ya)await guardarUbics([...X.ubics,v]);
+  X.ubicNueva=false;await saveLot(l.id,{ubicacionVenta:ya||v,manual:{...(l.manual||{}),ubicacionVenta:true}});toast(ya?`«${ya}» ya estaba en la lista`:`Ubicación «${v}» añadida`)}
+document.addEventListener("click",e=>{if(e.target.closest("#xd-ubic-add")){anadirUbic();return}if(e.target.closest("#xd-ubic-no")){X.ubicNueva=false;renderDrawer()}});
+document.addEventListener("keydown",e=>{if(e.target.id==="xd-ubic-txt"){if(e.key==="Enter"){e.preventDefault();anadirUbic()}else if(e.key==="Escape"){e.stopPropagation();X.ubicNueva=false;renderDrawer()}}},true);
 document.addEventListener("change",async e=>{const t=e.target;if(t.id!=="xw-subir"||!S.open)return;const l=S.lots.get(S.open);const fs=[...t.files];t.value="";if(!fs.length)return;
   X.fotoMsg=`Subiendo ${fs.length} foto${fs.length>1?"s":""}…`;renderDrawer();const ids=[];
   try{for(const f of fs){ids.push((await HUELSAN.subir("fotos",await reducir(f,3000))).id)}
