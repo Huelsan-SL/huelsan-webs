@@ -76,6 +76,7 @@ ETIQ = {
     "estado.vendido": "Etiqueta «Vendido»", "coches.vendido": "Texto en lugar del precio de un vendido", "coches.antes": "Lectura del precio tachado («Antes»)",
     "coches.rebajado": "Etiqueta «Precio rebajado»", "ficha.ahorro": "Ahorro en la ficha ({v} = importe)", "ficha.vendido": "Aviso en la ficha de un vendido",
     "ficha.boton.vendido": "Botón de la ficha de un vendido", "filtros.vendidos": "Opción «Vendidos» del filtro",
+    "ficha.ubicacion": "Ubicación en la ficha ({v} = lugar)", "filtros.ubicacion": "Filtro «Ubicación»",
     "ficha.compartir": "Botón «Compartir este coche»", "ficha.copiado": "Aviso «enlace copiado»",
 }
 PREG_FORM = {"tipo": "1 (tipo)", "pres": "4 (presupuesto)", "km": "5 (kilometraje)", "antig": "6 (antigüedad)", "comb": "7 (combustible)", "cambio": "8 (cambio)", "pot": "9 (potencia)", "cil": "10 (cilindrada)", "plazo": "11 (plazo)"}

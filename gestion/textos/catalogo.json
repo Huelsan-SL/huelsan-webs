@@ -516,6 +516,12 @@
     "largo": false
    },
    {
+    "clave": "filtros.ubicacion",
+    "etiqueta": "Filtro «Ubicación»",
+    "defecto": "Ubicación",
+    "largo": false
+   },
+   {
     "clave": "filtros.precio",
     "etiqueta": "Filtro «Precio hasta»",
     "defecto": "Precio hasta",
@@ -741,6 +747,12 @@
     "clave": "ficha.ahorro",
     "etiqueta": "Ahorro en la ficha ({v} = importe)",
     "defecto": "Ahorras {v}",
+    "largo": false
+   },
+   {
+    "clave": "ficha.ubicacion",
+    "etiqueta": "Ubicación en la ficha ({v} = lugar)",
+    "defecto": "Puedes verlo en {v}",
     "largo": false
    },
    {

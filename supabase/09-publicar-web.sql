@@ -10,6 +10,7 @@ create or replace function public.ficha_web(d jsonb) returns jsonb language sql 
     'marca', d->'marca', 'modelo', d->'modelo', 'derivado', d->'derivado', 'anio', d->'anio', 'km', d->'km',
     'combustible', d->'combustible', 'cv', d->'cv', 'motor', d->'motor', 'cambio', d->'cambio', 'tipo', d->'tipo',
     'plazas', d->'plazas', 'color', d->'color', 'equipamiento', d->'equipamiento', 'etiquetaDGT', d->'etiquetaDGT',
+    'ubicacionVenta', d->'ubicacionVenta',
     'precioVenta', d->'precioVenta', 'textoVenta', d->'textoVenta', 'fotosWeb', coalesce(d->'fotosWeb','[]'::jsonb)))
 $$;
 
@@ -72,7 +73,9 @@ select
   coalesce(w->'fotosWeb','[]'::jsonb)                          as fotos,
   nullif(btrim(w->>'textoVenta'),'')                           as descripcion,
   nullif(w->>'etiquetaDGT','')                                 as etiqueta,
-  coalesce(nullif(w->>'publicadoEn','')::timestamptz, l.actualizado) as actualizado
+  coalesce(nullif(w->>'publicadoEn','')::timestamptz, l.actualizado) as actualizado,
+  -- 10/11 (migración 11_ubicacion_venta): dónde está el coche para la venta (no la sede de la subasta)
+  case when l.estado in ('comprado','stock','vendido') then nullif(btrim(w->>'ubicacionVenta'),'') end as ubicacion
 from public.lotes l
 cross join lateral (select l.data->'web' as w) x
 where l.publico
