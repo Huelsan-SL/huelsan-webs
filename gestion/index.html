@@ -544,7 +544,8 @@ function flagsOf(l){const t=[];
   if(l.iva)t.push(`<span class="tag">${l.iva==="REBU"?"REBU":"IVA general"}</span>`);
   if(l.importado===true)t.push(`<span class="tag warn">Importado</span>`);
   if(l.procedencia)t.push(`<span class="tag">${esc(l.procedencia)}</span>`);
-  if(l.publico)t.push(`<span class="tag acc">En web</span>`);
+  if(l.publico&&l.web)t.push(`<span class="tag acc">En web</span>`);
+  if(window.cambiosWeb&&window.cambiosWeb(l).length)t.push(`<span class="tag warn">Cambios sin publicar</span>`);
   const dm=demandsFor(l).length;if(dm)t.push(`<span class="tag acc">${dm} cliente${dm>1?"s":""} interesado${dm>1?"s":""}</span>`);
   return t.join("")}
 function describeSubasta(s,ls){
@@ -897,7 +898,7 @@ function pintarVisor(){let v=$("#visor");if(!VIS.fotos.length){v&&v.remove();ret
 function moverVisor(d){const n=VIS.fotos.length;if(!n)return;VIS.i=(VIS.i+d+n)%n;pintarVisor()}
 function renderPublico(){
   const p=S.pub;
-  const cars=[...S.lots.values()].filter(l=>l.publico&&l.estado!=="vendido"&&l.estado!=="descartado"&&(isOwned(l)||!isPast(l)))
+  const cars=[...S.lots.values()].filter(l=>l.publico&&l.web&&l.estado!=="vendido"&&l.estado!=="descartado"&&(isOwned(l)||!isPast(l)))
     .filter(l=>(!p.tipo||l.tipo===p.tipo)&&(!p.anioMin||(l.anio&&l.anio>=+p.anioMin))&&(!p.precioMax||!publicPrice(l)||publicPrice(l)<=+p.precioMax))
     .sort((a,b)=>isOwned(b)-isOwned(a));
   const hasAny=[...S.lots.values()].some(l=>l.publico);

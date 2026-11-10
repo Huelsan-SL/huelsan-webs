@@ -63,6 +63,12 @@ const css=document.createElement("style");css.textContent=`
 .xfoto .mat{position:absolute;left:5px;bottom:22px;font-size:10px;border-radius:4px;padding:1px 5px;background:var(--warn);color:#fff}
 .xfoto .mat.ok{background:var(--good)}
 .xlink{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.xlink input{flex:1 1 240px;font-size:12.5px}
+.xpub{border-radius:8px;padding:8px 10px;font-size:13px;display:flex;gap:8px;align-items:flex-start}
+.xpub.off{background:var(--sunk);color:var(--muted)}.xpub.ok{background:var(--good-soft);color:var(--good)}.xpub.warn{background:var(--warn-soft);color:var(--warn)}
+.xpubbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px solid var(--line);padding-top:12px}
+.xrev{border:2px solid var(--accent);border-radius:10px;padding:12px;display:grid;gap:10px;background:var(--surface)}
+.xrev-car{display:flex;gap:10px;align-items:center}.xrev-car img,.xrev-nof{width:96px;height:72px;object-fit:cover;border-radius:6px;background:var(--sunk);flex:none;display:grid;place-items:center;font-size:11px;color:var(--muted)}
+.xrev ul{margin:0;padding-left:18px;font-size:13px;display:grid;gap:3px}.xrev-ok li::marker{content:"✓  ";color:var(--good)}.xrev-av li::marker{content:"⚠  ";color:var(--warn)}
 `;document.head.appendChild(css);
 
 /* ---------- datos ---------- */
@@ -361,6 +367,36 @@ document.addEventListener("click",async e=>{const t=e.target;
   const bpp=t.closest("[data-xbproponer]");if(bpp){const[bid,lid]=bpp.dataset.xbproponer.split("|");const b=X.busquedas.get(bid);if(b&&b.clienteId)await proponer(b.clienteId,lid);return}
 });
 
+/* ---------- publicar en la web con paso previo ----------
+   La web pública lee la copia publicada del coche (l.web), no los datos que se están editando (supabase/09-publicar-web.sql).
+   «Revisar y publicar» / «Revisar y actualizar» enseñan qué va a salir y avisan de lo que falta antes de confirmar. */
+const CAMPOS_WEB=["marca","modelo","derivado","anio","km","combustible","cv","motor","cambio","tipo","plazas","color","equipamiento","etiquetaDGT","precioVenta","textoVenta","fotosWeb"];
+const fichaWeb=l=>{const o={};for(const k of CAMPOS_WEB){const v=k==="fotosWeb"?(l.fotosWeb||[]):l[k];if(v!=null&&v!==""&&!(k==="fotosWeb"&&!v.length))o[k]=v}return o};
+const copiaWeb=l=>{const o={};for(const k of CAMPOS_WEB)o[k]=k==="fotosWeb"?[...(l.fotosWeb||[])]:(l[k]??null);o.publicadoEn=ahora();o.publicadoPor=X.user||null;return o};
+const publicada=l=>!!(l&&l.publico&&l.web&&typeof l.web==="object");
+function cambiosWeb(l){if(!publicada(l))return[];const a=fichaWeb(l),b=fichaWeb(l.web),out=[];
+  for(const k of CAMPOS_WEB){if(JSON.stringify(a[k]??null)===JSON.stringify(b[k]??null))continue;
+    const n=k==="precioVenta"?"precio":k==="textoVenta"?"texto de venta":k==="fotosWeb"?"fotos":k==="equipamiento"?"equipamiento":"datos del coche";if(!out.includes(n))out.push(n)}return out}
+window.cambiosWeb=cambiosWeb;window.publicadaWeb=publicada;
+function revisionWeb(l,actualizar){const owned=isOwned(l),w=l.fotosWeb||[],mat=l.fotosWebMat||{};
+  const avisos=[],ok=[];const t=titleOf(l);
+  if(!l.marca||/^nuevo coche$/i.test(String(l.marca).trim())||!l.modelo)avisos.push("Revisa la marca y el modelo: ahora sale «"+(t||"sin nombre")+"».");else ok.push("Nombre: "+t);
+  if(!owned&&cerrado(l))avisos.push("La subasta ya ha cerrado: no saldrá en la web hasta que el coche esté en stock.");
+  if(owned){if(l.precioVenta==null)avisos.push("Sin precio de venta: saldrá «Consultar precio».");else ok.push("Precio: "+eur(l.precioVenta))}
+  if(!w.length)avisos.push("Sin fotos: saldrá «Fotos disponibles bajo petición».");else{ok.push(w.length+" foto"+(w.length>1?"s":""));
+    const sinRev=w.filter(n=>mat[n]===false).length;if(sinRev)avisos.push(sinRev+" foto"+(sinRev>1?"s":"")+" con la matrícula sin tapar automáticamente: compruébala"+(sinRev>1?"s":"")+" antes.")}
+  if(!String(l.textoVenta||"").trim())avisos.push("Sin texto de venta (es opcional).");else ok.push("Texto de venta");
+  if(l.anio==null||l.km==null)avisos.push("Falta el año o los kilómetros.");
+  const camb=actualizar?cambiosWeb(l):[];const w0=l.web||{};
+  const det=actualizar?camb.map(c=>c==="precio"?`precio (${w0.precioVenta!=null?eur(w0.precioVenta):"sin precio"} → ${l.precioVenta!=null?eur(l.precioVenta):"sin precio"})`:c==="fotos"?`fotos (${(w0.fotosWeb||[]).length} → ${w.length}${(w0.fotosWeb||[]).length===w.length?", cambia el orden o alguna foto":""})`:c):[];
+  const f0=w[0];
+  return`<div class="xrev" role="region" aria-label="Revisión antes de publicar"><b>${actualizar?"Revisa los cambios antes de actualizar la web":"Revisa cómo va a salir en la web"}</b>
+    <div class="xrev-car">${f0?`<img src="${esc(/^https?:/.test(f0)?f0:FOTOS_WEB()+f0)}" alt="">`:`<div class="xrev-nof">Sin fotos</div>`}<div><div style="font-weight:700">${esc(t)}</div><div class="muted" style="font-size:12.5px">${[l.anio,l.km!=null?num(l.km)+" km":null,l.combustible,l.cv?l.cv+" CV":null].filter(Boolean).map(esc).join(" · ")}</div><div style="font-weight:700;margin-top:2px">${owned?(l.precioVenta!=null?eur(l.precioVenta):"Consultar precio"):"Por encargo"}</div></div></div>
+    ${actualizar?`<div style="font-size:13px">Se va a cambiar en la web: <b>${esc(det.join(", ")||"nada")}</b>.</div>`:""}
+    ${ok.length?`<ul class="xrev-ok">${ok.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+    ${avisos.length?`<ul class="xrev-av">${avisos.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+    <div class="row"><button class="btn primary sm" id="xw-confirmar">${actualizar?"Actualizar en la web":"Publicar en la web"}</button><button class="btn sm" id="xw-cancelar">Cancelar</button></div></div>`}
+
 /* ---------- ficha del coche: panel «En la web», clientes y reseña ---------- */
 const origDrawer=window.renderDrawer;
 window.renderDrawer=function(){origDrawer.apply(this,arguments);try{ampliarFicha()}catch(e){console.error(e)}};
@@ -385,9 +421,10 @@ function ampliarFicha(){
   const anun=l.anuncio&&l.anuncio.descripcion;
   const web=document.createElement("div");web.className="dsec";web.id="xweb";
   web.innerHTML=`<h3>En la web <a href="https://huelsanautomocion.com/#stock" target="_blank" rel="noopener" style="font-weight:400;font-size:12.5px;margin-left:6px">Ver la web ↗</a></h3>
-    <label class="toggle"><input type="checkbox" id="d-publico" ${l.publico?"checked":""}><span><b>Mostrar en huelsanautomocion.com</b><br><span class="muted">${owned?"Sale como «En stock».":"Sale como «Por encargo» hasta que cierre la subasta, sin ningún dato de la subasta."}</span></span></label>
+    ${estadoWeb(l)}
+    <div class="muted" style="font-size:12px">Lo que cambies aquí (precio, texto, fotos) no sale en la web hasta que pulses ${publicada(l)?"«Revisar y actualizar cambios»":"«Revisar y publicar»"}, abajo.</div>
     ${owned?`<div class="form"><label>Precio de venta en la web (€)<input type="number" id="xw-precio" data-e="precioVenta" step="100" value="${esc(l.precioVenta??"")}" placeholder="Sin precio: «Consultar precio»"></label></div>`:""}
-    <label style="display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--muted)">Texto de venta <span style="font-weight:400">(sale en la ficha del coche, encima de los datos)</span>
+    <label style="display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--muted)">Texto de venta <span style="font-weight:400">(sale en la ficha del coche, debajo de las fotos)</span>
       <textarea id="xw-texto" data-e="textoVenta" data-kind="text" rows="4" maxlength="1500" placeholder="Ej.: Único propietario, libro de revisiones al día y neumáticos nuevos. Garantía de 12 meses.">${esc(l.textoVenta??"")}</textarea></label>
     <div class="row">${anun?`<button class="btn sm" id="xw-anuncio">Usar el texto del anuncio</button>`:""}${S.sample?`<button class="btn sm" id="xw-ia" ${X.iaOcupada?"disabled":""}>${X.iaOcupada?"Redactando…":"Redactar con IA"}</button>`:""}</div>
     <div style="display:grid;gap:6px"><div class="row" style="justify-content:space-between"><b style="font-size:13px">Fotos en la web: ${nWeb||"ninguna"}</b><span class="muted" style="font-size:12px">Toca una foto para ponerla o quitarla · la nº 1 es la principal</span></div>
@@ -396,6 +433,9 @@ function ampliarFicha(){
       ${X.fotoMsg?`<div class="note" role="status">${esc(X.fotoMsg)}</div>`:""}
       <div class="row"><label class="btn sm">Subir fotos<input type="file" id="xw-subir" accept="image/*" multiple hidden></label><a class="btn sm" href="folleto/?id=${encodeURIComponent(l.id)}" style="text-decoration:none">Retocar en el Estudio (matrícula, fondo, folleto)</a>${nWeb?`<button class="btn sm ghost" id="xw-quitartodas">Quitar todas</button>`:""}</div>
       <div class="muted" style="font-size:12px">Al poner una foto se intenta tapar la matrícula sola (placa europea con franja azul). Si sale «Revisa la matrícula», ábrela en el Estudio y tápala a mano.${(l.fotoIds||[]).length?" Las fotos de BCA necesitan la extensión de Huelsan instalada en este navegador.":""}</div></div>`;
+  const bar=document.createElement("div");
+  bar.innerHTML=X.revisar===l.id?revisionWeb(l,publicada(l)):`<div class="xpubbar">${publicada(l)?(cambiosWeb(l).length?`<button class="btn primary sm" id="xw-revisar">Revisar y actualizar cambios</button>`:`<span class="muted" style="font-size:12.5px">La web está al día.</span>`)+`<button class="btn sm ghost" id="xw-retirar">Retirar de la web</button>`:`<button class="btn primary sm" id="xw-revisar">Revisar y publicar</button>`}</div>`;
+  web.appendChild(bar);
   dec.after(web);
   // clientes
   const cl=document.createElement("div");cl.className="dsec";cl.id="xclientes";
@@ -414,6 +454,13 @@ function ampliarFicha(){
       <div class="row"><input id="xr-nombre" placeholder="Nombre del cliente" value="${esc(l.facturaVenta&&l.facturaVenta.cliente||"")}" style="flex:1 1 180px;min-width:0"><button class="btn sm primary" id="xr-crear">Crear enlace de reseña</button></div>`;
     cl.after(rs)}
 }
+function estadoWeb(l){const f=d=>d?new Date(d).toLocaleString("es-ES",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
+  if(!publicada(l))return`<div class="xpub off"><span>●</span><span><b>No está en la web.</b> ${isOwned(l)?"Saldrá como «En stock».":"Saldrá como «Por encargo» hasta que cierre la subasta, sin ningún dato de la subasta."}</span></div>`;
+  if(["vendido","descartado"].includes(l.estado))return`<div class="xpub off"><span>●</span><span><b>${l.estado==="vendido"?"Vendido":"Descartado"}:</b> ya no sale en la web.</span></div>`;
+  if(!isOwned(l)&&cerrado(l))return`<div class="xpub off"><span>●</span><span><b>Subasta cerrada:</b> ya no sale en la web.</span></div>`;
+  const c=cambiosWeb(l);
+  return c.length?`<div class="xpub warn"><span>●</span><span><b>Hay cambios sin publicar</b> (${esc(c.join(", "))}). La web sigue mostrando la versión del ${esc(f(l.web.publicadoEn))}.</span></div>`
+    :`<div class="xpub ok"><span>●</span><span><b>Publicado en la web</b> · actualizado el ${esc(f(l.web.publicadoEn))}.</span></div>`}
 async function codigoNuevo(){const a=new Uint8Array(12);crypto.getRandomValues(a);return[...a].map(b=>b.toString(36).padStart(2,"0")).join("").slice(0,20)}
 const urlResena=c=>(/^prueba--/.test(location.hostname)?"https://prueba--huelsan-automocion.netlify.app":"https://huelsanautomocion.com")+"/opinion/?c="+c;
 async function copiar(txt){try{await navigator.clipboard.writeText(txt);toast("Enlace copiado")}catch(e){prompt("Copia el enlace",txt)}}
@@ -423,6 +470,13 @@ document.addEventListener("click",async e=>{const t=e.target;if(!t.closest("#dra
   const l=S.open&&S.lots.get(S.open);if(!l)return;
   const fx=t.closest("[data-xprincipal]");if(fx){e.stopPropagation();const n=fx.dataset.xprincipal;const w=(l.fotosWeb||[]).filter(x=>x!==n);await saveLot(l.id,{fotosWeb:[n,...w]});return}
   const fb=t.closest("[data-xfoto]");if(fb){await alternarFoto(l,fb.dataset.xfoto);return}
+  if(t.closest("#xw-revisar")){X.revisar=l.id;renderDrawer();const r=$("#xweb .xrev");r&&r.scrollIntoView({block:"nearest",behavior:"smooth"});return}
+  if(t.closest("#xw-cancelar")){X.revisar=null;renderDrawer();return}
+  if(t.closest("#xw-confirmar")){const act=publicada(l);X.revisar=null;
+    try{await saveLot(l.id,{publico:true,web:copiaWeb(S.lots.get(l.id)||l)});toast(act?"Cambios publicados en la web":"Coche publicado en la web")}catch(err){toast("No se ha podido publicar: "+(err.message||err))}
+    renderDrawer();return}
+  const rt=t.closest("#xw-retirar");if(rt){if(rt.dataset.ok!=="1"){rt.dataset.ok="1";rt.textContent="¿Seguro? Pulsa otra vez";setTimeout(()=>{if(rt.isConnected){rt.dataset.ok="";rt.textContent="Retirar de la web"}},3000);return}
+    await saveLot(l.id,{publico:false});toast("Retirado de la web");renderDrawer();return}
   if(t.closest("#xw-quitartodas")){if(!confirm("¿Quitar todas las fotos de la web de este coche?"))return;await saveLot(l.id,{fotosWeb:[]});return}
   if(t.closest("#xw-anuncio")){await saveLot(l.id,{textoVenta:l.anuncio.descripcion});toast("Texto del anuncio copiado: revísalo");return}
   if(t.closest("#xw-ia")){await redactarIA(l);return}
@@ -463,7 +517,7 @@ async function alternarFoto(l,clave){
     const r=await HUELSAN.subir("fotos-web",out);const cur=S.lots.get(l.id)||l;const w=[...(cur.fotosWeb||[]),r.id];
     await saveLot(l.id,{fotosWeb:w,fotosWebOrigen:{...(cur.fotosWebOrigen||{}),[r.id]:clave},fotosWebMat:{...(cur.fotosWebMat||{}),[r.id]:tapada}});
     if(!tapada)X.fotoMsg="Foto añadida, pero no he encontrado la matrícula: comprueba que no se lee (si se lee, quítala y retócala en el Estudio).";
-    if(!cur.publico&&w.length===1)X.fotoMsg=(X.fotoMsg?X.fotoMsg+" ":"")+"Recuerda activar «Mostrar en huelsanautomocion.com».";}
+    if(publicada(cur))X.fotoMsg=(X.fotoMsg?X.fotoMsg+" ":"")+"Pulsa «Revisar y actualizar cambios» para que se vea en la web.";}
   catch(err){X.fotoMsg="No se ha podido añadir la foto: "+(err.message||err)}
   finally{X.fotoOcupada.delete(key);renderDrawer()}}
 /* Tapado automático de matrícula: busca la franja azul de la placa europea y difumina la placa que va a su derecha.
