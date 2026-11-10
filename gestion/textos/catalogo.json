@@ -424,6 +424,12 @@
     "etiqueta": "Coches por encargo",
     "defecto": "Por encargo",
     "largo": false
+   },
+   {
+    "clave": "estado.vendido",
+    "etiqueta": "Etiqueta «Vendido»",
+    "defecto": "Vendido",
+    "largo": false
    }
   ]
  },
@@ -582,6 +588,12 @@
     "largo": false
    },
    {
+    "clave": "filtros.vendidos",
+    "etiqueta": "Opción «Vendidos» del filtro",
+    "defecto": "Vendidos",
+    "largo": false
+   },
+   {
     "clave": "filtros.aplicar",
     "etiqueta": "Filtro «Aplicar filtros»",
     "defecto": "Aplicar filtros",
@@ -642,15 +654,33 @@
   "ancla": "coches",
   "campos": [
    {
-    "clave": "coches.fotos",
-    "etiqueta": "Palabra «fotos» en la tarjeta",
-    "defecto": "fotos",
+    "clave": "coches.vendido",
+    "etiqueta": "Texto en lugar del precio de un vendido",
+    "defecto": "Vendido",
+    "largo": false
+   },
+   {
+    "clave": "coches.antes",
+    "etiqueta": "Lectura del precio tachado («Antes»)",
+    "defecto": "Antes",
     "largo": false
    },
    {
     "clave": "coches.consultar",
     "etiqueta": "Coche sin precio",
     "defecto": "Consultar precio",
+    "largo": false
+   },
+   {
+    "clave": "coches.rebajado",
+    "etiqueta": "Etiqueta «Precio rebajado»",
+    "defecto": "Precio rebajado",
+    "largo": false
+   },
+   {
+    "clave": "coches.fotos",
+    "etiqueta": "Palabra «fotos» en la tarjeta",
+    "defecto": "fotos",
     "largo": false
    },
    {
@@ -708,10 +738,28 @@
     "largo": false
    },
    {
+    "clave": "ficha.ahorro",
+    "etiqueta": "Ahorro en la ficha ({v} = importe)",
+    "defecto": "Ahorras {v}",
+    "largo": false
+   },
+   {
+    "clave": "ficha.vendido",
+    "etiqueta": "Aviso en la ficha de un vendido",
+    "defecto": "Este vehículo ya está vendido. Si buscas uno parecido, te lo encontramos.",
+    "largo": true
+   },
+   {
     "clave": "ficha.encargo",
     "etiqueta": "Aviso en coches por encargo",
     "defecto": "Vehículo disponible por encargo durante unos días. El precio final se confirma al consultarnos.",
     "largo": true
+   },
+   {
+    "clave": "ficha.boton.vendido",
+    "etiqueta": "Botón de la ficha de un vendido",
+    "defecto": "Quiero uno parecido",
+    "largo": false
    },
    {
     "clave": "ficha.boton",

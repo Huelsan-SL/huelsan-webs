@@ -203,6 +203,15 @@ nav.menu a:hover{border-color:var(--green)}
 .car .ph img{width:100%;height:100%;object-fit:cover;display:block}
 .badge{position:absolute;top:12px;left:12px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border-radius:999px;background:#0E2A47;color:#fff}
 .badge.encargo{background:var(--gold);color:#1B1D20}
+.badge.vendido{background:#B42318;color:#fff;font-size:13px;padding:6px 14px}
+.badge.rebaja{top:auto;bottom:12px;background:#1E9E52;color:#fff}
+.car.es-vendido .ph img{filter:grayscale(.55) brightness(.92)}
+.car.es-vendido .ph::after{content:"";position:absolute;inset:0;background:rgba(14,42,71,.12);pointer-events:none}
+.vendido-txt{color:#B42318;text-transform:uppercase;letter-spacing:.06em}
+.p-ant{color:var(--muted);font-weight:600;font-size:.72em;text-decoration-thickness:2px;margin-right:4px}
+.p-oferta{color:#1E9E52}
+.tag.vendido{background:#FDECEA;color:#B42318}
+.fprice .ahorro{background:#E6F5EC;color:#178643;font-weight:800;font-size:13px;border-radius:999px;padding:5px 10px}
 .nfotos{position:absolute;right:12px;bottom:12px;font-size:12px;font-weight:700;background:rgba(9,28,49,.75);color:#fff;padding:3px 9px;border-radius:999px}
 .car .b{padding:16px 18px 18px;display:grid;gap:6px}
 .car .t{font-size:18px;font-weight:800;line-height:1.25}
@@ -560,7 +569,7 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
           <label><span data-t="filtros.cambio">Cambio</span><select id="f-cambio"><option value="" data-t="filtros.indiferente">Indiferente</option><option value="Automático" data-t="filtros.cambio.auto">Automático</option><option value="Manual" data-t="filtros.cambio.manual">Manual</option></select></label>
           <label><span data-t="filtros.tipo">Carrocería</span><select id="f-tipo"><option value="" data-t="filtros.todos">Todos</option></select></label>
           <label><span data-t="filtros.potencia">Potencia desde</span><select id="f-cv"><option value="" data-t="filtros.cualquiera">Cualquiera</option></select></label>
-          <label><span data-t="filtros.disponibilidad">Disponibilidad</span><select id="f-disp"><option value="" data-t="filtros.todos">Todos</option><option value="stock" data-t="estado.stock">En stock</option><option value="encargo" data-t="estado.encargo">Por encargo</option></select></label>
+          <label><span data-t="filtros.disponibilidad">Disponibilidad</span><select id="f-disp"><option value="" data-t="filtros.todos">Todos</option><option value="stock" data-t="estado.stock">En stock</option><option value="encargo" data-t="estado.encargo">Por encargo</option><option value="vendido" data-t="filtros.vendidos">Vendidos</option></select></label>
           <button type="button" class="btn verde aplicar" id="f-aplicar"><span data-t="filtros.aplicar">Aplicar filtros</span></button>
         </div>
         <div class="resumen-f"><span id="f-total" class="tnum" aria-live="polite"></span><span class="chips-f" id="f-chips"></span><button type="button" class="limpiar" id="f-limpiar" hidden data-t="filtros.limpiar">Quitar filtros</button></div>
@@ -660,13 +669,13 @@ let toastT;function toast(m){let t=$("#toast");if(!t){t=document.createElement("
 
 /* Textos editables desde la app: T(clave, texto por defecto) y elementos con data-t */
 const T=(k,def)=>{const v=EMPRESA.textos&&EMPRESA.textos[k];return v!=null&&String(v).trim()!==""?String(v):def};
-const DISP={stock:"En stock",encargo:"Por encargo"};
+const DISP={stock:"En stock",encargo:"Por encargo",vendido:"Vendido"};
 function aplicarTextos(){
   document.querySelectorAll("[data-t]").forEach(el=>{const v=T(el.dataset.t,null);if(v==null)return;
     if(el.dataset.tEnlace){const m=v.match(/^(.*?)\{(.+?)\}(.*)$/s);el.textContent="";if(m){el.append(m[1]);const a=document.createElement("a");a.href=el.dataset.tEnlace;a.textContent=m[2];el.append(a,m[3])}else el.textContent=v}
     else el.textContent=v});
   document.querySelectorAll("[data-t-ph]").forEach(el=>{const v=T(el.dataset.tPh,null);if(v!=null)el.placeholder=v});
-  DISP.stock=T("estado.stock","En stock");DISP.encargo=T("estado.encargo","Por encargo");
+  DISP.stock=T("estado.stock","En stock");DISP.encargo=T("estado.encargo","Por encargo");DISP.vendido=T("estado.vendido","Vendido");
   document.title=T("seo.titulo",document.title);
   const md=document.querySelector('meta[name="description"]');if(md)md.content=T("seo.descripcion",md.content);
 }
@@ -677,13 +686,19 @@ const SB_KEY="sb_publishable_8n9P6btJois-b7B3-kNTTQ_YG6D4S1X";
 const FOTOS_WEB=SB_URL+"/storage/v1/object/public/fotos-web/";
 const H={apikey:SB_KEY,Accept:"application/json"};
 let COCHES=[];
+// orden por defecto: en stock, por encargo y, al final, los vendidos (se quedan en la web marcados como VENDIDO)
+const RANGO=c=>({stock:0,encargo:1,vendido:2}[c.disponibilidad]??1);
+// precio: los vendidos no lo muestran; las bajadas se ven con el precio anterior tachado
+const precioHtml=c=>c.disponibilidad==="vendido"?`<span class="vendido-txt">${esc(T("coches.vendido","Vendido"))}</span>`
+  :c.precio?`${c.precio_anterior>c.precio?`<s class="p-ant" aria-label="${esc(T("coches.antes","Antes"))} ${esc(eur(c.precio_anterior))}">${esc(eur(c.precio_anterior))}</s> `:""}<span class="${c.precio_anterior>c.precio?"p-oferta":""}">${esc(eur(c.precio))}</span>`
+  :esc(T("coches.consultar","Consultar precio"));
 async function cargarCoches(){
-  const r=await fetch(SB_URL+"/rest/v1/coches_web?select=*",{headers:H});
+  const r=await fetch(SB_URL+"/rest/v1/coches_web_v2?select=*",{headers:H});
   if(!r.ok)throw new Error("HTTP "+r.status);
   const filas=await r.json();
   COCHES=filas.map(c=>({...c,fotos:(Array.isArray(c.fotos)?c.fotos:[]).map(f=>/^https?:/.test(f)?f:FOTOS_WEB+String(f).replace(/^\/+/,""))}))
     .filter(c=>!c.caduca||new Date(c.caduca).getTime()>Date.now())
-    .sort((a,b)=>(a.disponibilidad==="stock"?0:1)-(b.disponibilidad==="stock"?0:1));
+    .sort((a,b)=>RANGO(a)-RANGO(b));
 }
 async function cargarEmpresa(){
   const r=await fetch(SB_URL+"/rest/v1/empresa_web?select=data",{headers:H});
@@ -793,7 +808,8 @@ function filtrar(ignorar){
 function ordenar(l){const o=va("f-orden"),n=x=>x==null?Infinity:+x;
   const r=[...l];if(o==="precio-asc")r.sort((a,b)=>n(a.precio)-n(b.precio));else if(o==="precio-desc")r.sort((a,b)=>(+b.precio||0)-(+a.precio||0));
   else if(o==="km-asc")r.sort((a,b)=>n(a.km)-n(b.km));else if(o==="anio-desc")r.sort((a,b)=>(b.anio||0)-(a.anio||0));
-  else if(o==="nuevo")r.sort((a,b)=>String(b.actualizado||"").localeCompare(String(a.actualizado||"")));return r}
+  else if(o==="nuevo")r.sort((a,b)=>String(b.actualizado||"").localeCompare(String(a.actualizado||"")));
+  return r.sort((a,b)=>(a.disponibilidad==="vendido")-(b.disponibilidad==="vendido"))}
 function chipsActivos(){const out=[];const et={"f-precio":x=>T("filtros.chip.precio","Hasta {v}").replace("{v}",num(x)+" €"),"f-km":x=>T("filtros.chip.km","Hasta {v}").replace("{v}",num(x)+" km"),"f-anio":x=>T("filtros.chip.anio","Desde {v}").replace("{v}",x),"f-cv":x=>T("filtros.chip.cv","Desde {v}").replace("{v}",x+" CV"),"f-disp":x=>DISP[x]||x};
   if(va("f-q"))out.push(["f-q","«"+va("f-q")+"»"]);
   FIL.forEach(id=>{const x=va(id);if(x)out.push([id,(et[id]||(y=>y))(x)])});return out}
@@ -803,11 +819,11 @@ function pintarCoches(){
   $("#f-chips").innerHTML=act.map(([id,t])=>`<button type="button" class="chip-f" data-quitar="${id}" aria-label="Quitar filtro ${esc(t)}">${esc(t)}<span aria-hidden="true">✕</span></button>`).join("");
   $("#f-limpiar").hidden=!act.length;
   const nf=act.filter(([id])=>id!=="f-q").length;$("#f-n").hidden=!nf;$("#f-n").textContent=nf;
-  $("#cars").innerHTML=lista.length?lista.map(c=>`<button type="button" class="car" data-ficha="${esc(c.id)}" aria-label="Ver ${esc(titulo(c))}">
-    <div class="ph">${c.fotos[0]?`<img src="${esc(c.fotos[0])}" alt="" loading="lazy">`:""}<span class="badge ${esc(c.disponibilidad)}">${esc(DISP[c.disponibilidad]||"")}</span>${c.fotos.length>1?`<span class="nfotos">${c.fotos.length} ${esc(T("coches.fotos","fotos"))}</span>`:""}</div>
+  $("#cars").innerHTML=lista.length?lista.map(c=>`<button type="button" class="car${c.disponibilidad==="vendido"?" es-vendido":""}" data-ficha="${esc(c.id)}" aria-label="Ver ${esc(titulo(c))}">
+    <div class="ph">${c.fotos[0]?`<img src="${esc(c.fotos[0])}" alt="" loading="lazy">`:""}<span class="badge ${esc(c.disponibilidad)}">${esc(DISP[c.disponibilidad]||"")}</span>${c.precio_anterior>c.precio&&c.disponibilidad!=="vendido"?`<span class="badge rebaja">${esc(T("coches.rebajado","Precio rebajado"))}</span>`:""}${c.fotos.length>1?`<span class="nfotos">${c.fotos.length} ${esc(T("coches.fotos","fotos"))}</span>`:""}</div>
     <div class="b"><div class="t">${esc(titulo(c))}</div>${c.version?`<div class="v">${esc(c.version)}</div>`:""}
       <div class="sp tnum">${[c.anio,c.km!=null?num(c.km)+" km":null,c.combustible,cambioDe(c),c.cv?c.cv+" CV":null].filter(Boolean).map(x=>`<span>${esc(x)}</span>`).join("")}</div>
-      <div class="p tnum">${c.precio?eur(c.precio):esc(T("coches.consultar","Consultar precio"))}</div></div></button>`).join("")
+      <div class="p tnum">${precioHtml(c)}</div></div></button>`).join("")
     :`<div class="empty"><strong>${esc(COCHES.length?T("coches.sinresultados.titulo","Ningún vehículo con estos filtros"):T("coches.vacio.titulo","Próximamente publicaremos nuevos vehículos"))}</strong>${esc(COCHES.length?T("coches.sinresultados.texto","Prueba con otros filtros o deja que lo busquemos por ti."):T("coches.vacio.texto","Si buscas un vehículo concreto, puedes solicitar una búsqueda personalizada."))}<div style="margin-top:14px"><button type="button" class="btn verde" id="f-encargo">${esc(T("coches.sinresultados.boton","Búscamelo"))}</button></div></div>`}
 FIL.forEach(id=>$("#"+id).addEventListener("change",()=>{if(id==="f-marca")opcionesModelo();pendiente()}));
 $("#f-orden").addEventListener("change",pendiente);
@@ -890,11 +906,12 @@ function pintarFicha(){
       ${c.fotos.length>1?`<div class="thumbs">${c.fotos.map((u,i)=>`<button type="button" data-foto="${i}" aria-label="Foto ${i+1}" ${i===fotoI?'aria-current="true"':""}><img src="${esc(u)}" alt=""></button>`).join("")}</div>`:""}
       <p class="legalfoto">${esc(T("ficha.aviso.fotos","Fotos del propio vehículo. Matrículas ocultadas por protección de datos. Imágenes y datos orientativos, sin valor contractual."))} <a href="#fotos-info">${esc(T("ficha.mas.info","Más información"))}</a>.</p>`:`<div class="empty">${esc(T("ficha.sinfotos","Fotos disponibles bajo petición."))}</div>`}
       ${c.descripcion?`<div class="desc-venta">${esc(c.descripcion)}</div>`:""}</div>
-    <div class="fside"><div class="fprice"><b class="tnum">${c.precio?eur(c.precio):esc(T("coches.consultar","Consultar precio"))}</b></div>
+    <div class="fside"><div class="fprice${c.disponibilidad==="vendido"?" es-vendido":""}"><b class="tnum">${precioHtml(c)}</b>${c.precio_anterior>c.precio&&c.disponibilidad!=="vendido"?`<span class="ahorro tnum">${esc(T("ficha.ahorro","Ahorras {v}").replace("{v}",eur(c.precio_anterior-c.precio)))}</span>`:""}</div>
+      ${c.disponibilidad==="vendido"?`<p class="legalfoto" style="margin:0">${esc(T("ficha.vendido","Este vehículo ya está vendido. Si buscas uno parecido, te lo encontramos."))}</p>`:""}
       <dl class="kv tnum">${datos.map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
       ${c.equipamiento?`<div class="equip"><b style="color:var(--ink)">Equipamiento:</b> ${esc(c.equipamiento)}</div>`:""}
       ${c.disponibilidad==="encargo"?`<p class="legalfoto" style="margin:0">${esc(T("ficha.encargo","Vehículo disponible por encargo durante unos días. El precio final se confirma al consultarnos."))}</p>`:""}
-      <button class="btn verde" type="button" id="finteres">${esc(T("ficha.boton","Me interesa este vehículo"))}</button>
+      <button class="btn verde" type="button" id="finteres">${esc(c.disponibilidad==="vendido"?T("ficha.boton.vendido","Quiero uno parecido"):T("ficha.boton","Me interesa este vehículo"))}</button>
       <button class="btn-compartir" type="button" id="fcompartir"><svg aria-hidden="true"><use href="#i-compartir"/></svg>${esc(T("ficha.compartir","Compartir este coche"))}</button></div></div></div>`;
   if(location.hash!=="#coche-"+c.id)history.replaceState(null,"","#coche-"+c.id);
   $("#fclose").focus({preventScroll:true})}
