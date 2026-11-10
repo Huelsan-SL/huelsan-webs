@@ -62,6 +62,8 @@ const css=document.createElement("style");css.textContent=`
 .xfoto.busy::after{content:"Preparando…";position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;font-size:12px;font-weight:600}
 .xfoto .mat{position:absolute;left:5px;bottom:22px;font-size:10px;border-radius:4px;padding:1px 5px;background:var(--warn);color:#fff}
 .xfoto .mat.ok{background:var(--good)}
+#xbdlg{position:fixed;z-index:45;left:50%;top:6vh;transform:translateX(-50%);width:min(620px,calc(100vw - 24px));max-height:88vh;overflow:auto;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+#xbdlg .card{margin:0!important}#xbscrim{z-index:44}
 .xlink{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.xlink input{flex:1 1 240px;font-size:12.5px}
 .xpub{border-radius:8px;padding:8px 10px;font-size:13px;display:flex;gap:8px;align-items:flex-start}
 .xpub.off{background:var(--sunk);color:var(--muted)}.xpub.ok{background:var(--good-soft);color:var(--good)}.xpub.warn{background:var(--warn-soft);color:var(--warn)}
@@ -87,7 +89,7 @@ function refrescar(){if(["clientes","busquedas"].includes(S.tab)&&!enfoque())ren
 
 /* ---------- pestaña nueva y contadores ---------- */
 const origRender=window.render;
-window.render=function(){origRender.apply(this,arguments);contadores()};
+window.render=function(){origRender.apply(this,arguments);contadores();try{botonGuardar()}catch(e){}};
 function nuevasDe(bid){let n=0;for(const c of X.coinc.values())if(c.busqueda===bid&&!c.visto)n++;return n}
 function contadores(){
   const e=document.getElementById("c-busquedas");if(e){let n=0;for(const c of X.coinc.values())if(!c.visto&&X.busquedas.has(c.busqueda))n++;e.textContent=n?"("+n+")":"";e.classList.toggle("xnuevas",n>0)}
@@ -271,8 +273,10 @@ document.addEventListener("submit",async e=>{const f=e.target;
     const n=carsFor(d).length;toast(`Petición guardada · ${n} coche${n==1?"":"s"} encaja${n==1?"":"n"} ahora${crear?" · búsqueda clave creada":""}`);render();abrirCliente(d.id);return}
   if(f.id==="xc-editar"&&X.cli){e.preventDefault();const o=leerPeticion(f);X.cliEdit=false;await guardarDemanda(X.cli,o);return}
   if(f.id==="xb-form"){e.preventDefault();await guardarBusqueda(f);return}
+  if(f.id==="xbf-form"){e.preventDefault();await guardarBusquedaFiltros(f);return}
 },true);
 document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&$("#xbdlg")){e.stopPropagation();cerrarGuardarBusqueda();return}
   if(e.key==="Escape"&&X.cli&&!S.open&&!S.pubOpen){cerrarCliente();return}
   const t=e.target;if((e.key==="Enter"||e.key===" ")&&t.matches&&t.matches("[data-xcli]")){e.preventDefault();abrirCliente(t.dataset.xcli)}});
 
@@ -291,7 +295,34 @@ function coincide(b,l){
   if(b.cambio==="Automático"&&!esAuto(l))return false;
   if(b.cambio==="Manual"&&esAuto(l))return false;
   return true}
-const vivos=b=>[...S.lots.values()].filter(l=>!cerrado(l)&&!(b.ocultos||[]).includes(l.id)&&coincide(b,l));
+/* Búsquedas guardadas desde los filtros de Subastas: b.filtros = filtros del panel (los aplicados al guardar).
+   En la app se usan tal cual (passes); el aviso por correo los comprueba en la base de datos (pasa_filtros, supabase/10),
+   salvo margen y «bajo puja máx.», que dependen de la estimación de precio. */
+const FILTROS_CLAVES=["q","anioMin","anioMax","precioMin","precioMax","kmMax","duenosMax","libro","sinAverias","sinAccidentes","sinManip","margenMin","margenMax","margenPctMin","bajoPujaMax","mecMax","comb","cvMin","cvMax","motorMin","motorMax","tipos","plazasMin","iva","proced","sinImportados","danosMax","incluirDesconocidos","modo","subUbic","zonas"];
+const FILTROS_VACIOS={q:"",anioMin:"",anioMax:"",precioMin:"",precioMax:"",kmMax:"",duenosMax:"",libro:"any",sinAverias:false,sinAccidentes:false,sinManip:false,margenMin:"",margenMax:"",margenPctMin:"",bajoPujaMax:false,mecMax:"",comb:[],cvMin:"",cvMax:"",motorMin:"",motorMax:"",tipos:[],plazasMin:"",ubic:"",iva:"any",proced:[],sinImportados:false,danosMax:"",estados:[],incluirDesconocidos:true,modo:"todas",subUbic:"",zonas:[]};
+const copiaFiltros=f=>{const o={};for(const k of FILTROS_CLAVES)o[k]=JSON.parse(JSON.stringify(f[k]??FILTROS_VACIOS[k]));return o};
+const pasaGuardada=(f,l)=>{const F={...FILTROS_VACIOS,...f};
+  if(F.modo==="online"&&!lotOnline(l))return false;if(F.subUbic&&(l.subasta||{}).ubicacion!==F.subUbic)return false;
+  if(["descartado","vendido"].includes(l.estado))return false;return passes(l,F)};
+function resumenFiltros(f){const F={...FILTROS_VACIOS,...f},o=[],r=(a,b,u="",fm=x=>x)=>a!==""&&b!==""?`${fm(a)}–${fm(b)}${u}`:a!==""?`desde ${fm(a)}${u}`:b!==""?`hasta ${fm(b)}${u}`:"";
+  if(F.q)o.push(`«${F.q}»`);
+  if(F.modo==="online")o.push("Solo online");if(F.subUbic)o.push("Subastas en "+F.subUbic);
+  let x=r(F.anioMin,F.anioMax);if(x)o.push("Año "+x);
+  x=r(F.precioMin,F.precioMax," €",num);if(x)o.push("Precio BCA "+x);
+  if(F.kmMax!=="")o.push("Hasta "+num(F.kmMax)+" km");if(F.duenosMax!=="")o.push("Máx. "+F.duenosMax+" dueños");
+  if(F.libro!=="any")o.push(F.libro==="si"?"Con libro":"Sin libro");
+  if(F.sinAverias)o.push("Sin averías");if(F.sinAccidentes)o.push("Sin accidentes");if(F.sinManip)o.push("Km fiables");
+  (F.comb||[]).forEach(c=>o.push(c));(F.tipos||[]).forEach(c=>o.push(c));
+  x=r(F.cvMin,F.cvMax," CV");if(x)o.push(x);x=r(F.motorMin,F.motorMax," l");if(x)o.push("Motor "+x);
+  if(F.plazasMin!=="")o.push(F.plazasMin+"+ plazas");if((F.zonas||[]).length)o.push("Zona: "+F.zonas.join(", "));
+  if(F.iva!=="any")o.push("IVA "+F.iva);if((F.proced||[]).length)o.push("Procedencia: "+F.proced.join(", "));if(F.sinImportados)o.push("Sin importados");
+  if(F.mecMax)o.push("Grado mecánico hasta "+F.mecMax);if(F.danosMax!=="")o.push("Daños hasta "+F.danosMax);
+  const mg=[];if(F.margenMin!=="")mg.push("margen ≥ "+num(F.margenMin)+" €");if(F.margenMax!=="")mg.push("margen ≤ "+num(F.margenMax)+" €");if(F.margenPctMin!=="")mg.push("margen ≥ "+F.margenPctMin+" %");if(F.bajoPujaMax)mg.push("bajo puja máx.");
+  if(mg.length)o.push(mg.join(", ")+" *");
+  if(!F.incluirDesconocidos)o.push("Sin datos desconocidos");
+  return o}
+const tieneMargen=f=>f&&(f.margenMin!==""&&f.margenMin!=null||f.margenMax!==""&&f.margenMax!=null||f.margenPctMin!==""&&f.margenPctMin!=null||f.bajoPujaMax);
+const vivos=b=>[...S.lots.values()].filter(l=>!cerrado(l)&&!(b.ocultos||[]).includes(l.id)&&(b.filtros?(!isOwned(l)&&pasaGuardada(b.filtros,l)):coincide(b,l)));
 function busquedaDesdeCliente(d){const id="b-"+nid();
   return{id,nombre:(d.nombre||"Cliente")+(d.marca||d.modelo?" · "+[d.marca,d.modelo].filter(Boolean).join(" "):""),clienteId:d.id,marca:d.marca||null,modelo:d.modelo&&!/^(cualquiera|indiferente)/i.test(d.modelo)?d.modelo:null,
     combustibles:d.combustibles||[],tipos:d.tipos||[],anioMin:d.anioMin||null,antiguedadMax:null,precioMax:d.presupuestoMax||null,kmMax:d.kmMax||null,cvMin:d.cvMin||null,
@@ -310,12 +341,41 @@ function formBusqueda(b){const v=k=>esc(b[k]??"");const cli=[...S.demandas.value
     <label>Cambio<select name="cambio"><option value="">Indiferente</option>${["Automático","Manual"].map(x=>`<option ${b.cambio===x?"selected":""}>${x}</option>`).join("")}</select></label>
     <label class="wide">Combustible<span class="chips">${COMBUS.map(t=>`<label class="chk"><input type="checkbox" name="combustibles" value="${t}" ${(b.combustibles||[]).includes(t)?"checked":""}>${t}</label>`).join("")}</span></label>
     <label class="wide">Tipo de vehículo<span class="chips">${TIPOS.map(t=>`<label class="chk"><input type="checkbox" name="tipos" value="${t}" ${(b.tipos||[]).includes(t)?"checked":""}>${t}</label>`).join("")}</span></label></div>
+  <label style="display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--muted)">Comentario <span style="font-weight:400">(opcional)</span><textarea name="comentario" rows="2" placeholder="Ej.: para Juan, lo quiere antes de Navidad">${v("comentario")}</textarea></label>
   <div class="row"><label class="toggle"><input type="checkbox" name="correo" ${b.correo!==false?"checked":""}><span>Avisar por correo (huelsan26@gmail.com) cuando entre un coche que encaje</span></label>
     <label class="toggle"><input type="checkbox" name="activa" ${b.activa!==false?"checked":""}><span>Activa</span></label></div>
   <div class="note" id="xb-prev"></div>
   <div class="row"><button class="btn primary" type="submit">${b.id?"Guardar cambios":"Guardar búsqueda"}</button><button class="btn" type="button" id="xb-cancelar">Cancelar</button></div>
   <div class="muted" style="font-size:12px">El precio se compara con el precio de BCA (salida, puja actual, reserva o compra ya) en subastas y con el precio de venta en el stock.</div></form>`}
-function leerBusqueda(f){const fd=new FormData(f);const o={};for(const k of["nombre","clienteId","marca","modelo","cambio"])o[k]=(fd.get(k)||"").trim()||null;
+function formBusquedaFiltros(b){const v=k=>esc(b[k]??"");const res=resumenFiltros(b.filtros||{});const cambiaron=JSON.stringify(copiaFiltros(S.f))!==JSON.stringify(copiaFiltros(b.filtros||{}));
+  return`<form class="card" id="xbf-form" style="display:grid;gap:12px;margin-bottom:16px" data-id="${esc(b.id||"")}"><h2 style="margin:0">${b.id?"Editar búsqueda":"Guardar búsqueda"}</h2>
+  <div style="display:grid;gap:6px"><b style="font-size:13px">Filtros guardados</b><div class="flags">${res.map(x=>`<span class="tag">${esc(x)}</span>`).join("")||`<span class="muted" style="font-size:12.5px">Sin filtros (todos los coches)</span>`}</div>
+    ${tieneMargen(b.filtros)?`<div class="muted" style="font-size:12px">* Los filtros de margen dependen de la estimación de precio: se usan en la app, pero el aviso por correo no los tiene en cuenta (en una recogida nueva aún no hay estimación).</div>`:""}
+    ${b.id&&cambiaron?`<label class="toggle"><input type="checkbox" name="sustituir"><span>Sustituir por los filtros aplicados ahora en Subastas<br><span class="muted">${esc(resumenFiltros(S.f).join(" · ")||"sin filtros")}</span></span></label>`:""}</div>
+  <div class="form"><label class="wide">Nombre<input name="nombre" required maxlength="80" value="${v("nombre")}" placeholder="Ej.: Diésel grado A/B hasta 8.000 €"></label>
+    <label class="wide">Comentario <span class="muted" style="font-weight:400">(opcional)</span><textarea name="comentario" rows="2" placeholder="Para qué es, para qué cliente…">${v("comentario")}</textarea></label></div>
+  <div class="row"><label class="toggle"><input type="checkbox" name="correo" ${b.correo?"checked":""}><span><b>Enviar aviso por correo</b> (huelsan26@gmail.com) cuando en una recogida entre un coche que cumpla los filtros<br><span class="muted">Cada coche se avisa una sola vez, aunque salga en varias recogidas.</span></span></label>
+    ${b.id?`<label class="toggle"><input type="checkbox" name="activa" ${b.activa!==false?"checked":""}><span>Activa</span></label>`:""}</div>
+  <div class="note" id="xbf-prev">Ahora mismo cumplen estos filtros ${vivos({filtros:b.filtros||{}}).length} coches de las subastas abiertas.</div>
+  <div class="row"><button class="btn primary" type="submit">${b.id?"Guardar cambios":"Guardar búsqueda"}</button><button class="btn" type="button" id="xbf-cancelar">Cancelar</button></div></form>`}
+function abrirGuardarBusqueda(){const pend=typeof fPend==="function"&&fPend();
+  let sc=$("#xbscrim"),dl=$("#xbdlg");if(!sc){sc=document.createElement("div");sc.id="xbscrim";sc.className="scrim";document.body.appendChild(sc);sc.onclick=cerrarGuardarBusqueda}
+  if(!dl){dl=document.createElement("div");dl.id="xbdlg";dl.setAttribute("role","dialog");dl.setAttribute("aria-modal","true");document.body.appendChild(dl)}
+  dl.innerHTML=(pend?`<div class="note" style="margin-bottom:8px">Tienes cambios en los filtros sin aplicar: se guardan los filtros <b>aplicados</b>. Si quieres incluir los cambios, cierra, pulsa «Aplicar filtros» y vuelve a guardar.</div>`:"")+formBusquedaFiltros({filtros:copiaFiltros(S.f),correo:false});
+  const i=dl.querySelector("[name=nombre]");i&&i.focus()}
+function cerrarGuardarBusqueda(){const a=$("#xbdlg"),b=$("#xbscrim");a&&a.remove();b&&b.remove()}
+function botonGuardar(){if(S.tab!=="subastas")return;const h=document.querySelector("aside.filters .fhead");if(!h||document.getElementById("xb-guardar"))return;
+  const d=document.createElement("div");d.style.cssText="display:flex;gap:6px;margin:-2px 0 6px";
+  d.innerHTML=`<button class="btn sm" id="xb-guardar" type="button" style="flex:1" title="Guarda los filtros aplicados para seguirlos y, si quieres, recibir avisos">☆ Guardar búsqueda</button>${X.busquedas.size?`<button class="btn sm ghost" type="button" data-xirbusq title="Ver las búsquedas guardadas">Ver guardadas (${X.busquedas.size})</button>`:""}`;h.after(d)}
+async function guardarBusquedaFiltros(f){const fd=new FormData(f);const nombre=(fd.get("nombre")||"").trim();if(!nombre){toast("Ponle un nombre");return}
+  const id=f.dataset.id||("b-"+nid());const prev=X.busquedas.get(id);
+  const b={...(prev||{creado:ahora(),ocultos:[],filtros:copiaFiltros(S.f),creadaPor:X.user||null}),id,tipo:"filtros",nombre,comentario:(fd.get("comentario")||"").trim()||null,
+    correo:!!fd.get("correo"),activa:prev?!!fd.get("activa"):true};
+  if(prev&&fd.get("sustituir"))b.filtros=copiaFiltros(S.f);
+  X.busquedas.set(id,b);X.bEdit=null;X.bAbiertas.add(id);cerrarGuardarBusqueda();
+  try{await guardar("busquedas/"+id,b,false);toast(prev?"Búsqueda guardada":`Búsqueda «${nombre}» guardada${b.correo?" con aviso por correo":""}. La tienes en la pestaña «Búsquedas».`)}
+  catch(e){toast("No se ha podido guardar: "+(e.message||e))}render()}
+function leerBusqueda(f){const fd=new FormData(f);const o={};for(const k of["nombre","clienteId","marca","modelo","cambio","comentario"])o[k]=(fd.get(k)||"").trim()||null;
   for(const k of["antiguedadMax","anioMin","precioMax","kmMax","cvMin"]){const v=fd.get(k);o[k]=v?+v:null}
   o.combustibles=fd.getAll("combustibles");o.tipos=fd.getAll("tipos");o.correo=!!fd.get("correo");o.activa=!!fd.get("activa");return o}
 function previewBusqueda(){const f=$("#xb-form"),p=$("#xb-prev");if(!f||!p)return;const b=leerBusqueda(f);const n=vivos(b).length;
@@ -331,9 +391,9 @@ function resumenB(b){return[b.marca||b.modelo?`<span class="tag acc">${esc([b.ma
 window.renderBusquedas=function(){
   const bs=[...X.busquedas.values()].sort((a,b)=>(nuevasDe(b.id)-nuevasDe(a.id))||String(b.creado||"").localeCompare(String(a.creado||"")));
   const ed=X.bEdit==="nueva"?{correo:true,activa:true}:(X.bEdit?X.busquedas.get(X.bEdit):null);
-  $("#main").innerHTML=`<div class="pagehead"><div><h1>Búsquedas clave</h1><p>Guarda lo que te pide un cliente (marca, modelo, año, precio…). Cada recogida de BCA se compara sola con estas búsquedas: lo que encaja aparece aquí marcado como <span class="xnew">nuevo</span> y llega un correo con el resumen.</p></div>
+  $("#main").innerHTML=`<div class="pagehead"><div><h1>Búsquedas clave</h1><p>Dos formas de crear una: en <b>Subastas</b>, filtra como quieras y pulsa <b>«Guardar búsqueda»</b> (arriba del panel de filtros); o aquí, con «Nueva búsqueda», para algo sencillo (marca, modelo, precio…). Cada recogida de BCA se compara sola con las búsquedas activas: lo que encaja aparece marcado como <span class="xnew">nuevo</span> y, en las que tengan el aviso activado, llega un correo. Cada coche se avisa una sola vez.</p></div>
     ${ed?"":`<button class="btn primary" id="xb-nueva">Nueva búsqueda</button>`}</div>
-  ${ed?formBusqueda(ed):""}
+  ${ed?(ed.filtros?formBusquedaFiltros(ed):formBusqueda(ed)):""}
   ${bs.length?bs.map(b=>{const live=vivos(b),cli=b.clienteId&&S.demandas.get(b.clienteId);const nuevas=[...X.coinc.values()].filter(c=>c.busqueda===b.id&&!c.visto);
     const nuevasIds=new Set(nuevas.map(c=>c.lote));const nuevasVin=new Set(nuevas.map(c=>c.vin).filter(Boolean));
     const esNueva=l=>nuevasIds.has(l.id)||(l.vin&&nuevasVin.has(l.vin));
@@ -342,8 +402,9 @@ window.renderBusquedas=function(){
     const abierta=X.bAbiertas.has(b.id)||nuevas.length>0;
     return`<div class="card xb"><div class="row" style="justify-content:space-between"><div><h2>${esc(b.nombre||"Búsqueda")} ${nuevas.length?`<span class="xnew">${nuevas.length} nueva${nuevas.length>1?"s":""}</span>`:""}</h2>
         <div class="muted" style="font-size:12.5px">${cli?`Cliente: <a href="#" data-xcliabrir="${esc(cli.id)}">${esc(cli.nombre||"")}</a> · `:""}${b.activa===false?"<b>En pausa</b> · ":""}${b.correo!==false?"Aviso por correo":"Sin correo"} · creada el ${esc(fdate(b.creado))}</div></div>
-      <div class="row"><button class="btn sm" data-xbeditar="${esc(b.id)}">Editar</button><button class="btn sm" data-xbpausa="${esc(b.id)}">${b.activa===false?"Activar":"Pausar"}</button>${nuevas.length?`<button class="btn sm" data-xbvisto="${esc(b.id)}">Marcar como vistas</button>`:""}<button class="btn sm ghost" data-xbborrar="${esc(b.id)}">Borrar</button></div></div>
-      <div class="flags">${resumenB(b)||`<span class="muted" style="font-size:12.5px">Sin filtros</span>`}</div>
+      <div class="row">${b.filtros?`<button class="btn sm" data-xbaplicar="${esc(b.id)}" title="Pone estos filtros en Subastas">Ver en Subastas</button>`:""}<button class="btn sm" data-xbeditar="${esc(b.id)}">Editar</button><button class="btn sm" data-xbpausa="${esc(b.id)}">${b.activa===false?"Activar":"Pausar"}</button>${nuevas.length?`<button class="btn sm" data-xbvisto="${esc(b.id)}">Marcar como vistas</button>`:""}<button class="btn sm ghost" data-xbborrar="${esc(b.id)}">Borrar</button></div></div>
+      <div class="flags">${b.filtros?resumenFiltros(b.filtros).map(x=>`<span class="tag">${esc(x)}</span>`).join("")||`<span class="muted" style="font-size:12.5px">Sin filtros</span>`:(resumenB(b)||`<span class="muted" style="font-size:12.5px">Sin filtros</span>`)}</div>
+      ${b.comentario?`<div class="xcom"><p>${esc(b.comentario)}</p></div>`:""}
       <button class="btn sm ghost" data-xbtoggle="${esc(b.id)}" style="justify-self:start">${abierta?"▾":"▸"} ${live.length} coche${live.length==1?"":"s"} encaja${live.length==1?"":"n"} ahora${pend.length?` · ${pend.length} pendiente${pend.length>1?"s":""} de incorporar`:""}</button>
       ${abierta?`<div class="xlist">${pend.map(c=>`<div class="xitem"><span class="t">${esc(c.titulo||"")} <span class="xnew">nuevo</span><small>${[c.anio,c.km!=null?num(c.km)+" km":null,c.cv?c.cv+" CV":null,c.subasta,c.cierre?"cierra "+fdt(c.cierre):null].filter(Boolean).map(esc).join(" · ")} · <b>${eur(c.precio)}</b> · aún no incorporado (se añade al abrir la recogida)</small></span>${c.url?`<a class="btn sm" href="${esc(c.url)}" target="_blank" rel="noopener">BCA ↗</a>`:""}</div>`).join("")}
         ${lista.slice(0,60).map(l=>filaLote(l,`<span class="row">${esNueva(l)?`<span class="xnew">nuevo</span>`:""}${cli?`<button class="btn sm" data-xbproponer="${esc(b.id)}|${esc(l.id)}">Proponer a ${esc(String(cli.nombre||"cliente").split(" ")[0])}</button>`:""}<button class="btn sm ghost" data-xbocultar="${esc(b.id)}|${esc(l.id)}" title="No volver a mostrar este coche en esta búsqueda">Quitar</button></span>`)).join("")}
@@ -353,6 +414,12 @@ window.renderBusquedas=function(){
 document.addEventListener("click",async e=>{const t=e.target;
   if(t.closest("#xb-nueva")){X.bEdit="nueva";render();return}
   if(t.closest("#xb-cancelar")){X.bEdit=null;render();return}
+  if(t.closest("#xb-guardar")){abrirGuardarBusqueda();return}
+  if(t.closest("[data-xirbusq]")){S.tab="busquedas";document.querySelectorAll("#tabs [data-tab]").forEach(x=>x.setAttribute("aria-selected",x.dataset.tab==="busquedas"));render();scrollTo(0,0);return}
+  if(t.closest("#xbf-cancelar")){if($("#xbdlg"))cerrarGuardarBusqueda();else{X.bEdit=null;render()}return}
+  const ba=t.closest("[data-xbaplicar]");if(ba){const b=X.busquedas.get(ba.dataset.xbaplicar);if(!b||!b.filtros)return;
+    Object.assign(S.f,JSON.parse(JSON.stringify(b.filtros)));S.fd=null;saveF();S.aucSel=null;S.tab="subastas";
+    document.querySelectorAll("#tabs [data-tab]").forEach(x=>x.setAttribute("aria-selected",x.dataset.tab==="subastas"));S.limit=60;render();scrollTo(0,0);toast(`Filtros de «${b.nombre}» aplicados`);return}
   const bi=t.closest("[data-xbir]");if(bi){cerrarCliente();S.tab="busquedas";X.bAbiertas.add(bi.dataset.xbir);document.querySelectorAll("#tabs [data-tab]").forEach(x=>x.setAttribute("aria-selected",x.dataset.tab==="busquedas"));render();scrollTo(0,0);return}
   const ca=t.closest("[data-xcliabrir]");if(ca){e.preventDefault();abrirCliente(ca.dataset.xcliabrir);return}
   const be=t.closest("[data-xbeditar]");if(be){X.bEdit=be.dataset.xbeditar;render();scrollTo(0,0);return}
