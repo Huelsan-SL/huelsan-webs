@@ -424,6 +424,12 @@
     "etiqueta": "Coches por encargo",
     "defecto": "Por encargo",
     "largo": false
+   },
+   {
+    "clave": "estado.vendido",
+    "etiqueta": "Etiqueta «Vendido»",
+    "defecto": "Vendido",
+    "largo": false
    }
   ]
  },
@@ -432,9 +438,75 @@
   "ancla": "filtros",
   "campos": [
    {
-    "clave": "filtros.disponibilidad",
-    "etiqueta": "Filtro «Disponibilidad»",
-    "defecto": "Disponibilidad",
+    "clave": "filtros.buscar",
+    "etiqueta": "Filtro «Buscar»",
+    "defecto": "Buscar",
+    "largo": false
+   },
+   {
+    "clave": "filtros.boton",
+    "etiqueta": "Filtro «Filtros»",
+    "defecto": "Filtros",
+    "largo": false
+   },
+   {
+    "clave": "filtros.ordenar",
+    "etiqueta": "Filtro «Ordenar»",
+    "defecto": "Ordenar",
+    "largo": false
+   },
+   {
+    "clave": "filtros.orden.relevancia",
+    "etiqueta": "Filtro «Destacados»",
+    "defecto": "Destacados",
+    "largo": false
+   },
+   {
+    "clave": "filtros.orden.precio.asc",
+    "etiqueta": "Filtro «Precio: más barato»",
+    "defecto": "Precio: más barato",
+    "largo": false
+   },
+   {
+    "clave": "filtros.orden.precio.desc",
+    "etiqueta": "Filtro «Precio: más caro»",
+    "defecto": "Precio: más caro",
+    "largo": false
+   },
+   {
+    "clave": "filtros.orden.km",
+    "etiqueta": "Filtro «Menos kilómetros»",
+    "defecto": "Menos kilómetros",
+    "largo": false
+   },
+   {
+    "clave": "filtros.orden.anio",
+    "etiqueta": "Filtro «Más nuevo»",
+    "defecto": "Más nuevo",
+    "largo": false
+   },
+   {
+    "clave": "filtros.orden.recientes",
+    "etiqueta": "Filtro «Últimos publicados»",
+    "defecto": "Últimos publicados",
+    "largo": false
+   },
+   {
+    "clave": "filtros.marca",
+    "etiqueta": "Filtro «Marca»",
+    "defecto": "Marca",
+    "largo": false
+   },
+   {
+    "clave": "filtros.todas",
+    "etiqueta": "Filtro «Todas»",
+    "defecto": "Todas",
+    "largo": false
+   },
+   {
+    "clave": "filtros.modelo",
+    "etiqueta": "Filtro «Modelo»",
+    "defecto": "Modelo",
     "largo": false
    },
    {
@@ -444,15 +516,27 @@
     "largo": false
    },
    {
-    "clave": "filtros.tipo",
-    "etiqueta": "Filtro «Tipo»",
-    "defecto": "Tipo",
+    "clave": "filtros.ubicacion",
+    "etiqueta": "Filtro «Ubicación»",
+    "defecto": "Ubicación",
     "largo": false
    },
    {
-    "clave": "filtros.combustible",
-    "etiqueta": "Filtro «Combustible»",
-    "defecto": "Combustible",
+    "clave": "filtros.precio",
+    "etiqueta": "Filtro «Precio hasta»",
+    "defecto": "Precio hasta",
+    "largo": false
+   },
+   {
+    "clave": "filtros.cualquiera",
+    "etiqueta": "Opción «cualquier año»",
+    "defecto": "Cualquiera",
+    "largo": false
+   },
+   {
+    "clave": "filtros.km",
+    "etiqueta": "Filtro «Kilómetros hasta»",
+    "defecto": "Kilómetros hasta",
     "largo": false
    },
    {
@@ -462,9 +546,111 @@
     "largo": false
    },
    {
-    "clave": "filtros.cualquiera",
-    "etiqueta": "Opción «cualquier año»",
-    "defecto": "Cualquiera",
+    "clave": "filtros.combustible",
+    "etiqueta": "Filtro «Combustible»",
+    "defecto": "Combustible",
+    "largo": false
+   },
+   {
+    "clave": "filtros.cambio",
+    "etiqueta": "Filtro «Cambio»",
+    "defecto": "Cambio",
+    "largo": false
+   },
+   {
+    "clave": "filtros.indiferente",
+    "etiqueta": "Filtro «Indiferente»",
+    "defecto": "Indiferente",
+    "largo": false
+   },
+   {
+    "clave": "filtros.cambio.auto",
+    "etiqueta": "Filtro «Automático»",
+    "defecto": "Automático",
+    "largo": false
+   },
+   {
+    "clave": "filtros.cambio.manual",
+    "etiqueta": "Filtro «Manual»",
+    "defecto": "Manual",
+    "largo": false
+   },
+   {
+    "clave": "filtros.tipo",
+    "etiqueta": "Filtro «Carrocería»",
+    "defecto": "Carrocería",
+    "largo": false
+   },
+   {
+    "clave": "filtros.potencia",
+    "etiqueta": "Filtro «Potencia desde»",
+    "defecto": "Potencia desde",
+    "largo": false
+   },
+   {
+    "clave": "filtros.disponibilidad",
+    "etiqueta": "Filtro «Disponibilidad»",
+    "defecto": "Disponibilidad",
+    "largo": false
+   },
+   {
+    "clave": "filtros.vendidos",
+    "etiqueta": "Opción «Vendidos» del filtro",
+    "defecto": "Vendidos",
+    "largo": false
+   },
+   {
+    "clave": "filtros.aplicar",
+    "etiqueta": "Filtro «Aplicar filtros»",
+    "defecto": "Aplicar filtros",
+    "largo": false
+   },
+   {
+    "clave": "filtros.limpiar",
+    "etiqueta": "Filtro «Quitar filtros»",
+    "defecto": "Quitar filtros",
+    "largo": false
+   },
+   {
+    "clave": "filtros.buscar.ejemplo",
+    "etiqueta": "Filtro «Busca por marca, modelo o versión»",
+    "defecto": "Busca por marca, modelo o versión",
+    "largo": false
+   },
+   {
+    "clave": "filtros.chip.precio",
+    "etiqueta": "Filtro «Hasta {v}»",
+    "defecto": "Hasta {v}",
+    "largo": false
+   },
+   {
+    "clave": "filtros.chip.km",
+    "etiqueta": "Filtro «Hasta {v}»",
+    "defecto": "Hasta {v}",
+    "largo": false
+   },
+   {
+    "clave": "filtros.chip.anio",
+    "etiqueta": "Filtro «Desde {v}»",
+    "defecto": "Desde {v}",
+    "largo": false
+   },
+   {
+    "clave": "filtros.chip.cv",
+    "etiqueta": "Filtro «Desde {v}»",
+    "defecto": "Desde {v}",
+    "largo": false
+   },
+   {
+    "clave": "filtros.total1",
+    "etiqueta": "Filtro «1 vehículo»",
+    "defecto": "1 vehículo",
+    "largo": false
+   },
+   {
+    "clave": "filtros.total",
+    "etiqueta": "Filtro «{n} vehículos»",
+    "defecto": "{n} vehículos",
     "largo": false
    }
   ]
@@ -474,15 +660,33 @@
   "ancla": "coches",
   "campos": [
    {
-    "clave": "coches.fotos",
-    "etiqueta": "Palabra «fotos» en la tarjeta",
-    "defecto": "fotos",
+    "clave": "coches.vendido",
+    "etiqueta": "Texto en lugar del precio de un vendido",
+    "defecto": "Vendido",
+    "largo": false
+   },
+   {
+    "clave": "coches.antes",
+    "etiqueta": "Lectura del precio tachado («Antes»)",
+    "defecto": "Antes",
     "largo": false
    },
    {
     "clave": "coches.consultar",
     "etiqueta": "Coche sin precio",
     "defecto": "Consultar precio",
+    "largo": false
+   },
+   {
+    "clave": "coches.rebajado",
+    "etiqueta": "Etiqueta «Precio rebajado»",
+    "defecto": "Precio rebajado",
+    "largo": false
+   },
+   {
+    "clave": "coches.fotos",
+    "etiqueta": "Palabra «fotos» en la tarjeta",
+    "defecto": "fotos",
     "largo": false
    },
    {
@@ -500,7 +704,7 @@
    {
     "clave": "coches.sinresultados.texto",
     "etiqueta": "Filtros sin resultados: texto",
-    "defecto": "Prueba con otros filtros.",
+    "defecto": "Prueba con otros filtros o deja que lo busquemos por ti.",
     "largo": false
    },
    {
@@ -508,6 +712,12 @@
     "etiqueta": "Sin coches publicados: texto",
     "defecto": "Si buscas un vehículo concreto, puedes solicitar una búsqueda personalizada.",
     "largo": true
+   },
+   {
+    "clave": "coches.sinresultados.boton",
+    "etiqueta": "Filtros sin resultados: boton",
+    "defecto": "Búscamelo",
+    "largo": false
    }
   ]
  },
@@ -534,15 +744,51 @@
     "largo": false
    },
    {
+    "clave": "ficha.ahorro",
+    "etiqueta": "Ahorro en la ficha ({v} = importe)",
+    "defecto": "Ahorras {v}",
+    "largo": false
+   },
+   {
+    "clave": "ficha.ubicacion",
+    "etiqueta": "Ubicación en la ficha ({v} = lugar)",
+    "defecto": "Puedes verlo en {v}",
+    "largo": false
+   },
+   {
+    "clave": "ficha.vendido",
+    "etiqueta": "Aviso en la ficha de un vendido",
+    "defecto": "Este vehículo ya está vendido. Si buscas uno parecido, te lo encontramos.",
+    "largo": true
+   },
+   {
     "clave": "ficha.encargo",
     "etiqueta": "Aviso en coches por encargo",
     "defecto": "Vehículo disponible por encargo durante unos días. El precio final se confirma al consultarnos.",
     "largo": true
    },
    {
+    "clave": "ficha.boton.vendido",
+    "etiqueta": "Botón de la ficha de un vendido",
+    "defecto": "Quiero uno parecido",
+    "largo": false
+   },
+   {
     "clave": "ficha.boton",
     "etiqueta": "Botón de interés",
     "defecto": "Me interesa este vehículo",
+    "largo": false
+   },
+   {
+    "clave": "ficha.compartir",
+    "etiqueta": "Botón «Compartir este coche»",
+    "defecto": "Compartir este coche",
+    "largo": false
+   },
+   {
+    "clave": "ficha.copiado",
+    "etiqueta": "Aviso «enlace copiado»",
+    "defecto": "Enlace copiado",
     "largo": false
    }
   ]
@@ -607,8 +853,14 @@
     "largo": true
    },
    {
+    "clave": "form.obligatorio",
+    "etiqueta": "Aviso «todas las preguntas son obligatorias»",
+    "defecto": "Todas las preguntas son obligatorias.",
+    "largo": false
+   },
+   {
     "clave": "form.p1",
-    "etiqueta": "Pregunta 1",
+    "etiqueta": "Pregunta 1 (tipo)",
     "defecto": "¿Qué tipo de vehículo buscas?",
     "largo": false
    },
@@ -667,183 +919,351 @@
     "largo": false
    },
    {
-    "clave": "form.p2",
-    "etiqueta": "Pregunta 2",
-    "defecto": "¿Qué marca o modelo te interesa?",
+    "clave": "form.p2m",
+    "etiqueta": "Pregunta 2 (marca)",
+    "defecto": "¿Qué marca te interesa?",
+    "largo": false
+   },
+   {
+    "clave": "form.p3m",
+    "etiqueta": "Pregunta 3 (modelo)",
+    "defecto": "¿Qué modelo?",
     "largo": false
    },
    {
     "clave": "form.p3",
-    "etiqueta": "Pregunta 3",
+    "etiqueta": "Pregunta 4 (presupuesto)",
     "defecto": "¿Qué presupuesto aproximado tienes?",
     "largo": false
    },
    {
     "clave": "form.op.pres.1",
-    "etiqueta": "Pregunta 3 (presupuesto): opción 1",
+    "etiqueta": "Pregunta 4 (presupuesto): opción 1",
     "defecto": "Menos de 10.000 €",
     "largo": false
    },
    {
     "clave": "form.op.pres.2",
-    "etiqueta": "Pregunta 3 (presupuesto): opción 2",
+    "etiqueta": "Pregunta 4 (presupuesto): opción 2",
     "defecto": "Entre 10.000 y 15.000 €",
     "largo": false
    },
    {
     "clave": "form.op.pres.3",
-    "etiqueta": "Pregunta 3 (presupuesto): opción 3",
+    "etiqueta": "Pregunta 4 (presupuesto): opción 3",
     "defecto": "Entre 15.000 y 20.000 €",
     "largo": false
    },
    {
     "clave": "form.op.pres.4",
-    "etiqueta": "Pregunta 3 (presupuesto): opción 4",
+    "etiqueta": "Pregunta 4 (presupuesto): opción 4",
     "defecto": "Entre 20.000 y 25.000 €",
     "largo": false
    },
    {
     "clave": "form.op.pres.5",
-    "etiqueta": "Pregunta 3 (presupuesto): opción 5",
+    "etiqueta": "Pregunta 4 (presupuesto): opción 5",
     "defecto": "Entre 25.000 y 35.000 €",
     "largo": false
    },
    {
     "clave": "form.op.pres.6",
-    "etiqueta": "Pregunta 3 (presupuesto): opción 6",
+    "etiqueta": "Pregunta 4 (presupuesto): opción 6",
     "defecto": "Más de 35.000 €",
     "largo": false
    },
    {
     "clave": "form.op.pres.7",
-    "etiqueta": "Pregunta 3 (presupuesto): opción 7",
+    "etiqueta": "Pregunta 4 (presupuesto): opción 7",
     "defecto": "Otro presupuesto",
     "largo": false
    },
    {
+    "clave": "form.pkm",
+    "etiqueta": "Pregunta 5 (kilometraje)",
+    "defecto": "¿Kilometraje máximo?",
+    "largo": false
+   },
+   {
+    "clave": "form.panio",
+    "etiqueta": "Pregunta 6 (antigüedad)",
+    "defecto": "¿Antigüedad máxima?",
+    "largo": false
+   },
+   {
     "clave": "form.p4",
-    "etiqueta": "Pregunta 4",
+    "etiqueta": "Pregunta 7 (combustible)",
     "defecto": "¿Qué combustible prefieres?",
     "largo": false
    },
    {
     "clave": "form.op.comb.1",
-    "etiqueta": "Pregunta 4 (combustible): opción 1",
+    "etiqueta": "Pregunta 7 (combustible): opción 1",
     "defecto": "Gasolina",
     "largo": false
    },
    {
     "clave": "form.op.comb.2",
-    "etiqueta": "Pregunta 4 (combustible): opción 2",
+    "etiqueta": "Pregunta 7 (combustible): opción 2",
     "defecto": "Diésel",
     "largo": false
    },
    {
     "clave": "form.op.comb.3",
-    "etiqueta": "Pregunta 4 (combustible): opción 3",
+    "etiqueta": "Pregunta 7 (combustible): opción 3",
     "defecto": "Híbrido",
     "largo": false
    },
    {
     "clave": "form.op.comb.4",
-    "etiqueta": "Pregunta 4 (combustible): opción 4",
+    "etiqueta": "Pregunta 7 (combustible): opción 4",
     "defecto": "Híbrido enchufable",
     "largo": false
    },
    {
     "clave": "form.op.comb.5",
-    "etiqueta": "Pregunta 4 (combustible): opción 5",
+    "etiqueta": "Pregunta 7 (combustible): opción 5",
     "defecto": "Eléctrico",
     "largo": false
    },
    {
     "clave": "form.op.comb.6",
-    "etiqueta": "Pregunta 4 (combustible): opción 6",
+    "etiqueta": "Pregunta 7 (combustible): opción 6",
     "defecto": "Otro / Indiferente",
     "largo": false
    },
    {
     "clave": "form.op.comb.7",
-    "etiqueta": "Pregunta 4 (combustible): opción 7",
+    "etiqueta": "Pregunta 7 (combustible): opción 7",
     "defecto": "No aplica",
     "largo": false
    },
    {
     "clave": "form.p5",
-    "etiqueta": "Pregunta 5",
+    "etiqueta": "Pregunta 8 (cambio)",
     "defecto": "¿Qué cambio prefieres?",
     "largo": false
    },
    {
     "clave": "form.op.cambio.1",
-    "etiqueta": "Pregunta 5 (cambio): opción 1",
+    "etiqueta": "Pregunta 8 (cambio): opción 1",
     "defecto": "Automático",
     "largo": false
    },
    {
     "clave": "form.op.cambio.2",
-    "etiqueta": "Pregunta 5 (cambio): opción 2",
+    "etiqueta": "Pregunta 8 (cambio): opción 2",
     "defecto": "Manual",
     "largo": false
    },
    {
     "clave": "form.op.cambio.3",
-    "etiqueta": "Pregunta 5 (cambio): opción 3",
+    "etiqueta": "Pregunta 8 (cambio): opción 3",
     "defecto": "Indiferente",
     "largo": false
    },
    {
     "clave": "form.op.cambio.4",
-    "etiqueta": "Pregunta 5 (cambio): opción 4",
+    "etiqueta": "Pregunta 8 (cambio): opción 4",
     "defecto": "No aplica",
     "largo": false
    },
    {
+    "clave": "form.pcv",
+    "etiqueta": "Pregunta 9 (potencia)",
+    "defecto": "¿Qué potencia mínima?",
+    "largo": false
+   },
+   {
+    "clave": "form.pcil",
+    "etiqueta": "Pregunta 10 (cilindrada)",
+    "defecto": "¿Qué cilindrada?",
+    "largo": false
+   },
+   {
     "clave": "form.p7",
-    "etiqueta": "Pregunta 7",
+    "etiqueta": "Pregunta 11 (plazo)",
     "defecto": "¿Para cuándo necesitas el vehículo?",
     "largo": false
    },
    {
     "clave": "form.op.plazo.1",
-    "etiqueta": "Pregunta 7 (plazo): opción 1",
+    "etiqueta": "Pregunta 11 (plazo): opción 1",
     "defecto": "Lo antes posible",
     "largo": false
    },
    {
     "clave": "form.op.plazo.2",
-    "etiqueta": "Pregunta 7 (plazo): opción 2",
+    "etiqueta": "Pregunta 11 (plazo): opción 2",
     "defecto": "En las próximas semanas",
     "largo": false
    },
    {
     "clave": "form.op.plazo.3",
-    "etiqueta": "Pregunta 7 (plazo): opción 3",
+    "etiqueta": "Pregunta 11 (plazo): opción 3",
     "defecto": "En uno o dos meses",
     "largo": false
    },
    {
     "clave": "form.op.plazo.4",
-    "etiqueta": "Pregunta 7 (plazo): opción 4",
+    "etiqueta": "Pregunta 11 (plazo): opción 4",
     "defecto": "Sin prisa, estoy buscando",
     "largo": false
    },
    {
-    "clave": "form.p6",
-    "etiqueta": "Pregunta 6",
-    "defecto": "¿Qué características buscas?",
-    "largo": false
-   },
-   {
     "clave": "form.p8",
-    "etiqueta": "Pregunta 8",
+    "etiqueta": "Pregunta 12 (residencia)",
     "defecto": "¿Dónde resides?",
     "largo": false
    },
    {
+    "clave": "form.p6",
+    "etiqueta": "Pregunta 13 (características)",
+    "defecto": "¿Qué características buscas?",
+    "largo": false
+   },
+   {
     "clave": "form.p9",
-    "etiqueta": "Pregunta 9",
+    "etiqueta": "Pregunta 14 (contacto)",
     "defecto": "Datos de contacto",
+    "largo": false
+   },
+   {
+    "clave": "form.op.km.1",
+    "etiqueta": "Pregunta 5 (kilometraje): opción 1",
+    "defecto": "Hasta 50.000 km",
+    "largo": false
+   },
+   {
+    "clave": "form.op.antig.1",
+    "etiqueta": "Pregunta 6 (antigüedad): opción 1",
+    "defecto": "Menos de 3 años",
+    "largo": false
+   },
+   {
+    "clave": "form.op.pot.1",
+    "etiqueta": "Pregunta 9 (potencia): opción 1",
+    "defecto": "Indiferente",
+    "largo": false
+   },
+   {
+    "clave": "form.op.cil.1",
+    "etiqueta": "Pregunta 10 (cilindrada): opción 1",
+    "defecto": "Indiferente",
+    "largo": false
+   },
+   {
+    "clave": "form.op.km.2",
+    "etiqueta": "Pregunta 5 (kilometraje): opción 2",
+    "defecto": "Hasta 100.000 km",
+    "largo": false
+   },
+   {
+    "clave": "form.op.antig.2",
+    "etiqueta": "Pregunta 6 (antigüedad): opción 2",
+    "defecto": "Menos de 5 años",
+    "largo": false
+   },
+   {
+    "clave": "form.op.pot.2",
+    "etiqueta": "Pregunta 9 (potencia): opción 2",
+    "defecto": "Más de 100 CV",
+    "largo": false
+   },
+   {
+    "clave": "form.op.cil.2",
+    "etiqueta": "Pregunta 10 (cilindrada): opción 2",
+    "defecto": "Hasta 1.2 l",
+    "largo": false
+   },
+   {
+    "clave": "form.op.km.3",
+    "etiqueta": "Pregunta 5 (kilometraje): opción 3",
+    "defecto": "Hasta 150.000 km",
+    "largo": false
+   },
+   {
+    "clave": "form.op.antig.3",
+    "etiqueta": "Pregunta 6 (antigüedad): opción 3",
+    "defecto": "Menos de 8 años",
+    "largo": false
+   },
+   {
+    "clave": "form.op.pot.3",
+    "etiqueta": "Pregunta 9 (potencia): opción 3",
+    "defecto": "Más de 130 CV",
+    "largo": false
+   },
+   {
+    "clave": "form.op.cil.3",
+    "etiqueta": "Pregunta 10 (cilindrada): opción 3",
+    "defecto": "De 1.2 a 1.6 l",
+    "largo": false
+   },
+   {
+    "clave": "form.op.km.4",
+    "etiqueta": "Pregunta 5 (kilometraje): opción 4",
+    "defecto": "Hasta 200.000 km",
+    "largo": false
+   },
+   {
+    "clave": "form.op.antig.4",
+    "etiqueta": "Pregunta 6 (antigüedad): opción 4",
+    "defecto": "Menos de 10 años",
+    "largo": false
+   },
+   {
+    "clave": "form.op.pot.4",
+    "etiqueta": "Pregunta 9 (potencia): opción 4",
+    "defecto": "Más de 150 CV",
+    "largo": false
+   },
+   {
+    "clave": "form.op.cil.4",
+    "etiqueta": "Pregunta 10 (cilindrada): opción 4",
+    "defecto": "De 1.6 a 2.0 l",
+    "largo": false
+   },
+   {
+    "clave": "form.op.km.5",
+    "etiqueta": "Pregunta 5 (kilometraje): opción 5",
+    "defecto": "Indiferente",
+    "largo": false
+   },
+   {
+    "clave": "form.op.antig.5",
+    "etiqueta": "Pregunta 6 (antigüedad): opción 5",
+    "defecto": "Menos de 15 años",
+    "largo": false
+   },
+   {
+    "clave": "form.op.pot.5",
+    "etiqueta": "Pregunta 9 (potencia): opción 5",
+    "defecto": "Más de 200 CV",
+    "largo": false
+   },
+   {
+    "clave": "form.op.cil.5",
+    "etiqueta": "Pregunta 10 (cilindrada): opción 5",
+    "defecto": "Más de 2.0 l",
+    "largo": false
+   },
+   {
+    "clave": "form.op.antig.6",
+    "etiqueta": "Pregunta 6 (antigüedad): opción 6",
+    "defecto": "Indiferente",
+    "largo": false
+   },
+   {
+    "clave": "form.op.pot.6",
+    "etiqueta": "Pregunta 9 (potencia): opción 6",
+    "defecto": "Más de 250 CV",
+    "largo": false
+   },
+   {
+    "clave": "form.op.pot.7",
+    "etiqueta": "Pregunta 9 (potencia): opción 7",
+    "defecto": "Más de 300 CV",
     "largo": false
    },
    {
@@ -859,9 +1279,9 @@
     "largo": false
    },
    {
-    "clave": "form.email",
+    "clave": "form.email2",
     "etiqueta": "Campo correo",
-    "defecto": "Correo electrónico (opcional)",
+    "defecto": "Correo electrónico",
     "largo": false
    },
    {
@@ -890,16 +1310,16 @@
     "largo": false
    },
    {
-    "clave": "form.p2.ejemplo",
-    "etiqueta": "Ejemplo dentro del campo 2",
-    "defecto": "Ej. BMW X3, Audi A4, Volkswagen Transporter, Yamaha TMAX...",
+    "clave": "form.p2m.ejemplo",
+    "etiqueta": "Ejemplo dentro de la pregunta 2",
+    "defecto": "Ej. BMW, Audi, Volkswagen, Yamaha…",
     "largo": false
    },
    {
-    "clave": "form.p6.ejemplo",
-    "etiqueta": "Ejemplo dentro del campo 6",
-    "defecto": "Año mínimo, kilómetros máximos, equipamiento, potencia, color, número de plazas, etc.",
-    "largo": true
+    "clave": "form.p3m.ejemplo",
+    "etiqueta": "Ejemplo dentro de la pregunta 3",
+    "defecto": "Ej. X3, A4, Transporter, TMAX… (o «Cualquiera»)",
+    "largo": false
    },
    {
     "clave": "form.p8.ejemplo",
@@ -908,27 +1328,15 @@
     "largo": false
    },
    {
-    "clave": "form.error.nombre",
-    "etiqueta": "Aviso de error (nombre)",
-    "defecto": "Escribe tu nombre",
-    "largo": false
+    "clave": "form.p6b.ejemplo",
+    "etiqueta": "Ejemplo dentro de la pregunta 13",
+    "defecto": "Equipamiento, color, número de plazas, etiqueta DGT, uso que le vas a dar… Si no tienes preferencias, escribe «Ninguna en especial».",
+    "largo": true
    },
    {
-    "clave": "form.error.telefono",
-    "etiqueta": "Aviso de error (teléfono)",
-    "defecto": "Escribe un teléfono de contacto",
-    "largo": false
-   },
-   {
-    "clave": "form.error.email",
-    "etiqueta": "Aviso de error (correo)",
-    "defecto": "Revisa el correo electrónico",
-    "largo": false
-   },
-   {
-    "clave": "form.error.rgpd",
-    "etiqueta": "Aviso de error (privacidad)",
-    "defecto": "Acepta la política de privacidad para continuar",
+    "clave": "form.error.mas",
+    "etiqueta": "Aviso de error (mas)",
+    "defecto": "(faltan {n} respuestas)",
     "largo": false
    },
    {
@@ -996,6 +1404,24 @@
   ]
  },
  {
+  "seccion": "Redes sociales (el bloque solo aparece si hay alguna en Datos de empresa)",
+  "ancla": "redes",
+  "campos": [
+   {
+    "clave": "redes.titulo",
+    "etiqueta": "Título",
+    "defecto": "Síguenos en redes sociales",
+    "largo": false
+   },
+   {
+    "clave": "redes.texto",
+    "etiqueta": "Texto",
+    "defecto": "Publicamos los coches nuevos, entregas a clientes y consejos de compra.",
+    "largo": true
+   }
+  ]
+ },
+ {
   "seccion": "Opiniones (el bloque solo aparece cuando hay opiniones)",
   "ancla": "opiniones",
   "campos": [
@@ -1003,6 +1429,18 @@
     "clave": "opiniones.titulo",
     "etiqueta": "Título",
     "defecto": "Opiniones de clientes",
+    "largo": false
+   },
+   {
+    "clave": "opiniones.verificado",
+    "etiqueta": "Opiniones: sello «Cliente verificado»",
+    "defecto": "Cliente verificado",
+    "largo": false
+   },
+   {
+    "clave": "opiniones.ver",
+    "etiqueta": "Opiniones: botón «Ver valoración completa»",
+    "defecto": "Ver valoración completa",
     "largo": false
    }
   ]

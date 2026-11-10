@@ -195,7 +195,7 @@ async function elegir(id,folId){
   S.lote=l;S.folActual=null;S.f=camposDe(l);S.webFotos=[...(l.fotosWeb||[])];
   const fol=folId&&(l.folletos||[]).find(x=>x.id===folId);
   if(fol)abrirFolleto(fol,true);else{pintarCampos();$("#fol-nombre").value="";}
-  $("#info").textContent=`${titulo(l)}${l.matricula?" · "+l.matricula:""} · ${ESTADO_TXT[l.estado||"nuevo"]||""}${l.publico?" · se muestra en la web":" · no se muestra en la web"}`;
+  $("#info").textContent=`${titulo(l)}${l.matricula?" · "+l.matricula:""} · ${ESTADO_TXT[l.estado||"nuevo"]||""}${l.publico&&l.web?" · publicado en la web (los cambios se publican desde la ficha)":" · no está en la web"}`;
   history.replaceState(null,"","?id="+encodeURIComponent(id)+(fol?"&folleto="+encodeURIComponent(fol.id):""));
   pintarFotos();pintarFolletos();dibujar();
 }
@@ -747,7 +747,7 @@ document.addEventListener("input",e=>{const k=e.target.dataset&&e.target.dataset
   if(e.target.id==="q")pintarLista()});
 $("#sel").addEventListener("change",e=>{if(sinGuardar&&!confirm("Hay cambios sin guardar en el folleto. ¿Cambiar de coche igualmente?")){$("#sel").value=S.lote?S.lote.id:"";return}sinGuardar=false;elegir(e.target.value)});
 $("#b-precio-web").onclick=async()=>{if(!S.lote)return;const p=Math.round(+String(S.f.precio).replace(/\D/g,""));if(!p)return msg("Escribe un precio","bad");
-  try{await S.db.doc("lotes/"+S.lote.id).update({precioVenta:p});S.lote.precioVenta=p;msg(`Precio de la web: ${num(p)} €${S.lote.publico?"":" (el coche aún no está marcado para mostrarse en la web)"}`,"ok")}catch(e){msg(e.message,"bad")}};
+  try{await S.db.doc("lotes/"+S.lote.id).update({precioVenta:p});S.lote.precioVenta=p;msg(`Precio guardado: ${num(p)} €. Para que se vea en la web, pulsa «Revisar y ${S.lote.publico&&S.lote.web?"actualizar cambios":"publicar"}» en la ficha del coche.`,"ok")}catch(e){msg(e.message,"bad")}};
 function nombreArchivo(ext,fol){const base=fol?fol.nombre:($("#fol-nombre").value||[S.f.marca,S.f.modelo,S.fmt].filter(Boolean).join("-"));return ("folleto-"+base).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^\w-]+/g,"-").replace(/-+/g,"-")+"."+ext}
 $("#b-jpg").onclick=()=>{$("#cv").toBlob(b=>{const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=nombreArchivo("jpg");a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)},"image/jpeg",.92)};
 $("#b-pdf").onclick=()=>{

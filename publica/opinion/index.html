@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tu opinión · Huelsan Automoción</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<meta name="theme-color" content="#0E2A47">
+<meta property="og:title" content="¿Qué tal tu experiencia con Huelsan Automoción?">
+<meta property="og:description" content="Cuéntanos en un minuto cómo ha ido la compra de tu coche.">
+<meta property="og:image" content="https://huelsanautomocion.com/og-imagen.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap">
+<style>
+/* Cuestionario de opinión para clientes (enlace personal que se envía tras la venta). Mismos colores que la web. */
+:root{--navy:#0E2A47;--ink:#14243A;--muted:#5A6B7F;--line:#DCE3EB;--bg:#F3F6F9;--surface:#FFFFFF;--green:#1E9E52;--green2:#178643;--gold:#C29B57;--bad:#C0392B}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:"Hanken Grotesk",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.5}
+.top{background:#fff;border-bottom:1px solid var(--line)}
+.top .in{max-width:680px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;color:var(--navy);text-decoration:none}
+.brand svg{width:38px;height:32px}.brand b{font-family:Syncopate,sans-serif;font-size:16px;letter-spacing:.14em;display:block;line-height:1.1}.brand small{display:block;font-size:10px;letter-spacing:.42em;color:var(--gold);text-transform:uppercase;font-weight:700}
+.lgs{stroke:var(--gold)}.lgf{fill:var(--gold)}
+main{max-width:680px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:clamp(24px,5vw,32px);line-height:1.2;margin:4px 0 8px;color:var(--navy)}
+.lead{color:var(--muted);margin:0 0 20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;display:grid;gap:22px}
+.q{display:grid;gap:8px;border:0;padding:0;margin:0;min-width:0}
+.q>legend,.q>span.t{font-weight:700;font-size:16px;padding:0;margin-bottom:8px}
+.q small{color:var(--muted);font-weight:500}
+.estrellas{display:flex;gap:6px;flex-wrap:wrap}
+.estrellas input{position:absolute;opacity:0;width:1px;height:1px}
+.estrellas label{cursor:pointer;font-size:40px;line-height:1;color:#C9D2DC;user-select:none;padding:2px}
+.estrellas.peq label{font-size:26px;padding:1px}
+.estrellas label.on{color:var(--gold)}
+.estrellas input:focus-visible+label{outline:2px solid var(--green);outline-offset:2px;border-radius:6px}
+.aspecto{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
+.estrellas.peq{gap:0;flex-wrap:nowrap}
+.aspecto:first-of-type{border-top:0}
+.opciones{display:flex;flex-wrap:wrap;gap:8px}
+.opciones label{border:1px solid var(--line);border-radius:999px;padding:9px 16px;cursor:pointer;font-weight:600}
+.opciones input{position:absolute;opacity:0;width:1px;height:1px}
+.opciones input:checked+span{color:#fff}
+.opciones label:has(input:checked){background:var(--green);border-color:var(--green);color:#fff}
+.opciones input:focus-visible+span{outline:2px solid var(--green);outline-offset:4px}
+textarea,input[type=text]{width:100%;font:inherit;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:inherit;min-width:0}
+textarea{min-height:130px;resize:vertical}
+.fila{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:560px){.fila{grid-template-columns:minmax(0,1fr)}}
+.campo{display:grid;gap:6px;font-weight:700}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;color:var(--muted)}
+.chk input{margin-top:3px;width:18px;height:18px;flex:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:999px;padding:14px 22px;font:inherit;font-weight:800;cursor:pointer;background:var(--green);color:#fff;text-decoration:none}
+.btn:disabled{opacity:.6}
+.btn.claro{background:#fff;color:var(--navy);border:1px solid var(--line)}
+.err{color:var(--bad);font-weight:600;margin:0}
+[aria-invalid="true"]{border-color:var(--bad)!important}
+.mal .t,.mal>legend{color:var(--bad)}
+.gracias{text-align:center;display:grid;gap:12px;justify-items:center;padding:28px 20px}
+.gracias .ok{width:64px;height:64px;border-radius:50%;background:#E6F5EC;color:var(--green2);display:grid;place-items:center;font-size:34px}
+.nota{font-size:13px;color:var(--muted);margin:0}
+.nota a{color:inherit}
+.trampa{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+</style>
+</head>
+<body>
+<header class="top"><div class="in"><a class="brand" href="/" aria-label="Huelsan Automoción"><svg viewBox="3 3 58 49" aria-hidden="true"><path d="M8.6 49.5 A27 27 0 1 1 55.4 49.5" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><path d="M55.4 22.5 A27 27 0 0 1 56.47 43.41" fill="none" class="lgs" stroke-width="4.5" stroke-linecap="round"/><path d="M13.340 45.510 L16.660 50.490 L17.500 49.874 L17.500 42.998 Z" class="lgf"/><path d="M28.500 41.806 L35.500 36.672 L35.500 32.130 L28.500 36.357 Z" class="lgf"/><path d="M46.500 28.604 L48.960 26.800 L47.640 24.800 L46.500 25.488 Z" class="lgf"/><rect x="19" y="22" width="8" height="28" fill="currentColor"/><rect x="37" y="22" width="8" height="28" fill="currentColor"/><circle cx="15" cy="48" r="3.0" fill="currentColor"/></svg><span><b>HUELSAN</b><small>Automoción</small></span></a></div></header>
+<main id="main">
+  <p class="lead" id="cargando">Cargando…</p>
+</main>
+<script>
+"use strict";
+const SB_URL="https://ajxdzchffqaphkmetswx.supabase.co";
+const SB_KEY="sb_publishable_8n9P6btJois-b7B3-kNTTQ_YG6D4S1X";
+const H={apikey:SB_KEY,"Content-Type":"application/json",Accept:"application/json"};
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const codigo=(new URLSearchParams(location.search).get("c")||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+const rpc=async(n,body)=>{const r=await fetch(SB_URL+"/rest/v1/rpc/"+n,{method:"POST",headers:H,body:JSON.stringify(body)});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.message||"No se ha podido enviar. Inténtalo de nuevo.");return j};
+let googleUrl="";
+const ASPECTOS=[["atencion","Atención y trato"],["coche","Estado del coche"],["rapidez","Rapidez"],["tramites","Papeleo y entrega"]];
+function estrellas(nombre,peq){return`<div class="estrellas${peq?" peq":""}" data-grupo="${nombre}">${[1,2,3,4,5].map(n=>`<input type="radio" name="${nombre}" id="${nombre}-${n}" value="${n}"><label for="${nombre}-${n}" data-n="${n}" title="${n} de 5" aria-label="${n} de 5 estrellas">★</label>`).join("")}</div>`}
+function pintar(info){
+  const nombre=info.nombre?esc(info.nombre):"";
+  $("#main").innerHTML=`<h1>${nombre?`¡Hola, ${nombre}!`:"¡Hola!"} ¿Qué tal tu experiencia?</h1>
+  <p class="lead">Nos ayudas mucho contándonos cómo ha ido${info.coche?` la compra de tu <b>${esc(info.coche)}</b>`:" la compra de tu vehículo"}. Es un minuto.</p>
+  <form class="card" id="f" novalidate>
+    <fieldset class="q" id="q-estrellas"><legend>1. En general, ¿cómo nos valoras?</legend>${estrellas("estrellas")}</fieldset>
+    <fieldset class="q" id="q-recomienda"><legend>2. ¿Nos recomendarías a un amigo o familiar?</legend>
+      <div class="opciones">${[["si","Sí"],["quizas","Probablemente"],["no","No"]].map(([v,t])=>`<label><input type="radio" name="recomienda" value="${v}"><span>${t}</span></label>`).join("")}</div></fieldset>
+    <fieldset class="q"><legend>3. Valora cada parte <small>(opcional)</small></legend>
+      ${ASPECTOS.map(([k,t])=>`<div class="aspecto"><span>${t}</span>${estrellas("a-"+k,true)}</div>`).join("")}</fieldset>
+    <label class="q campo" id="q-texto"><span class="t">4. Cuéntanos tu experiencia</span><textarea id="texto" maxlength="1200" placeholder="¿Qué te ha gustado? ¿Qué podríamos mejorar?"></textarea></label>
+    <div class="fila"><label class="campo" id="q-nombre">5. Tu nombre, tal como quieres que aparezca<input type="text" id="nombre" maxlength="60" autocomplete="given-name" value="${nombre}"></label>
+      <label class="campo">Localidad <small style="font-weight:500;color:var(--muted)">(opcional)</small><input type="text" id="localidad" maxlength="60" autocomplete="address-level2"></label></div>
+    <label class="chk"><input type="checkbox" id="publicar" checked><span>Podéis publicar mi opinión en huelsanautomocion.com con este nombre y localidad.</span></label>
+    <div class="trampa" aria-hidden="true"><label>No rellenar<input id="web" tabindex="-1" autocomplete="off"></label></div>
+    <p class="err" id="err" role="alert" hidden></p>
+    <div><button class="btn" type="submit" id="enviar">Enviar mi opinión</button></div>
+    <p class="nota">Tu opinión se guarda con este enlace personal y solo la usamos para mejorar y, si lo marcas, para mostrarla en nuestra web. Más información en la <a href="/#privacidad">política de privacidad</a>.</p>
+  </form>`;
+  document.querySelectorAll(".estrellas").forEach(g=>{const pinta=n=>g.querySelectorAll("label").forEach(l=>l.classList.toggle("on",+l.dataset.n<=n));
+    g.addEventListener("change",()=>{const c=g.querySelector("input:checked");pinta(c?+c.value:0)});
+    g.addEventListener("mouseover",e=>{const l=e.target.closest("label");if(l)pinta(+l.dataset.n)});
+    g.addEventListener("mouseleave",()=>{const c=g.querySelector("input:checked");pinta(c?+c.value:0)})});
+  $("#f").addEventListener("submit",enviar);
+}
+const val=n=>{const x=document.querySelector(`input[name="${n}"]:checked`);return x?x.value:""};
+async function enviar(e){
+  e.preventDefault();const err=$("#err");err.hidden=true;document.querySelectorAll(".mal").forEach(x=>x.classList.remove("mal"));document.querySelectorAll("[aria-invalid]").forEach(x=>x.removeAttribute("aria-invalid"));
+  const falta=[];
+  if(!val("estrellas"))falta.push(["q-estrellas","Elige de 1 a 5 estrellas."]);
+  if(!val("recomienda"))falta.push(["q-recomienda","Dinos si nos recomendarías."]);
+  if($("#texto").value.trim().length<10){falta.push(["q-texto","Cuéntanos un poco más sobre tu experiencia."]);$("#texto").setAttribute("aria-invalid","true")}
+  if($("#nombre").value.trim().length<2){falta.push(["q-nombre","Escribe tu nombre."]);$("#nombre").setAttribute("aria-invalid","true")}
+  if(falta.length){falta.forEach(([id])=>$("#"+id).classList.add("mal"));err.textContent=falta[0][1];err.hidden=false;$("#"+falta[0][0]).scrollIntoView({block:"center",behavior:"smooth"});return}
+  const aspectos={};ASPECTOS.forEach(([k])=>{const v=val("a-"+k);if(v)aspectos[k]=v});
+  const b=$("#enviar");b.disabled=true;b.textContent="Enviando…";
+  try{await rpc("enviar_resena",{c:codigo,r:{estrellas:val("estrellas"),recomienda:val("recomienda"),aspectos,texto:$("#texto").value.trim(),nombre:$("#nombre").value.trim(),localidad:$("#localidad").value.trim(),publicar:$("#publicar").checked,web:$("#web").value}});
+    gracias(+val("estrellas"))}
+  catch(x){err.textContent=x.message;err.hidden=false;b.disabled=false;b.textContent="Enviar mi opinión"}
+}
+function gracias(n){
+  $("#main").innerHTML=`<div class="card gracias"><div class="ok" aria-hidden="true">✓</div><h1 style="margin:0">¡Muchas gracias!</h1><p class="lead" style="margin:0">Hemos recibido tu opinión. Nos ayuda a seguir mejorando.</p>
+    ${n>=4&&googleUrl?`<p style="margin:8px 0 0">¿Nos haces un último favor? Dejar tu reseña también en Google ayuda a que otros clientes nos encuentren.</p><a class="btn" href="${esc(googleUrl)}" target="_blank" rel="noopener">Dejar la reseña en Google</a>`:""}
+    <a class="btn claro" href="/">Ir a huelsanautomocion.com</a></div>`;scrollTo(0,0)}
+function aviso(t,txt){$("#main").innerHTML=`<div class="card gracias"><h1 style="margin:0">${t}</h1><p class="lead" style="margin:0">${txt}</p><a class="btn claro" href="/">Ir a huelsanautomocion.com</a></div>`}
+(async()=>{
+  fetch(SB_URL+"/rest/v1/empresa_web?select=data",{headers:H}).then(r=>r.ok?r.json():[]).then(f=>{const g=f&&f[0]&&f[0].data&&f[0].data.redes&&f[0].data.redes.google;if(g&&/^https:\/\//.test(g))googleUrl=g}).catch(()=>{});
+  if(codigo.length<16){aviso("Enlace no válido","Comprueba que has abierto el enlace completo que te enviamos.");return}
+  try{const info=await rpc("ver_invitacion_resena",{c:codigo});
+    if(!info.ok){aviso("Enlace no válido","Comprueba que has abierto el enlace completo que te enviamos.");return}
+    if(info.usada){aviso("¡Gracias!","Ya hemos recibido tu opinión con este enlace.");return}
+    pintar(info)}
+  catch(e){aviso("No se ha podido cargar","Revisa tu conexión e inténtalo de nuevo en un momento.")}
+})();
+</script>
+</body>
+</html>

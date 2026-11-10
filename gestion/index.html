@@ -145,6 +145,7 @@ aside.filters{background:var(--surface);border:1px solid var(--line);border-radi
 .fhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .fbody{display:grid;gap:14px;margin-top:12px}
 .fgroup{display:grid;gap:6px}
+.faplicar-pie{position:sticky;bottom:-14px;background:var(--surface);padding:10px 0 2px;margin-top:4px;border-top:1px solid var(--line)}
 .fgroup>label,.fgroup>.lbl{font-size:12px;font-weight:600;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
 .fgroup .n{font-weight:400;font-size:11px;color:var(--muted)}
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:6px}
@@ -291,13 +292,14 @@ tbody tr:hover{background:var(--sunk)}
 <header class="top">
   <div class="top-in">
     <div class="brand"><svg class="logo-sym" viewBox="3 3 58 49" aria-hidden="true"><path d="M8.6 49.5 A27 27 0 1 1 55.4 49.5" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><path d="M55.4 22.5 A27 27 0 0 1 56.47 43.41" fill="none" class="lgs" stroke-width="4.5" stroke-linecap="round"/><path d="M13.340 45.510 L16.660 50.490 L17.500 49.874 L17.500 42.998 Z" class="lgf"/><path d="M28.500 41.806 L35.500 36.672 L35.500 32.130 L28.500 36.357 Z" class="lgf"/><path d="M46.500 28.604 L48.960 26.800 L47.640 24.800 L46.500 25.488 Z" class="lgf"/><rect x="19" y="22" width="8" height="28" fill="currentColor"/><rect x="37" y="22" width="8" height="28" fill="currentColor"/><circle cx="15" cy="48" r="3.0" fill="currentColor"/></svg><span class="brand-txt">HUELSAN <small>Automoción</small></span></div>
-    <div class="status" id="status">Conectando…</div><details class="hmenu"><summary class="btn">Menú ▾</summary><nav><a href="folleto/">Estudio de fotos y folletos</a><a href="anuncios/">Anuncios en portales</a><a href="#" onclick="document.querySelector('[data-tab=historico]').click();this.closest('details').open=false;return false">Histórico de subastas</a><a href="facturacion/">Facturación</a><a href="textos/">Textos de la web</a><a href="empresa/">Datos de empresa</a><a href="https://huelsanautomocion.com" target="_blank" rel="noopener">Ver la web pública</a><button type="button" data-instalar hidden onclick="HUELSAN_INSTALAR()">Instalar app en este dispositivo</button><button type="button" id="salir" onclick="HUELSAN_SALIR()">Salir</button></nav></details>
+    <div class="status" id="status">Conectando…</div><details class="hmenu"><summary class="btn">Menú ▾</summary><nav><a href="folleto/">Estudio de fotos y folletos</a><a href="anuncios/">Anuncios en portales</a><a href="resenas/">Reseñas de clientes</a><a href="#" onclick="document.querySelector('[data-tab=historico]').click();this.closest('details').open=false;return false">Histórico de subastas</a><a href="facturacion/">Facturación</a><a href="textos/">Textos de la web</a><a href="empresa/">Datos de empresa</a><a href="https://huelsanautomocion.com" target="_blank" rel="noopener">Ver la web pública</a><button type="button" data-instalar hidden onclick="HUELSAN_INSTALAR()">Instalar app en este dispositivo</button><button type="button" id="salir" onclick="HUELSAN_SALIR()">Salir</button></nav></details>
   </div>
   <nav class="tabs" role="tablist" id="tabs">
     <button role="tab" data-tab="subastas" aria-selected="true">Subastas<span class="count" id="c-subastas"></span></button>
     <button role="tab" data-tab="interesantes" aria-selected="false">Interesantes<span class="count" id="c-interesantes"></span></button>
     <button role="tab" data-tab="stock" aria-selected="false">Stock<span class="count" id="c-stock"></span></button>
     <button role="tab" data-tab="clientes" aria-selected="false">Clientes<span class="count" id="c-clientes"></span></button>
+    <button role="tab" data-tab="busquedas" aria-selected="false">Búsquedas<span class="count" id="c-busquedas"></span></button>
     <button role="tab" data-tab="historico" aria-selected="false" hidden>Histórico<span class="count" id="c-historico"></span></button><button type="button" onclick="location.href='facturacion/'">Facturación</button>
     <button role="tab" data-tab="publico" aria-selected="false">Vista previa web</button>
   </nav>
@@ -416,6 +418,10 @@ const S={limit:60,thumbs:new Map(),thumbReq:new Set(),tab:"subastas",lots:new Ma
      danosMax:"",estados:["nuevo","interesante","pujar"],incluirDesconocidos:true,modo:"todas",subUbic:"",zonas:[]}};
 try{const saved=JSON.parse(localStorage.getItem("huelsan-f")||"null");if(saved)Object.assign(S.f,saved)}catch(e){}
 const saveF=()=>{try{localStorage.setItem("huelsan-f",JSON.stringify(S.f))}catch(e){}};
+/* Filtros: los cambios van a un borrador (S.fd) y solo se aplican con «Aplicar filtros» (arriba y abajo del panel) o Intro en el buscador */
+const draftF=()=>S.fd||(S.fd=JSON.parse(JSON.stringify(S.f)));
+const fPend=()=>!!S.fd&&JSON.stringify(S.fd)!==JSON.stringify(S.f);
+function aplicarYa(){S.f=JSON.parse(JSON.stringify(draftF()));saveF();S.limit=60;render()}
 
 const now=()=>Date.now();
 /* Una subasta archivada a mano cuenta como cerrada: sus lotes pasan al Histórico aunque no haya llegado la fecha */
@@ -468,7 +474,8 @@ const okAnio=a=>a!=null&&+a>=1950&&+a<=new Date().getFullYear()+1?+a:null;
 const okKm=k=>k!=null&&+k>=0?+k:null;
 /* Grado mecánico BCA: A (mejor) a E; "z" = sin calificar */
 const gradoMec=l=>{const g=String(l.gradoMecanico||"").trim().toUpperCase();return/^[A-E]$/.test(g)?g:null};
-const titleOf=l=>[l.marca,(l.derivado||l.modelo||"")].filter(Boolean).join(" ");
+// «Audi Audi Q2…»: si la versión de BCA ya empieza por la marca, no se repite
+const titleOf=l=>{const m=l.marca||"",d=l.derivado||l.modelo||"";return m&&d.toLowerCase().startsWith(m.toLowerCase()+" ")?d:[m,d].filter(Boolean).join(" ")};
 /* Gastos desglosados por coche */
 const GASTO_CATS=["Transporte y portes","Limpieza y estética","Mecánica y mantenimiento","Chapa y pintura","Neumáticos","ITV","Gestoría, transferencia e impuestos","Seguro","Comisiones de compra","Publicidad y venta","Garantía","Otros"];
 const gastosDe=l=>{const d=Array.isArray(l.gastosDetalle)?l.gastosDetalle:[];if(!d.length&&+l.gastos>0)return[{id:"ant",fecha:null,categoria:"Otros",concepto:"Gastos anotados antes del desglose",importe:+l.gastos}];return d};
@@ -537,7 +544,8 @@ function flagsOf(l){const t=[];
   if(l.iva)t.push(`<span class="tag">${l.iva==="REBU"?"REBU":"IVA general"}</span>`);
   if(l.importado===true)t.push(`<span class="tag warn">Importado</span>`);
   if(l.procedencia)t.push(`<span class="tag">${esc(l.procedencia)}</span>`);
-  if(l.publico)t.push(`<span class="tag acc">En web</span>`);
+  if(l.publico&&l.web)t.push(`<span class="tag acc">En web</span>`);
+  if(window.cambiosWeb&&window.cambiosWeb(l).length)t.push(`<span class="tag warn">Cambios sin publicar</span>`);
   const dm=demandsFor(l).length;if(dm)t.push(`<span class="tag acc">${dm} cliente${dm>1?"s":""} interesado${dm>1?"s":""}</span>`);
   return t.join("")}
 function describeSubasta(s,ls){
@@ -680,7 +688,7 @@ function baseLots(){const f=S.f;const all=[...S.lots.values()].filter(l=>!isPast
   const ids=new Set(subsShown().map(s=>s.id));
   return all.filter(l=>(f.modo!=="online"||lotOnline(l))&&(!f.subUbic||(l.subasta?.ubicacion===f.subUbic))&&(!l.subastaId||!S.subastas.has(l.subastaId)||ids.has(l.subastaId))&&(!S.aucSel||l.subastaId===S.aucSel))}
 function renderSubastas(){
-  const f=S.f;
+  const f=S.f,fd=draftF();if(!Array.isArray(fd.zonas))fd.zonas=[];
   const all=[...S.lots.values()].filter(l=>!isPast(l)&&!isOwned(l));
   if(S.aucSel&&!subsShown().some(s=>s.id===S.aucSel))S.aucSel=null;
   const subs=subsShown();
@@ -688,7 +696,7 @@ function renderSubastas(){
   const base=baseLots();
   const zcount={};base.forEach(l=>{const z=zonaOf(l);if(z)zcount[z]=(zcount[z]||0)+1});
   if(!Array.isArray(f.zonas))f.zonas=[];
-  const zonas=[...new Set([...Object.keys(zcount),...f.zonas])].sort((a,b)=>a.localeCompare(b));
+  const zonas=[...new Set([...Object.keys(zcount),...f.zonas,...fd.zonas])].sort((a,b)=>a.localeCompare(b));
   const est=f.estados.length?base.filter(l=>f.estados.includes(l.estado||"nuevo")):base;
   const shown=est.filter(l=>passes(l,f)).sort((a,b)=>(margen(b)??-1e9)-(margen(a)??-1e9)||(a.km??0)-(b.km??0));
   $("#main").innerHTML=`
@@ -703,39 +711,40 @@ function renderSubastas(){
   ${subs.length?`<div class="auctions" style="margin-bottom:16px"><button class="auc" data-auc="" aria-pressed="${!S.aucSel}"><b>Todas las subastas</b><span class="aucmeta">${subs.length} subasta${subs.length>1?"s":""} · ${base.length} lotes</span></button>${subs.map(s=>{const ls=[...S.lots.values()].filter(l=>l.subastaId===s.id);const on=subOnline(s);const ub=s.ubicacion||"";return`<div class="auc" role="button" tabindex="0" data-auc="${esc(s.id)}" aria-pressed="${S.aucSel===s.id}"><span class="mode ${on?"on":""}">${on?"Online":"Presencial"}</span><b>${esc(ub?ub+" · ":"")}${esc(s.nombre)}</b><span class="aucdesc">${esc(describeSubasta(s,ls))}</span><span class="aucmeta">${on?(s.inicio?"Abierta desde "+fdt(s.inicio)+" · ":""):(s.inicio?"Empieza "+fdt(s.inicio)+" · ":"")}cierra ${fdt(s.fin)} · ${ls.length} lotes${s.canal&&/sobre/i.test(s.canal)?" · oferta en sobre cerrado":""}</span><span class="aucfoot"><button type="button" class="aucarch" data-archivar="${esc(s.id)}" data-n="${ls.filter(l=>!isOwned(l)).length}" title="Pasa la subasta y todos sus lotes al Histórico">Archivar subasta</button></span></div>`}).join("")}</div>`:(liveSubs().length?`<div class="empty" style="margin-bottom:16px"><strong>No hay subastas con ese tipo y ubicación</strong>Cambia a «Online y presencial» o elige otra ubicación.</div>`:"")}
   <div class="split">
     <aside class="filters ${S.filtersOpen?"open":""}" aria-label="Filtros">
-      <div class="fhead"><h2>Filtros</h2><div class="row"><button class="btn sm ghost" id="freset">Limpiar</button><button class="btn sm" id="ftoggle">${S.filtersOpen?"Ocultar":"Mostrar"}</button></div></div>
+      <div class="fhead"><h2>Filtros</h2><div class="row"><button class="btn sm ${fPend()?"primary":""}" data-faplicar>Aplicar filtros</button><button class="btn sm ghost" id="freset">Limpiar</button><button class="btn sm" id="ftoggle">${S.filtersOpen?"Ocultar":"Mostrar"}</button></div></div>
       <div class="fbody">
-        <div class="fgroup"><input type="search" id="f-q" data-f="q" placeholder="Marca, modelo, matrícula…" value="${esc(f.q)}"></div>
-        <div class="fgroup"><div class="lbl">Estado</div><div class="chips">${ESTADOS.filter(e=>!["comprado","stock","vendido"].includes(e[0])).map(([k,v])=>`<label class="chk"><input type="checkbox" data-fgroup="estados" value="${k}" ${f.estados.includes(k)?"checked":""}>${v}</label>`).join("")}</div></div>
-        <label class="toggle"><input type="checkbox" id="f-unk" data-fb="incluirDesconocidos" ${f.incluirDesconocidos?"checked":""}><span>Incluir lotes con el dato sin rellenar<br><span class="muted">Desmárcalo para ver solo lotes con el dato comprobado.</span></span></label>
+        <div class="fgroup"><input type="search" id="f-q" data-f="q" placeholder="Marca, modelo, matrícula…" value="${esc(fd.q)}"></div>
+        <div class="fgroup"><div class="lbl">Estado</div><div class="chips">${ESTADOS.filter(e=>!["comprado","stock","vendido"].includes(e[0])).map(([k,v])=>`<label class="chk"><input type="checkbox" data-fgroup="estados" value="${k}" ${fd.estados.includes(k)?"checked":""}>${v}</label>`).join("")}</div></div>
+        <label class="toggle"><input type="checkbox" id="f-unk" data-fb="incluirDesconocidos" ${fd.incluirDesconocidos?"checked":""}><span>Incluir lotes con el dato sin rellenar<br><span class="muted">Desmárcalo para ver solo lotes con el dato comprobado.</span></span></label>
         <div class="sep"></div>
-        <div class="fgroup"><label>Año</label><div class="pair"><input type="number" id="f-anioMin" data-f="anioMin" placeholder="desde" value="${esc(f.anioMin)}"><input type="number" id="f-anioMax" data-f="anioMax" placeholder="hasta" value="${esc(f.anioMax)}"></div></div>
-        <div class="fgroup"><label>Precio (€) <span class="n">precio de salida; si ya hay pujas, la puja mínima; si no, reserva BCA</span></label><div class="pair"><input type="number" id="f-precioMin" data-f="precioMin" step="500" placeholder="desde" value="${esc(f.precioMin??"")}"><input type="number" id="f-precioMax" data-f="precioMax" step="500" placeholder="hasta" value="${esc(f.precioMax)}"></div></div>
-        <div class="fgroup"><label for="f-kmMax">Kilómetros máx.</label><input type="number" id="f-kmMax" data-f="kmMax" step="10000" value="${esc(f.kmMax)}"></div>
-        <div class="fgroup"><label for="f-duenosMax">Nº de dueños</label><select id="f-duenosMax" data-f="duenosMax">${[["","Cualquiera"],["1","Solo 1 dueño"],["2","Hasta 2"],["3","Hasta 3"],["4","Hasta 4"]].map(([k,v])=>`<option value="${k}" ${String(f.duenosMax)===k?"selected":""}>${v}</option>`).join("")}</select></div>
-        <div class="fgroup"><div class="lbl">Libro de mantenimiento</div><div class="seg">${[["any","Da igual"],["si","Sí"],["no","No"]].map(([k,v])=>`<button data-seg="libro" data-v="${k}" aria-pressed="${f.libro===k}">${v}</button>`).join("")}</div></div>
-        <label class="toggle"><input type="checkbox" data-fb="sinAverias" ${f.sinAverias?"checked":""}>Excluir averías graves</label>
-        <label class="toggle"><input type="checkbox" data-fb="sinAccidentes" ${f.sinAccidentes?"checked":""}>Excluir accidentes graves</label>
-        <label class="toggle"><input type="checkbox" data-fb="sinManip" ${f.sinManip?"checked":""}><span>Excluir indicios de manipulación de km<br><span class="muted">Incluye los marcados «revisar»: menos de 5.000 km/año con 4+ años.</span></span></label>
-        <div class="fgroup"><label for="f-mecMax">Grado mecánico BCA <span class="n">A = mejor · E = peor</span></label><select id="f-mecMax" data-f="mecMax">${[["","Cualquiera"],["A","Solo A"],["B","Hasta B"],["C","Hasta C"],["D","Hasta D"]].map(([k,v])=>`<option value="${k}" ${(f.mecMax||"")===k?"selected":""}>${v}</option>`).join("")}</select><span class="n">Los lotes sin grado solo salen con «Hasta D» o «Cualquiera».</span></div>
-        <div class="fgroup"><label for="f-danosMax">Clasificación de daños BCA <span class="n">1 = mejor · sin dato se incluye</span></label><select id="f-danosMax" data-f="danosMax">${[["","Cualquiera"],["1","Solo 1"],["2","Hasta 2"],["3","Hasta 3"],["4","Hasta 4"]].map(([k,v])=>`<option value="${k}" ${String(f.danosMax)===k?"selected":""}>${v}</option>`).join("")}</select></div>
-        <div class="fgroup"><label>Margen hasta venta estimada (€) <span class="n">venta estimada − precio de salida (si no hay: puja mínima o reserva BCA)</span></label><div class="pair"><input type="number" id="f-margenMin" data-f="margenMin" step="250" placeholder="desde" value="${esc(f.margenMin??"")}"><input type="number" id="f-margenMax" data-f="margenMax" step="250" placeholder="hasta" value="${esc(f.margenMax??"")}"></div></div>
-        <div class="fgroup"><label for="f-margenPctMin">Margen mín. sobre ese precio (%)</label><input type="number" id="f-margenPctMin" data-f="margenPctMin" step="5" placeholder="p. ej. 20" value="${esc(f.margenPctMin??"")}"></div>
-        <label class="toggle"><input type="checkbox" data-fb="bajoPujaMax" ${f.bajoPujaMax?"checked":""}><span>Solo si el precio actual no supera la puja máx. sugerida<br><span class="muted">Puja máx. sugerida = venta estimada − 30 %.</span></span></label>
+        <div class="fgroup"><label>Año</label><div class="pair"><input type="number" id="f-anioMin" data-f="anioMin" placeholder="desde" value="${esc(fd.anioMin)}"><input type="number" id="f-anioMax" data-f="anioMax" placeholder="hasta" value="${esc(fd.anioMax)}"></div></div>
+        <div class="fgroup"><label>Precio (€) <span class="n">precio de salida; si ya hay pujas, la puja mínima; si no, reserva BCA</span></label><div class="pair"><input type="number" id="f-precioMin" data-f="precioMin" step="500" placeholder="desde" value="${esc(fd.precioMin??"")}"><input type="number" id="f-precioMax" data-f="precioMax" step="500" placeholder="hasta" value="${esc(fd.precioMax)}"></div></div>
+        <div class="fgroup"><label for="f-kmMax">Kilómetros máx.</label><input type="number" id="f-kmMax" data-f="kmMax" step="10000" value="${esc(fd.kmMax)}"></div>
+        <div class="fgroup"><label for="f-duenosMax">Nº de dueños</label><select id="f-duenosMax" data-f="duenosMax">${[["","Cualquiera"],["1","Solo 1 dueño"],["2","Hasta 2"],["3","Hasta 3"],["4","Hasta 4"]].map(([k,v])=>`<option value="${k}" ${String(fd.duenosMax)===k?"selected":""}>${v}</option>`).join("")}</select></div>
+        <div class="fgroup"><div class="lbl">Libro de mantenimiento</div><div class="seg">${[["any","Da igual"],["si","Sí"],["no","No"]].map(([k,v])=>`<button data-seg="libro" data-v="${k}" aria-pressed="${fd.libro===k}">${v}</button>`).join("")}</div></div>
+        <label class="toggle"><input type="checkbox" data-fb="sinAverias" ${fd.sinAverias?"checked":""}>Excluir averías graves</label>
+        <label class="toggle"><input type="checkbox" data-fb="sinAccidentes" ${fd.sinAccidentes?"checked":""}>Excluir accidentes graves</label>
+        <label class="toggle"><input type="checkbox" data-fb="sinManip" ${fd.sinManip?"checked":""}><span>Excluir indicios de manipulación de km<br><span class="muted">Incluye los marcados «revisar»: menos de 5.000 km/año con 4+ años.</span></span></label>
+        <div class="fgroup"><label for="f-mecMax">Grado mecánico BCA <span class="n">A = mejor · E = peor</span></label><select id="f-mecMax" data-f="mecMax">${[["","Cualquiera"],["A","Solo A"],["B","Hasta B"],["C","Hasta C"],["D","Hasta D"]].map(([k,v])=>`<option value="${k}" ${(fd.mecMax||"")===k?"selected":""}>${v}</option>`).join("")}</select><span class="n">Los lotes sin grado solo salen con «Hasta D» o «Cualquiera».</span></div>
+        <div class="fgroup"><label for="f-danosMax">Clasificación de daños BCA <span class="n">1 = mejor · sin dato se incluye</span></label><select id="f-danosMax" data-f="danosMax">${[["","Cualquiera"],["1","Solo 1"],["2","Hasta 2"],["3","Hasta 3"],["4","Hasta 4"]].map(([k,v])=>`<option value="${k}" ${String(fd.danosMax)===k?"selected":""}>${v}</option>`).join("")}</select></div>
+        <div class="fgroup"><label>Margen hasta venta estimada (€) <span class="n">venta estimada − precio de salida (si no hay: puja mínima o reserva BCA)</span></label><div class="pair"><input type="number" id="f-margenMin" data-f="margenMin" step="250" placeholder="desde" value="${esc(fd.margenMin??"")}"><input type="number" id="f-margenMax" data-f="margenMax" step="250" placeholder="hasta" value="${esc(fd.margenMax??"")}"></div></div>
+        <div class="fgroup"><label for="f-margenPctMin">Margen mín. sobre ese precio (%)</label><input type="number" id="f-margenPctMin" data-f="margenPctMin" step="5" placeholder="p. ej. 20" value="${esc(fd.margenPctMin??"")}"></div>
+        <label class="toggle"><input type="checkbox" data-fb="bajoPujaMax" ${fd.bajoPujaMax?"checked":""}><span>Solo si el precio actual no supera la puja máx. sugerida<br><span class="muted">Puja máx. sugerida = venta estimada − 30 %.</span></span></label>
         <div class="sep"></div>
-        <div class="fgroup"><div class="lbl">Combustible</div><div class="chips">${COMBUS.map(c=>chk("comb",c,f.comb.includes(c))).join("")}</div></div>
-        <div class="fgroup"><label>Potencia (CV)</label><div class="pair"><input type="number" id="f-cvMin" data-f="cvMin" placeholder="mín." value="${esc(f.cvMin)}"><input type="number" id="f-cvMax" data-f="cvMax" placeholder="máx." value="${esc(f.cvMax)}"></div></div>
-        <div class="fgroup"><label>Motor (litros)</label><div class="pair"><input type="number" id="f-motorMin" data-f="motorMin" step="0.1" placeholder="mín." value="${esc(f.motorMin)}"><input type="number" id="f-motorMax" data-f="motorMax" step="0.1" placeholder="máx." value="${esc(f.motorMax)}"></div></div>
-        <div class="fgroup"><div class="lbl">Tipo de vehículo</div><div class="chips">${TIPOS.map(c=>chk("tipos",c,f.tipos.includes(c))).join("")}</div></div>
-        <div class="fgroup"><label for="f-plazasMin">Plazas mín.</label><input type="number" id="f-plazasMin" data-f="plazasMin" min="2" max="9" value="${esc(f.plazasMin)}"></div>
-        <div class="fgroup"><div class="lbl">Ubicación del vehículo <span class="n">${f.zonas.length?f.zonas.length+" elegida"+(f.zonas.length>1?"s":"")+" · ":""}varias a la vez</span></div><div class="chips">${zonas.map(z=>`<label class="chk"><input type="checkbox" data-fgroup="zonas" value="${esc(z)}" ${f.zonas.includes(z)?"checked":""}>${esc(z)} <span class="n tnum">${zcount[z]||0}</span></label>`).join("")}</div>${f.zonas.length?`<button class="btn sm ghost" id="zonas-clear" style="justify-self:start">Quitar ubicaciones</button>`:""}</div>
-        <div class="fgroup"><label for="f-iva">Régimen de IVA</label><select id="f-iva" data-f="iva">${[["any","Todos"],["REBU","REBU"],["General","IVA general (deducible)"]].map(([k,v])=>`<option value="${k}" ${f.iva===k?"selected":""}>${v}</option>`).join("")}</select></div>
-        <div class="fgroup"><div class="lbl">Procedencia</div><div class="chips">${PROCED.map(c=>chk("proced",c,f.proced.includes(c))).join("")}</div></div>
-        <label class="toggle"><input type="checkbox" data-fb="sinImportados" ${f.sinImportados?"checked":""}>Excluir importados</label>
+        <div class="fgroup"><div class="lbl">Combustible</div><div class="chips">${COMBUS.map(c=>chk("comb",c,fd.comb.includes(c))).join("")}</div></div>
+        <div class="fgroup"><label>Potencia (CV)</label><div class="pair"><input type="number" id="f-cvMin" data-f="cvMin" placeholder="mín." value="${esc(fd.cvMin)}"><input type="number" id="f-cvMax" data-f="cvMax" placeholder="máx." value="${esc(fd.cvMax)}"></div></div>
+        <div class="fgroup"><label>Motor (litros)</label><div class="pair"><input type="number" id="f-motorMin" data-f="motorMin" step="0.1" placeholder="mín." value="${esc(fd.motorMin)}"><input type="number" id="f-motorMax" data-f="motorMax" step="0.1" placeholder="máx." value="${esc(fd.motorMax)}"></div></div>
+        <div class="fgroup"><div class="lbl">Tipo de vehículo</div><div class="chips">${TIPOS.map(c=>chk("tipos",c,fd.tipos.includes(c))).join("")}</div></div>
+        <div class="fgroup"><label for="f-plazasMin">Plazas mín.</label><input type="number" id="f-plazasMin" data-f="plazasMin" min="2" max="9" value="${esc(fd.plazasMin)}"></div>
+        <div class="fgroup"><div class="lbl">Ubicación del vehículo <span class="n">${fd.zonas.length?fd.zonas.length+" elegida"+(fd.zonas.length>1?"s":"")+" · ":""}varias a la vez</span></div><div class="chips">${zonas.map(z=>`<label class="chk"><input type="checkbox" data-fgroup="zonas" value="${esc(z)}" ${fd.zonas.includes(z)?"checked":""}>${esc(z)} <span class="n tnum">${zcount[z]||0}</span></label>`).join("")}</div>${fd.zonas.length?`<button class="btn sm ghost" id="zonas-clear" style="justify-self:start">Quitar ubicaciones</button>`:""}</div>
+        <div class="fgroup"><label for="f-iva">Régimen de IVA</label><select id="f-iva" data-f="iva">${[["any","Todos"],["REBU","REBU"],["General","IVA general (deducible)"]].map(([k,v])=>`<option value="${k}" ${fd.iva===k?"selected":""}>${v}</option>`).join("")}</select></div>
+        <div class="fgroup"><div class="lbl">Procedencia</div><div class="chips">${PROCED.map(c=>chk("proced",c,fd.proced.includes(c))).join("")}</div></div>
+        <label class="toggle"><input type="checkbox" data-fb="sinImportados" ${fd.sinImportados?"checked":""}>Excluir importados</label>
+        <div class="faplicar-pie"><button class="btn ${fPend()?"primary":""}" data-faplicar style="width:100%">Aplicar filtros</button></div>
       </div>
     </aside>
     <section style="min-width:0">
-      <div class="listbar"><span class="sum"><b class="tnum">${shown.length}</b> de ${est.length} lotes pasan los filtros</span><span id="fpend" class="estprog" role="status">${filT?"Actualizando en 2,5 s…":""}</span>
+      <div class="listbar"><span class="sum"><b class="tnum">${shown.length}</b> de ${est.length} lotes pasan los filtros</span><span id="fpend" class="estprog" role="status">${fPend()?"Hay cambios en los filtros sin aplicar":""}</span>
         ${S.sample?(EST.running?`<span class="estprog tnum">${EST.auto?"Estimando automáticamente todos los lotes…":"Estimando precios…"} ${EST.done} de ${EST.total}</span><button class="btn sm" id="est-stop">Detener</button>`:(()=>{const n=shown.filter(l=>l.mercado==null).length;return n?`<button class="btn sm primary" id="est-run" title="Estimación orientativa (IA) según modelo, año, km, combustible y potencia">Estimar precio de mercado (${n})</button>`:""})()):""}
         ${shown.length?`<button class="btn sm" id="bulk-int">Marcar visibles como interesantes</button>`:""}
         ${(()=>{const n=shown.filter(l=>l.estado==="interesante").length;return n?`<button class="btn sm" id="bulk-noint">Desmarcar visibles como interesantes (${n})</button>`:""})()}
@@ -889,7 +898,7 @@ function pintarVisor(){let v=$("#visor");if(!VIS.fotos.length){v&&v.remove();ret
 function moverVisor(d){const n=VIS.fotos.length;if(!n)return;VIS.i=(VIS.i+d+n)%n;pintarVisor()}
 function renderPublico(){
   const p=S.pub;
-  const cars=[...S.lots.values()].filter(l=>l.publico&&l.estado!=="vendido"&&l.estado!=="descartado"&&(isOwned(l)||!isPast(l)))
+  const cars=[...S.lots.values()].filter(l=>l.publico&&l.web&&l.estado!=="vendido"&&l.estado!=="descartado"&&(isOwned(l)||!isPast(l)))
     .filter(l=>(!p.tipo||l.tipo===p.tipo)&&(!p.anioMin||(l.anio&&l.anio>=+p.anioMin))&&(!p.precioMax||!publicPrice(l)||publicPrice(l)<=+p.precioMax))
     .sort((a,b)=>isOwned(b)-isOwned(a));
   const hasAny=[...S.lots.values()].some(l=>l.publico);
@@ -1252,7 +1261,15 @@ async function mergeData(subastas,lots){
   for(const subasta of subastas){S.subastas.set(subasta.id,{...(S.subastas.get(subasta.id)||{}),...subasta}); if(S.db)await S.db.doc("subastas/"+subasta.id).set(S.subastas.get(subasta.id));}
   const PRE=window.HUELSAN_HIST?await HUELSAN_HIST.precargar(lots.map(x=>x.id)).catch(()=>new Map()):new Map();
   for(const l0 of lots){const l={...l0};for(const k of["estado","publico","importadoEn","notas","fotos","precioCompra","precioVenta","gastos","pujaMax","mercado","precioRemate"])delete l[k];
-    const cur=S.lots.get(l.id);
+    let cur=S.lots.get(l.id);
+    // BCA a veces da otro LotId al mismo coche en la misma subasta: se fusiona con el que ya había (bastidor + subasta)
+    if(!cur&&l.vin&&l.subastaId){const dup=[...S.lots.values()].find(x=>x.vin===l.vin&&x.subastaId===l.subastaId&&x.id!==l.id);
+      if(dup){const ids=[...new Set([...(dup.idsBCA||[]),dup.id,l.id])];
+        const nuestro=["comprado","stock","vendido"].includes(dup.estado)||dup.publico||dup.facturaVenta||dup.folleto||dup.folletos;
+        if(nuestro){l.id=dup.id;l.idsBCA=ids;cur=dup}
+        else{const man=dup.manual||{};const doc={...dup};for(const[k,v]of Object.entries(l))if(v!=null&&v!==""&&!man[k]&&!(k==="tipo"&&dup.tipoManual))doc[k]=v;
+          doc.id=l.id;doc.idsBCA=ids;for(const k of Object.keys(doc))if(doc[k]===undefined)doc[k]=null;
+          S.lots.delete(dup.id);S.lots.set(l.id,doc);if(S.db)await S.db.doc("lotes/"+l.id).set(doc);act++;continue}}}
     if(cur){const patch={};const man=cur.manual||{};for(const[k,v]of Object.entries(l)){if(v!=null&&v!==""&&!man[k]&&JSON.stringify(cur[k])!==JSON.stringify(v))patch[k]=v}
       if(cur.tipoManual)delete patch.tipo;
       if(Object.keys(patch).length){S.lots.set(l.id,{...cur,...patch});if(S.db)await S.db.doc("lotes/"+l.id).update(patch);act++}}
@@ -1298,7 +1315,7 @@ function render(){
   // Al volver a pintar se sustituye todo #main: guardamos y restauramos la posición de la página y del panel de filtros
   const fa=document.querySelector("aside.filters"),fst=fa?fa.scrollTop:0,wy=window.scrollY,mh=$("#main").offsetHeight;
   $("#main").style.minHeight=mh+"px";
-  ({subastas:renderSubastas,interesantes:renderInteresantes,stock:renderStock,clientes:renderClientes,historico:renderHistorico,publico:renderPublico})[S.tab]();
+  ({subastas:renderSubastas,interesantes:renderInteresantes,stock:renderStock,clientes:renderClientes,busquedas:window.renderBusquedas||renderClientes,historico:renderHistorico,publico:renderPublico})[S.tab]();
   hydrateThumbs();
   const fb=document.querySelector("aside.filters");if(fb)fb.scrollTop=fst;
   if(aid){const n=document.getElementById(aid);if(n&&n!==ae&&!n.closest("#drawer")){try{n.focus({preventScroll:true})}catch(e){n.focus()}try{if(sel!=null)n.setSelectionRange(sel,sel)}catch(e){}}}
@@ -1308,19 +1325,21 @@ function render(){
 $("#tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(!b)return;S.tab=b.dataset.tab;
   document.querySelectorAll("#tabs [data-tab]").forEach(x=>x.setAttribute("aria-selected",x===b));try{localStorage.setItem("huelsan-tab",S.tab)}catch(e){}render();scrollTo(0,0)});
 let inT;
-/* Los cambios de filtros se aplican 2,5 s después del último cambio */
-const FILTRO_RETARDO=2500;let filT=null;
-function aplicarFiltros(){saveF();clearTimeout(filT);const fp=$("#fpend");if(fp)fp.textContent="Actualizando en 2,5 s…";
-  filT=setTimeout(()=>{filT=null;S.limit=60;render()},FILTRO_RETARDO)}
+let filT=null;
+/* Un cambio en el panel de filtros solo marca «sin aplicar»; los selectores de tipo y ubicación de subasta (fuera del panel) se aplican al momento */
+function aplicarFiltros(t){if(t&&!t.closest("aside.filters")){S.f=JSON.parse(JSON.stringify(draftF()));saveF();S.limit=60;render();return}
+  const p=fPend(),fp=$("#fpend");if(fp)fp.textContent=p?"Hay cambios en los filtros sin aplicar":"";
+  document.querySelectorAll("[data-faplicar]").forEach(b=>b.classList.toggle("primary",p))}
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset&&e.target.dataset.f&&e.target.closest("aside.filters")){e.preventDefault();aplicarYa()}});
 document.addEventListener("input",e=>{const t=e.target;
-  if(t.dataset.f){S.f[t.dataset.f]=t.value;aplicarFiltros()}
+  if(t.dataset.f){draftF()[t.dataset.f]=t.value;aplicarFiltros(t)}
   if(t.dataset.h){S.histQ=t.value;S.histLimit=300;clearTimeout(inT);inT=setTimeout(render,250)}
   if(t.dataset.impprecio!=null){IMP.items[+t.dataset.impprecio].precio=t.value;return}
   if(t.dataset.imporigen!=null){IMP.items[+t.dataset.imporigen].origen=t.value;return}
   if(t.dataset.p){S.pub[t.dataset.p]=t.value;clearTimeout(inT);inT=setTimeout(render,300)}});
 document.addEventListener("change",async e=>{const t=e.target;
-  if(t.dataset.fgroup){const g=t.dataset.fgroup;const set=new Set(S.f[g]);t.checked?set.add(t.value):set.delete(t.value);S.f[g]=[...set];aplicarFiltros()}
-  if(t.dataset.fb){S.f[t.dataset.fb]=t.checked;aplicarFiltros()}
+  if(t.dataset.fgroup){const g=t.dataset.fgroup,d=draftF();const set=new Set(d[g]);t.checked?set.add(t.value):set.delete(t.value);d[g]=[...set];aplicarFiltros(t)}
+  if(t.dataset.fb){draftF()[t.dataset.fb]=t.checked;aplicarFiltros(t)}
   if(t.dataset.aucsel){S.aucSel=t.value||null;S.limit=60;render()}
   if(t.dataset.e&&S.open){let v=t.value;if(t.dataset.kind==="text")v=v.trim()||null;else v=v===""?null:+v;
     const patch={[t.dataset.e]:v,manual:{...(S.lots.get(S.open).manual||{}),[t.dataset.e]:true}};if(t.dataset.e==="tipo")patch.tipoManual=true;await saveLot(S.open,patch)}
@@ -1356,15 +1375,16 @@ document.addEventListener("click",async e=>{const t=e.target;
   if(t.closest("#rec-login")){recLogin();return}
   if(t.closest("#rec-run")){recRun();return}
   const au=t.closest("[data-auc]");if(au){S.aucSel=au.dataset.auc||null;render();return}
-  const sg=t.closest("[data-seg]");if(sg){S.f[sg.dataset.seg]=sg.dataset.v;sg.parentElement.querySelectorAll("[data-seg]").forEach(b=>b.setAttribute("aria-pressed",b===sg));aplicarFiltros();return}
+  if(t.closest("[data-faplicar]")){aplicarYa();return}
+  const sg=t.closest("[data-seg]");if(sg){draftF()[sg.dataset.seg]=sg.dataset.v;sg.parentElement.querySelectorAll("[data-seg]").forEach(b=>b.setAttribute("aria-pressed",b===sg));aplicarFiltros(sg);return}
   if(t.closest("#est-stop")){EST.ctl&&EST.ctl.abort();return}
   if(t.closest("#est-run")){const shown=baseLots().filter(l=>(S.f.estados.length?S.f.estados.includes(l.estado||"nuevo"):true)&&passes(l,S.f)&&l.mercado==null);estimarVarios(shown);return}
   if(t.closest("#est-one")&&S.open){const l=S.lots.get(S.open);if(l){const m={...(l.manual||{})};delete m.mercado;S.lots.set(l.id,{...l,manual:m,mercado:null});if(S.db)S.db.doc("lotes/"+l.id).update({manual:m}).catch(()=>{});estimarVarios([S.lots.get(l.id)])}return}
   if(t.closest("#usar-pujamax")&&S.open){const l=S.lots.get(S.open);const pm=l&&pujaMaxEst(l);if(pm)await saveLot(l.id,{pujaMax:pm,manual:{...(l.manual||{}),pujaMax:true}});return}
   if(t.closest("#h-est-clear")){S.histEstados=[];render();return}
-  if(t.closest("#zonas-clear")){S.f.zonas=[];saveF();render();return}
+  if(t.closest("#zonas-clear")){draftF().zonas=[];aplicarYa();return}
   if(t.closest("#ftoggle")){S.filtersOpen=!S.filtersOpen;render();return}
-  if(t.closest("#freset")){clearTimeout(filT);filT=null;Object.assign(S.f,{q:"",anioMin:"",anioMax:"",precioMin:"",precioMax:"",kmMax:"",duenosMax:"",libro:"any",sinAverias:false,sinAccidentes:false,sinManip:false,margenMin:"",margenMax:"",margenPctMin:"",bajoPujaMax:false,mecMax:"",comb:[],cvMin:"",cvMax:"",motorMin:"",motorMax:"",tipos:[],plazasMin:"",ubic:"",iva:"any",proced:[],sinImportados:false,danosMax:"",estados:["nuevo","interesante","pujar"],incluirDesconocidos:true,modo:"todas",subUbic:"",zonas:[]});S.aucSel=null;saveF();render();return}
+  if(t.closest("#freset")){clearTimeout(filT);filT=null;Object.assign(S.f,{q:"",anioMin:"",anioMax:"",precioMin:"",precioMax:"",kmMax:"",duenosMax:"",libro:"any",sinAverias:false,sinAccidentes:false,sinManip:false,margenMin:"",margenMax:"",margenPctMin:"",bajoPujaMax:false,mecMax:"",comb:[],cvMin:"",cvMax:"",motorMin:"",motorMax:"",tipos:[],plazasMin:"",ubic:"",iva:"any",proced:[],sinImportados:false,danosMax:"",estados:["nuevo","interesante","pujar"],incluirDesconocidos:true,modo:"todas",subUbic:"",zonas:[]});S.fd=null;S.aucSel=null;saveF();render();return}
   const stb=t.closest("[data-state]");if(stb&&S.open){const patch={estado:stb.dataset.state};const cl=S.lots.get(S.open);
     if(["comprado","stock"].includes(patch.estado)&&!cl.compradoEn)patch.compradoEn=new Date().toISOString();if(patch.estado==="vendido"&&!cl.vendidoEn)patch.vendidoEn=new Date().toISOString();if(["comprado","stock"].includes(patch.estado)&&!S.lots.get(S.open).precioCompra&&S.lots.get(S.open).pujaMax)patch.precioCompra=S.lots.get(S.open).pujaMax;await saveLot(S.open,patch);return}
   const tr=t.closest("[data-tri]");if(tr&&S.open){const v={"true":true,"false":false,"null":null}[tr.dataset.v];await saveLot(S.open,{[tr.dataset.tri]:v,manual:{...(S.lots.get(S.open).manual||{}),[tr.dataset.tri]:true}});return}
@@ -1407,7 +1427,7 @@ document.addEventListener("submit",async e=>{e.preventDefault();const f=e.target
   const n=carsFor(d).length;toast(f.id==="leadform"?"Gracias. Te contactaremos pronto.":`Petición guardada · ${n} coche${n==1?"":"s"} encaja${n==1?"":"n"} ahora`);render()});
 
 /* ---------- arranque ---------- */
-try{const t=localStorage.getItem("huelsan-tab");if(t&&["subastas","interesantes","stock","clientes","historico","publico"].includes(t)){S.tab=t;document.querySelectorAll("#tabs [data-tab]").forEach(x=>x.setAttribute("aria-selected",x.dataset.tab===t))}}catch(e){}
+try{const t=localStorage.getItem("huelsan-tab");if(t&&["subastas","interesantes","stock","clientes","busquedas","historico","publico"].includes(t)){S.tab=t;document.querySelectorAll("#tabs [data-tab]").forEach(x=>x.setAttribute("aria-selected",x.dataset.tab===t))}}catch(e){}
 render();
 (async()=>{
   const db=window.claude?await window.claude.use("db"):null;
@@ -1470,4 +1490,5 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-hp]");if(b
 document.addEventListener("change",e=>{if(e.target.matches("[data-hp-arch]"))HP.archivo=e.target.checked});
 </script>
 
+<script src="extra.js"></script>
 </body></html>
