@@ -92,7 +92,8 @@ function pintar(){
 async function empresaDoc(){const sn=await db.doc("web/empresa").get();return sn.exists?sn.data():{}}
 async function publicar(r){const x=r.respuesta||{};const e=await empresaDoc();const lista=(Array.isArray(e.resenas)?e.resenas:[]).filter(y=>y.id!==r.id);
   const d=new Date(r.recibida||Date.now());
-  lista.unshift({id:r.id,nombre:x.nombre||r.cliente||"Cliente",estrellas:+x.estrellas||5,texto:x.texto||"",localidad:x.localidad||"",coche:r.coche||"",fecha:d.toLocaleDateString("es-ES",{month:"long",year:"numeric"}),fuente:"Cliente verificado"});
+  lista.unshift({id:r.id,nombre:x.nombre||r.cliente||"Cliente",estrellas:+x.estrellas||5,texto:x.texto||"",localidad:x.localidad||"",coche:r.coche||"",fecha:d.toLocaleDateString("es-ES",{month:"long",year:"numeric"}),fuente:"Cliente verificado",
+    aspectos:x.aspectos||{},recomienda:x.recomienda||""});
   try{await db.doc("web/empresa").update({resenas:lista})}catch(err){if(err.code!=="not-found")throw err;await db.doc("web/empresa").set({resenas:lista})}
   await db.doc("resenas/"+r.id).update({estado:"publicada",publicada:new Date().toISOString()})}
 async function retirar(r){const e=await empresaDoc();const lista=(Array.isArray(e.resenas)?e.resenas:[]).filter(y=>y.id!==r.id);

@@ -1370,6 +1370,18 @@
     "etiqueta": "Título",
     "defecto": "Opiniones de clientes",
     "largo": false
+   },
+   {
+    "clave": "opiniones.verificado",
+    "etiqueta": "Opiniones: sello «Cliente verificado»",
+    "defecto": "Cliente verificado",
+    "largo": false
+   },
+   {
+    "clave": "opiniones.ver",
+    "etiqueta": "Opiniones: botón «Ver valoración completa»",
+    "defecto": "Ver valoración completa",
+    "largo": false
    }
   ]
  },

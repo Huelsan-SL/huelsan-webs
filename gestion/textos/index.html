@@ -75,7 +75,9 @@ function filaRes(r={}){const e=+r.estrellas||5;return`<div class="op"><div class
   ${["id","coche","localidad"].map(k=>r[k]?`<input type="hidden" data-r="${k}" value="${esc(r[k])}">`:"").join("")}
   <div>${r.id?`<span style="font-size:12.5px;opacity:.75">Llegó por el cuestionario de reseñas${r.coche?" · "+esc(r.coche):""}. </span>`:""}<button type="button" class="sec mini" data-rquitar>Quitar</button></div></div>`}
 function pintarRes(lista=resGuardadas()){$("#res-lista").innerHTML=lista.length?lista.map(filaRes).join(""):`<p>Todavía no hay opiniones.</p>`}
-function leerRes(){return[...document.querySelectorAll("#res-lista .op")].map(o=>{const r={};o.querySelectorAll("[data-r]").forEach(i=>{r[i.dataset.r]=i.value.trim()});r.estrellas=+r.estrellas||5;for(const k of["id","coche","localidad"])if(!r[k])delete r[k];return r}).filter(r=>r.nombre&&r.texto)}
+function leerRes(){return[...document.querySelectorAll("#res-lista .op")].map(o=>{const r={};o.querySelectorAll("[data-r]").forEach(i=>{r[i.dataset.r]=i.value.trim()});r.estrellas=+r.estrellas||5;for(const k of["id","coche","localidad"])if(!r[k])delete r[k];
+  // las que llegaron por el cuestionario conservan sus respuestas detalladas (aspectos, recomendaría)
+  const o=r.id&&resGuardadas().find(x=>x.id===r.id);return o?{...o,...r}:r}).filter(r=>r.nombre&&r.texto)}
 const canon=l=>JSON.stringify(l.map(r=>Object.entries(r).filter(([,v])=>v!==""&&v!=null).map(([k,v])=>[k,k==="estrellas"?+v:String(v)]).sort()));
 const cambiosRes=()=>canon(leerRes())!==canon(resGuardadas());
 const actual=k=>k.startsWith("@")?(DOC[k.slice(1)]||""):((DOC.textos||{})[k]||"");

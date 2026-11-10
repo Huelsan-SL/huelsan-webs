@@ -69,6 +69,10 @@ ETIQ = {
     "form.pcv": "Pregunta 9 (potencia)", "form.pcil": "Pregunta 10 (cilindrada)", "form.p7": "Pregunta 11 (plazo)", "form.p8": "Pregunta 12 (residencia)",
     "form.p6": "Pregunta 13 (características)", "form.p9": "Pregunta 14 (contacto)", "form.email2": "Campo correo",
     "form.p2m.ejemplo": "Ejemplo dentro de la pregunta 2", "form.p3m.ejemplo": "Ejemplo dentro de la pregunta 3", "form.p6b.ejemplo": "Ejemplo dentro de la pregunta 13",
+    "opiniones.ver": "Opiniones: botón «Ver valoración completa»", "opiniones.verificado": "Opiniones: sello «Cliente verificado»",
+    "opiniones.atencion": "Opiniones: atención y trato", "opiniones.coche": "Opiniones: estado del coche", "opiniones.rapidez": "Opiniones: rapidez",
+    "opiniones.tramites": "Opiniones: papeleo y entrega", "opiniones.precio": "Opiniones: precio",
+    "opiniones.rec.si": "Opiniones: «Nos recomendaría»", "opiniones.rec.quizas": "Opiniones: «Probablemente nos recomendaría»", "opiniones.rec.no": "Opiniones: «No nos recomendaría»",
     "ficha.compartir": "Botón «Compartir este coche»", "ficha.copiado": "Aviso «enlace copiado»",
 }
 PREG_FORM = {"tipo": "1 (tipo)", "pres": "4 (presupuesto)", "km": "5 (kilometraje)", "antig": "6 (antigüedad)", "comb": "7 (combustible)", "cambio": "8 (cambio)", "pot": "9 (potencia)", "cil": "10 (cilindrada)", "plazo": "11 (plazo)"}

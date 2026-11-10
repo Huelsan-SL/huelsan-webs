@@ -111,6 +111,18 @@ nav.menu a:hover{border-color:var(--green)}
 .hero .zonas{margin-top:18px;display:inline-flex;gap:10px;align-items:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);padding:9px 16px;border-radius:18px;font-weight:600;font-size:15px}
 .hero .zonas svg{width:18px;height:18px;color:#4CD38A;flex:none}
 .credito{position:absolute;right:12px;bottom:8px;font-size:11px;color:rgba(255,255,255,.6)}
+/* reseñas flotantes sobre la foto de portada (solo pantallas grandes): discretas y van rotando */
+.hero-resena{display:none}
+@media (min-width:1100px){.hero-resena:not([hidden]){display:grid;gap:8px;position:absolute;z-index:1;top:50%;right:max(32px,calc((100vw - 1180px)/2 + 16px));transform:translateY(-38%);width:320px;
+  padding:16px 18px;border-radius:16px;background:rgba(9,28,49,.38);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(10px) saturate(1.2);-webkit-backdrop-filter:blur(10px) saturate(1.2);
+  color:#fff;text-decoration:none;box-shadow:0 10px 30px rgba(0,0,0,.18);opacity:.9;transition:opacity .45s ease}
+  .hero-resena:hover{opacity:1}.hero-resena.fuera{opacity:0}
+  .hero-resena .estrellas{font-size:15px;letter-spacing:1px}
+  .hero-resena q{font-size:15px;line-height:1.45;color:rgba(255,255,255,.92);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;quotes:"«" "»"}
+  .hero-resena .quien{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:13px;color:rgba(255,255,255,.75)}
+  .hero-resena .quien b{color:#fff;font-weight:700}
+  .hero-resena .puntos{display:flex;gap:5px;margin-top:2px}.hero-resena .puntos i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35)}.hero-resena .puntos i.on{background:#fff}}
+@media (min-width:1100px) and (prefers-reduced-motion:reduce){.hero-resena{transition:none}}
 .credito a{color:inherit}
 
 /* tarjetas e iconos */
@@ -267,6 +279,23 @@ form.card{background:var(--surface);color:var(--ink);border-radius:22px;padding:
 
 /* opiniones */
 .resena-coche{font-size:13px;color:var(--muted);margin-top:2px}
+.verif{display:inline-flex;align-items:center;gap:4px;color:var(--green2);font-weight:600}
+.verif svg{width:16px;height:16px;flex:none}
+.hero-resena .verif{color:#7FE0A8}
+.resena-pie{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:13px;color:var(--muted);margin-top:4px}
+.resena-mas{border-top:1px solid var(--line);padding-top:10px}
+.resena-mas summary{cursor:pointer;font-weight:700;color:var(--green2);font-size:14px;list-style:none;display:inline-flex;align-items:center;gap:6px}
+.resena-mas summary::-webkit-details-marker{display:none}
+.resena-mas summary::after{content:"▾";font-size:12px;transition:transform .2s}
+.resena-mas[open] summary::after{transform:rotate(180deg)}
+.resena-mas dl{display:grid;gap:6px;margin:10px 0 0}
+.resena-mas dl div{display:flex;justify-content:space-between;gap:10px;font-size:14px}
+.resena-mas dt{color:var(--ink)}.resena-mas dd{margin:0;color:#E8A93B;letter-spacing:1px;white-space:nowrap}
+.resena-mas .rec{margin-top:8px;font-size:14px;font-weight:600;color:var(--green2)}.resena-mas .rec.no{color:var(--muted)}
+.redes.top-redes{display:none}
+@media (min-width:1100px){.redes.top-redes:not([hidden]){display:flex;gap:6px;margin-left:6px;padding-left:16px;border-left:1px solid #E6EBF1}
+  .redes.top-redes a{width:32px;height:32px;border-radius:9px;background:transparent;border:0;color:#5A6B7F}
+  .redes.top-redes a:hover{color:var(--green2);background:var(--soft)}.redes.top-redes svg{width:18px;height:18px}}
 .resenas{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr));gap:18px}
 .resena{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;display:grid;gap:10px;margin:0}
 .estrellas{color:#E8A93B;letter-spacing:2px;font-size:18px}
@@ -364,6 +393,7 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-verif" viewBox="0 0 24 24"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.5 1.7-1 2.8 1 2.8-2.5 1.7-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9-2.5-1.7 1-2.8-1-2.8 2.5-1.7.9-2.9 3 .2z" fill="#1E9E52"/><path d="m8 12.2 2.7 2.7L16.2 9.4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-filtro" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
   <symbol id="i-compartir" viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="r-instagram" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.3" fill="currentColor"/></symbol>
@@ -392,6 +422,7 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
 <header class="top">
   <div class="wrap top-in">
     <a class="brand" href="#inicio" aria-label="Huelsan Automoción, inicio"><svg class="logo-sym" viewBox="3 3 58 49" aria-hidden="true"><path d="M8.6 49.5 A27 27 0 1 1 55.4 49.5" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><path d="M55.4 22.5 A27 27 0 0 1 56.47 43.41" fill="none" class="lgs" stroke-width="4.5" stroke-linecap="round"/><path d="M13.340 45.510 L16.660 50.490 L17.500 49.874 L17.500 42.998 Z" class="lgf"/><path d="M28.500 41.806 L35.500 36.672 L35.500 32.130 L28.500 36.357 Z" class="lgf"/><path d="M46.500 28.604 L48.960 26.800 L47.640 24.800 L46.500 25.488 Z" class="lgf"/><rect x="19" y="22" width="8" height="28" fill="currentColor"/><rect x="37" y="22" width="8" height="28" fill="currentColor"/><circle cx="15" cy="48" r="3.0" fill="currentColor"/></svg><span><b>HUELSAN</b><small>Automoción</small></span></a>
+    <div class="redes top-redes" id="top-redes" hidden></div>
     <nav class="menu" aria-label="Secciones">
       <a href="#inicio" data-t="menu.inicio">Inicio</a><a href="#encargo" data-t="menu.encargo">Búsqueda por encargo</a><a href="#stock" data-t="menu.stock">Stock</a><a href="#quienes-somos" data-t="menu.quienes">Quiénes somos</a><a href="#busqueda" data-t="menu.contacto">Contacto</a>
     </nav>
@@ -410,6 +441,7 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
       <div class="sellos"><span><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="inicio.sello1">Búsqueda personalizada</span></span><span><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="inicio.sello2">Gestión integral</span></span><span><svg aria-hidden="true"><use href="#i-ok"/></svg><span data-t="inicio.sello3">Atención cercana</span></span></div>
       <div class="zonas"><svg aria-hidden="true"><use href="#i-pin"/></svg><span id="zonas-hero">Trabajamos en Andalucía, Murcia y Alicante.</span></div>
     </div>
+    <a class="hero-resena" id="hero-resena" href="#opiniones" hidden aria-label="Opiniones de clientes"></a>
     <span class="credito">Foto: <a href="https://unsplash.com/@tylerprahm" target="_blank" rel="noopener">Tyler Prahm</a> / <a href="https://unsplash.com" target="_blank" rel="noopener">Unsplash</a></span>
   </div>
 
@@ -678,10 +710,29 @@ function contacto(){
   $("#zona-txt").textContent=T("quienes.zona","Trabajamos principalmente en {zonas}, ofreciendo atención personalizada durante todo el proceso.").replace(/\{zonas\}/g,zt);
   $("#pie-emp").innerHTML=[EMPRESA.razonSocial||EMPRESA.nombre,EMPRESA.nif?"NIF "+EMPRESA.nif:null,EMPRESA.domicilio].filter(Boolean).map(esc).join(" · ")+" · © "+new Date().getFullYear();
 }
+const ASPECTOS=[["atencion","opiniones.atencion","Atención y trato"],["coche","opiniones.coche","Estado del coche"],["rapidez","opiniones.rapidez","Rapidez"],["tramites","opiniones.tramites","Papeleo y entrega"],["precio","opiniones.precio","Precio"]];
+const REC={si:["opiniones.rec.si","Nos recomendaría"],quizas:["opiniones.rec.quizas","Probablemente nos recomendaría"],no:["opiniones.rec.no","No nos recomendaría"]};
+const estr=n=>"★".repeat(n)+"☆".repeat(5-n);
+const verificado=r=>r.fuente==="Cliente verificado"||(!r.fuente&&r.id);
+const fuenteHtml=r=>verificado(r)?`<span class="verif"><svg aria-hidden="true"><use href="#i-verif"/></svg>${esc(T("opiniones.verificado","Cliente verificado"))}</span>`:(r.fuente?`<span>${esc(r.fuente)}</span>`:"");
 function resenas(){
-  const rs=EMPRESA.resenas||[];$("#opiniones").hidden=!rs.length;if(!rs.length)return;
-  $("#resenas").innerHTML=rs.map(r=>{const n=Math.max(1,Math.min(5,Math.round(+r.estrellas||5)));return`<figure class="resena"><div class="estrellas" role="img" aria-label="${n} de 5 estrellas">${"★".repeat(n)}${"☆".repeat(5-n)}</div><blockquote><p>${esc(r.texto)}</p></blockquote><figcaption><b>${esc(r.nombre)}</b>${r.localidad?` <small>· ${esc(r.localidad)}</small>`:""}${r.coche?`<div class="resena-coche">${esc(r.coche)}</div>`:""} <small>${esc([r.fuente,r.fecha].filter(Boolean).join(" · "))}</small></figcaption></figure>`}).join("");
+  const rs=EMPRESA.resenas||[];$("#opiniones").hidden=!rs.length;heroResenas(rs);if(!rs.length)return;
+  $("#resenas").innerHTML=rs.map(r=>{const n=Math.max(1,Math.min(5,Math.round(+r.estrellas||5)));
+    const asp=ASPECTOS.filter(([k])=>r.aspectos&&/^[1-5]$/.test(String(r.aspectos[k]))),rec=REC[r.recomienda];
+    return`<figure class="resena"><div class="estrellas" role="img" aria-label="${n} de 5 estrellas">${estr(n)}</div><blockquote><p>${esc(r.texto)}</p></blockquote>
+    <figcaption><b>${esc(r.nombre)}</b>${r.localidad?` <small>· ${esc(r.localidad)}</small>`:""}${r.coche?`<div class="resena-coche">${esc(r.coche)}</div>`:""}
+      <div class="resena-pie">${fuenteHtml(r)}${r.fecha?`<span>· ${esc(r.fecha)}</span>`:""}</div></figcaption>
+    ${asp.length||rec?`<details class="resena-mas"><summary>${esc(T("opiniones.ver","Ver valoración completa"))}</summary><dl>${asp.map(([k,t,d])=>{const v=+r.aspectos[k];return`<div><dt>${esc(T(t,d))}</dt><dd role="img" aria-label="${v} de 5 estrellas">${estr(v)}</dd></div>`}).join("")}</dl>${rec?`<div class="rec ${r.recomienda==="no"?"no":""}">${r.recomienda==="no"?"":"✓ "}${esc(T(rec[0],rec[1]))}</div>`:""}</details>`:""}</figure>`}).join("");
 }
+let heroT=null;
+function heroResenas(rs){const el=$("#hero-resena");clearInterval(heroT);if(!rs.length){el.hidden=true;return}el.hidden=false;let i=0;
+  const pinta=()=>{const r=rs[i],n=Math.max(1,Math.min(5,Math.round(+r.estrellas||5)));
+    el.innerHTML=`<div class="estrellas" aria-hidden="true">${estr(n)}</div><q>${esc(r.texto)}</q><div class="quien"><b>${esc(r.nombre)}</b>${r.coche?`<span>${esc(r.coche)}</span>`:""}${fuenteHtml(r)}</div>${rs.length>1?`<div class="puntos" aria-hidden="true">${rs.map((_,j)=>`<i class="${j===i?"on":""}"></i>`).join("")}</div>`:""}`};
+  pinta();if(rs.length<2)return;
+  const quieto=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  heroT=setInterval(()=>{if(el.matches(":hover")||document.hidden)return;
+    if(quieto){i=(i+1)%rs.length;pinta();return}
+    el.classList.add("fuera");setTimeout(()=>{i=(i+1)%rs.length;pinta();el.classList.remove("fuera")},450)},7000)}
 
 /* ---------- redes sociales (Datos de empresa → Redes sociales); el bloque no aparece si no hay ninguna ---------- */
 const REDES=[["instagram","Instagram"],["facebook","Facebook"],["tiktok","TikTok"],["youtube","YouTube"],["x","X"],["linkedin","LinkedIn"],["google","Google (reseñas)"],["whatsapp","WhatsApp"]];
@@ -690,7 +741,7 @@ function urlRed(k,u){u=String(u||"").trim();if(!u)return"";if(k==="whatsapp"&&/^
   if(!/^https:\/\//i.test(u))u="https://"+u.replace(/^http:\/\//i,"");try{return new URL(u).protocol==="https:"?u:""}catch(e){return""}}
 function redes(){const r=EMPRESA.redes||{};const l=REDES.map(([k,n])=>[k,n,urlRed(k,r[k])]).filter(x=>x[2]);
   const html=l.map(([k,n,u])=>`<a href="${esc(u)}" target="_blank" rel="noopener me" aria-label="${esc(n)}" title="${esc(n)}"><svg aria-hidden="true"><use href="#r-${k}"/></svg></a>`).join("");
-  $("#redes").innerHTML=html;$("#pie-redes").innerHTML=html;$("#redes-bloque").hidden=!l.length;
+  $("#redes").innerHTML=html;$("#pie-redes").innerHTML=html;$("#top-redes").innerHTML=html;$("#top-redes").hidden=!l.length;$("#redes-bloque").hidden=!l.length;
   try{const ld=$("#ld-empresa"),j=JSON.parse(ld.textContent);j.sameAs=l.filter(([k])=>k!=="whatsapp").map(x=>x[2]);if(!j.sameAs.length)delete j.sameAs;ld.textContent=JSON.stringify(j)}catch(e){}}
 
 /* ---------- coches ---------- */
