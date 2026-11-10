@@ -407,7 +407,31 @@ function revisionWeb(l,actualizar){const owned=isOwned(l),w=l.fotosWeb||[],mat=l
 
 /* ---------- ficha del coche: panel «En la web», clientes y reseña ---------- */
 const origDrawer=window.renderDrawer;
-window.renderDrawer=function(){origDrawer.apply(this,arguments);try{ampliarFicha()}catch(e){console.error(e)}};
+/* Al redibujar la ficha (cada vez que se guarda un campo) se mantiene la posición y el campo al que ibas:
+   los paneles añadidos aquí van por encima de parte del contenido y, sin esto, la ficha saltaba hacia abajo y se perdía el cursor. */
+const CAMPO="input:not([type=hidden]):not([type=file]),select,textarea";
+function claveFoco(el){if(!el||!el.closest||!el.closest("#drawer"))return null;
+  if(el.dataset&&el.dataset.e){const sec=el.closest("#xdatos")?"#xdatos ":el.closest("#xweb")?"#xweb ":"";return sec+`[data-e="${el.dataset.e}"]`}
+  return el.id?"#"+el.id:null}
+let focoPend=null;
+// a qué campo vas: con Tab (siguiente/anterior campo de la ficha) o con un clic en otro campo
+document.addEventListener("keydown",e=>{if(e.key!=="Tab")return;const t=e.target;if(!t.closest||!t.closest("#drawer")||!t.matches(CAMPO))return;
+  const l=[...document.querySelectorAll("#drawer "+CAMPO)].filter(x=>!x.disabled&&x.offsetParent!==null&&claveFoco(x));const i=l.indexOf(t);
+  const n=l[i+(e.shiftKey?-1:1)];focoPend=n?claveFoco(n):null},true);
+document.addEventListener("pointerdown",e=>{const t=e.target.closest&&e.target.closest(CAMPO);focoPend=t&&t.closest("#drawer")?claveFoco(t):null},true);
+document.addEventListener("focusin",e=>{if(e.target.closest&&e.target.closest("#drawer"))focoPend=claveFoco(e.target)});
+window.renderDrawer=function(){const dr0=document.getElementById("drawer"),st=dr0?dr0.scrollTop:null;
+  const ae=document.activeElement,mismo=ae&&ae.closest&&ae.closest("#drawer")&&ae.matches(CAMPO)?claveFoco(ae):null,
+    sel=mismo&&typeof ae.selectionStart==="number"?[ae.selectionStart,ae.selectionEnd]:null;
+  origDrawer.apply(this,arguments);try{ampliarFicha()}catch(e){console.error(e)}
+  const dr=document.getElementById("drawer");if(!dr)return;
+  if(st!=null&&dr0===dr)dr.scrollTop=st;
+  const volver=()=>{const d=document.getElementById("drawer");if(!d)return;const a=document.activeElement;
+    if(a&&a!==document.body&&d.contains(a)&&a.isConnected)return;   // el foco ya está bien
+    const k=focoPend||mismo;const n=k&&d.querySelector(k);
+    if(n){try{n.focus({preventScroll:true});if(k===mismo&&sel&&typeof n.setSelectionRange==="function"&&!["number","date"].includes(n.type))n.setSelectionRange(sel[0],sel[1])}catch(e){}}
+    if(st!=null&&dr0===d)d.scrollTop=st};
+  volver();setTimeout(volver,0)};
 function fotosCandidatas(l){
   const web=l.fotosWeb||[],org=l.fotosWebOrigen||{},mat=l.fotosWebMat||{},mapa=l.fotosBcaMap||{};
   const usados=new Map(Object.entries(org).filter(([n])=>web.includes(n)).map(([n,k])=>[k,n]));
