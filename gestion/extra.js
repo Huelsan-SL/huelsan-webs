@@ -415,7 +415,7 @@ function ampliarFicha(){
     cl.after(rs)}
 }
 async function codigoNuevo(){const a=new Uint8Array(12);crypto.getRandomValues(a);return[...a].map(b=>b.toString(36).padStart(2,"0")).join("").slice(0,20)}
-const urlResena=c=>"https://huelsanautomocion.com/opinion/?c="+c;
+const urlResena=c=>(/^prueba--/.test(location.hostname)?"https://prueba--huelsan-automocion.netlify.app":"https://huelsanautomocion.com")+"/opinion/?c="+c;
 async function copiar(txt){try{await navigator.clipboard.writeText(txt);toast("Enlace copiado")}catch(e){prompt("Copia el enlace",txt)}}
 window.HUELSAN_RESENA_NUEVA=async(cliente,coche,loteId)=>{const c=await codigoNuevo();const r={id:c,cliente:cliente||"",coche:coche||"",loteId:loteId||null,creada:ahora(),estado:"invitada",avisado:true,creadaPor:X.user};
   await guardar("resenas/"+c,r,false);X.resenas.set(c,r);return{...r,url:urlResena(c)}};

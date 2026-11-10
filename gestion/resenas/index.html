@@ -42,7 +42,9 @@ button:disabled{opacity:.55;cursor:not-allowed}
   <div><h1>Reseñas de clientes</h1>
   <p class="intro">Crea un enlace personal para cada cliente que os compra un coche y envíaselo por WhatsApp o correo. Cuando responde el cuestionario os llega un correo y la reseña aparece aquí. Solo sale en huelsanautomocion.com cuando la publicáis (y si el cliente lo ha autorizado).</p></div>
   <form class="card" id="nueva"><h2>Nuevo enlace de reseña</h2>
-    <div class="two"><label>Nombre del cliente<input name="cliente" required placeholder="Laura Pérez"></label><label>Coche que compró<input name="coche" placeholder="Ford Focus 2016"></label></div>
+    <div class="two"><label>Coche que compró<select name="lote" id="lote"><option value="">Cargando coches…</option></select></label>
+      <label>Nombre del cliente<input name="cliente" required placeholder="Laura Pérez" autocomplete="off"></label></div>
+    <label id="coche-otro" hidden>Escribe el coche<input name="coche" placeholder="Ford Focus 2016"></label>
     <div class="row"><button class="pri" type="submit">Crear enlace</button></div>
     <div id="nuevo-link"></div>
   </form>
@@ -56,7 +58,15 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fecha=iso=>iso?new Date(iso).toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit",year:"numeric"}):"";
 const msg=(t,c)=>{const m=$("#msg");m.textContent=t||"";m.className=c||""};
-const url=c=>"https://huelsanautomocion.com/opinion/?c="+c;
+const WEB=/^prueba--/.test(location.hostname)?"https://prueba--huelsan-automocion.netlify.app":"https://huelsanautomocion.com";
+const url=c=>WEB+"/opinion/?c="+c;
+let COCHES=[];
+const nombreCoche=l=>{const t=[l.marca,(l.derivado||l.modelo||"")].filter(Boolean);const m=String(l.marca||""),d=String(l.derivado||l.modelo||"");return(m&&d.toLowerCase().startsWith(m.toLowerCase()+" ")?d:t.join(" "))+(l.anio?" "+l.anio:"")};
+async function cargarCoches(){const sel=$("#lote");
+  try{const r=await HUELSAN.rest("/rest/v1/lotes?select=id,estado,marca:data->>marca,modelo:data->>modelo,derivado:data->>derivado,anio:data->>anio,matricula:data->>matricula,anuncio:data->anuncio->>titulo,cliente:data->facturaVenta->>cliente&estado=in.(comprado,stock,vendido)&order=actualizado.desc&limit=500");
+    COCHES=Array.isArray(r)?r:[]}catch(e){COCHES=[]}
+  const grupo=(t,l)=>l.length?`<optgroup label="${t}">${l.map(c=>`<option value="${esc(c.id)}">${esc(c.anuncio||nombreCoche(c))}${c.matricula?" · "+esc(c.matricula):""}</option>`).join("")}</optgroup>`:"";
+  sel.innerHTML=`<option value="">Elige el coche…</option>${grupo("Vendidos",COCHES.filter(c=>c.estado==="vendido"))}${grupo("En stock",COCHES.filter(c=>c.estado!=="vendido"))}<option value="__otro">Otro (escribirlo)</option>`}
 const mensaje=r=>`Hola ${String(r.cliente||"").split(" ")[0]||""}, gracias por confiar en Huelsan Automoción${r.coche?" para tu "+r.coche:""}. ¿Nos cuentas en un minuto qué tal ha ido? Nos ayuda muchísimo: ${url(r.id)}`;
 const ASP={atencion:"Atención",coche:"Estado del coche",rapidez:"Rapidez",tramites:"Papeleo y entrega",precio:"Precio"};
 const REC={si:"Sí nos recomendaría",quizas:"Probablemente nos recomendaría",no:"No nos recomendaría"};
@@ -99,13 +109,18 @@ document.addEventListener("click",async e=>{const t=e.target;
     else if(k==="volver"){await db.doc("resenas/"+r.id).update({estado:"recibida"})}
     else if(k==="borrar"){if(!confirm("¿Borrar este enlace? El cliente ya no podrá responder."))return;await db.doc("resenas/"+r.id).delete();msg("Enlace borrado.","ok")}}
   catch(err){msg("No se ha podido completar: "+(err.message||err),"bad")}finally{t.disabled=false}});
-$("#nueva").addEventListener("submit",async e=>{e.preventDefault();const f=e.target;const cliente=f.cliente.value.trim(),coche=f.coche.value.trim();if(!cliente)return;
-  const id=codigo();const r={id,cliente,coche,loteId:null,creada:new Date().toISOString(),estado:"invitada",avisado:true};
+$("#lote").addEventListener("change",e=>{const v=e.target.value;$("#coche-otro").hidden=v!=="__otro";const c=COCHES.find(x=>x.id===v);
+  if(c&&c.cliente&&!$("#nueva").cliente.value)$("#nueva").cliente.value=c.cliente});
+$("#nueva").addEventListener("submit",async e=>{e.preventDefault();const f=e.target;const cliente=f.cliente.value.trim();if(!cliente)return;
+  const lv=f.lote.value,c=COCHES.find(x=>x.id===lv);if(!lv){msg("Elige el coche que compró.","bad");f.lote.focus();return}
+  const coche=c?nombreCoche(c):f.coche.value.trim();if(!coche){msg("Escribe el coche.","bad");f.coche.focus();return}
+  const id=codigo();const r={id,cliente,coche,loteId:c?c.id:null,creada:new Date().toISOString(),estado:"invitada",avisado:true};
   try{await db.doc("resenas/"+id).set(r);R.set(id,r);f.reset();
     $("#nuevo-link").innerHTML=`<div class="link"><input readonly value="${esc(url(id))}"><button type="button" data-copiar="${esc(id)}">Copiar enlace</button><button type="button" data-copiarmsg="${esc(id)}">Copiar mensaje</button></div><p class="meta" style="margin:6px 0 0">Mensaje: ${esc(mensaje(r))}</p>`;
-    copiar(url(id),"Enlace creado y copiado: envíaselo al cliente.")}catch(err){msg("No se ha podido crear: "+(err.message||err),"bad")}});
+    $("#coche-otro").hidden=true;copiar(url(id),"Enlace creado y copiado: envíaselo al cliente.")}catch(err){msg("No se ha podido crear: "+(err.message||err),"bad")}});
 (async()=>{
-  db=await window.claude.use("db");
+  db=await window.claude.use("db");cargarCoches();
+  if(WEB!=="https://huelsanautomocion.com")$("#nueva").insertAdjacentHTML("beforeend",`<p class="meta" style="margin:0">Estás en la vista previa: los enlaces apuntan a la web de prueba (solo se abre con la cuenta de Netlify). Con la web publicada apuntarán a huelsanautomocion.com.</p>`);
   db.collection("resenas").onSnapshot(s=>{R=new Map(s.docs.map(d=>[d.id,{...d.data(),id:d.id}]));if($("#msg").textContent==="Cargando…")msg("");
     if(primera&&![...R.values()].some(r=>r.estado==="recibida")&&[...R.values()].some(r=>r.estado==="invitada"))tab="invitada";primera=false;pintar()},err=>msg("No se han podido cargar: "+(err.message||err),"bad"));
 })();

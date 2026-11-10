@@ -582,6 +582,12 @@
     "largo": false
    },
    {
+    "clave": "filtros.aplicar",
+    "etiqueta": "Filtro «Aplicar filtros»",
+    "defecto": "Aplicar filtros",
+    "largo": false
+   },
+   {
     "clave": "filtros.limpiar",
     "etiqueta": "Filtro «Quitar filtros»",
     "defecto": "Quitar filtros",
