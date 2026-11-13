@@ -9,7 +9,7 @@
 (function(){
 "use strict";
 const CT={lista:new Map(),ed:null,sucio:false,reps:{},ubics:["Huelva","Murcia"],forzar:false};
-const REPS_DEF={francisco:{nombre:"Francisco José Álvarez González",dni:"49107393R",cargo:"",dniArchivos:[]},gustavo:{nombre:"Gustavo Fornell Lacida",dni:"48121035K",cargo:"",dniArchivos:[]},garantiaEmpresa:""};
+const REPS_DEF={francisco:{nombre:"Francisco José Álvarez González",dni:"49107393R",cargo:"",dniArchivos:[]},gustavo:{nombre:"Gustavo Fornell Lacida",dni:"48121035K",cargo:"",dniArchivos:[]}};
 const DOCS=[["permiso","Permiso de circulación"],["ficha","Tarjeta ITV (ficha técnica)"],["itv","Informe ITV en vigor"],["factura","Factura de compraventa"],["libro","Libro de mantenimiento"],["manual","Manual de usuario"],["llaves","Llaves"],["garantia","Documento de garantía"],["dgt","Informe DGT del vehículo"]];
 const MEDIOS=["Transferencia bancaria","Financiación","Tarjeta","Efectivo","Bizum","Mixto"];
 const get=(o,r)=>r.split(".").reduce((x,k)=>x==null?x:x[k],o);
@@ -46,7 +46,7 @@ function contratoVacio(){
     precio:{regimen:"",base:"",cuota:"",total:"",letra:"",gastos:"",gastosImporte:""},
     pago:{senal:"",senalFecha:"",medio:"",fechaLimite:"",entidad:"",financiado:"",detalle:""},
     permuta:{marcaModelo:"",matricula:"",bastidor:"",km:"",valor:""},
-    entrega:{fecha:"",hora:"",lugar:""},docs:{},transferencia:"",garantia:{empresa:(CT.reps&&CT.reps.garantiaEmpresa)||"",referencia:""},dniComprador:[],contratacion:"establecimiento",jurisdiccion:"",observaciones:"",
+    entrega:{fecha:"",hora:"",lugar:""},docs:{},transferencia:"",dniComprador:[],contratacion:"establecimiento",observaciones:"",
     creado:new Date().toISOString()};
 }
 const loteDe=id=>S.lotes.find(x=>x.id===id);
@@ -105,6 +105,7 @@ function enLetra(n){
 /* ---------- vistas ---------- */
 const nombreComprador=c=>{const p=c.comprador||{};const pers=[p.nombre,p.apellidos].filter(Boolean).join(" ");return p.tipo==="empresa"&&p.razonSocial?p.razonSocial+(pers?" ("+pers+")":""):pers||p.razonSocial||""};
 const listaArch=(arr,quien)=>`<div class="files">${(arr||[]).map((a,i)=>`<div><span>${esc(a.nombre||"Copia")} <span class="muted">${a.size?Math.round(a.size/1024)+" KB":""}</span></span><span class="row"><button class="btn sm" data-ver-archivo="${esc(a.ruta)}" data-nombre="${esc(a.nombre||"dni.jpg")}">Ver</button><button class="btn sm" data-ct-quitar="${esc(quien)}|${i}">Quitar</button></span></div>`).join("")||`<span class="muted">Sin copia: en el contrato sale una página con recuadros para grapar la fotocopia.</span>`}</div>`;
+const dniSi=(c,q)=>c["dniPag"+q]!=null?c["dniPag"+q]!==false:c.incluirDNI!==false; // por defecto se añaden
 function vistaLista(){
   const ls=[...CT.lista.values()].sort((a,b)=>String(b.fecha||b.creado||"").localeCompare(String(a.fecha||a.creado||"")));
   const facts=[...S.facturas.values()].sort((a,b)=>String(b.fechaExpedicion||"").localeCompare(String(a.fechaExpedicion||""))).slice(0,80);
@@ -119,7 +120,6 @@ function vistaLista(){
   <div class="card"><h3>Representantes de Huelsan (firman por la empresa)</h3>
     ${["francisco","gustavo"].map(k=>`<div class="g3"><label>Nombre y apellidos<input data-rep="${k}.nombre" value="${esc((r[k]||{}).nombre||"")}"></label><label>DNI / NIE<input data-rep="${k}.dni" value="${esc((r[k]||{}).dni||"")}"></label><label>Cargo <small>administrador, apoderado…</small><input data-rep="${k}.cargo" value="${esc((r[k]||{}).cargo||"")}"></label></div>
       <div class="row sp"><span class="muted">Copia del DNI de ${esc(((r[k]||{}).nombre||k).split(" ")[0])} (anverso y reverso):</span><label class="btn sm" style="display:inline-flex;color:var(--ink)">Subir foto o PDF<input type="file" data-ct-file="rep:${k}" accept="image/*,application/pdf" multiple hidden></label></div>${listaArch((r[k]||{}).dniArchivos,"rep:"+k)}`).join("")}
-    <label>Compañía de garantía por defecto <small>sale en la cláusula de garantía de los contratos nuevos</small><input data-rep="garantiaEmpresa" value="${esc(r.garantiaEmpresa||"")}" placeholder="Nombre de la empresa de garantías"></label>
     <div class="row"><button class="btn" data-ct="guardar-reps">Guardar representantes</button><span class="muted">Se copian en cada contrato al elegir quién firma. La copia del DNI sale en una página aparte del contrato.</span></div></div>`;
 }
 const inp=(ruta,lab,o={})=>{const v=get(CT.ed,ruta);return`<label${o.cls?` class="${o.cls}"`:""}>${lab}${o.small?` <small>${o.small}</small>`:""}<input data-c="${ruta}" value="${esc(v??"")}"${o.type?` type="${o.type}"`:""}${o.list?` list="${o.list}"`:""}${o.ph?` placeholder="${esc(o.ph)}"`:""}${o.num?' inputmode="decimal"':""}></label>`};
@@ -153,7 +153,7 @@ function vistaEditorC(){
       ${listaArch(c.dniComprador,"comprador")}</div></div>
   <div class="card"><div class="row sp"><h3>Vehículo</h3><label style="flex:1 1 320px;max-width:520px">Coger datos de un coche de la app<select data-ct-change="lote"><option value="">— Elige un coche —</option>${lotesOpc.map(l=>`<option value="${esc(l.id)}" ${c.loteId===l.id?"selected":""}>${esc([l.marca,l.modelo].filter(Boolean).join(" "))} · ${esc(l.matricula||"sin matrícula")}</option>`).join("")}</select></label></div>
     <div class="g4">${inp("vehiculo.marca","Marca")}${inp("vehiculo.modelo","Modelo")}${inp("vehiculo.version","Versión")}${inp("vehiculo.color","Color")}</div>
-    <div class="g4">${inp("vehiculo.matricula","Matrícula")}${inp("vehiculo.bastidor","Nº de bastidor (VIN)")}${inp("vehiculo.fechaMatric","1ª matriculación",{type:"date"})}${inp("vehiculo.km","Kilómetros",{num:1})}</div>
+    <div class="g4">${inp("vehiculo.matricula","Matrícula")}${inp("vehiculo.bastidor","Nº de bastidor (VIN)")}${inp("vehiculo.fechaMatric","1ª matriculación",{type:"date"})}<label>Kilómetros <small>se rellenan a mano en el contrato</small><input value="" placeholder="A mano" disabled></label></div>
     <div class="g4">${inp("vehiculo.combustible","Combustible")}${inp("vehiculo.cambio","Cambio")}${inp("vehiculo.cv","Potencia (CV)",{num:1})}${inp("vehiculo.etiqueta","Distintivo DGT")}</div>
     <div class="g4">${inp("vehiculo.itvHasta","ITV válida hasta",{type:"date"})}${inp("vehiculo.llaves","Nº de llaves",{num:1})}</div>
     <label>Defectos y particularidades conocidos <small>se aceptan expresamente y no cuentan como falta de conformidad; vacío = líneas para escribir a mano</small><textarea data-c="defectos" rows="2">${esc(c.defectos||"")}</textarea></label>
@@ -174,11 +174,9 @@ function vistaEditorC(){
       <div class="g3">${DOCS.map(([k,t])=>`<label style="flex-direction:row;display:flex;gap:6px;align-items:center;color:var(--ink);font-weight:500"><input type="checkbox" data-c="docs.${k}" ${c.docs[k]?"checked":""} style="width:auto"> ${t}</label>`).join("")}</div></div>
     <div class="card"><h3>Transferencia y otros</h3>
       <div class="row"><span class="muted">Gestiona el cambio de titular:</span>${seg("transferencia",[["","Sin indicar"],["huelsan","Huelsan"],["comprador","El comprador"]])}</div>
-      <div class="g2">${inp("garantia.empresa","Compañía de garantía",{ph:"Empresa de garantías"})}${inp("garantia.referencia","Nº de garantía / póliza")}</div>
-      ${p.tipo!=="particular"?inp("jurisdiccion","Juzgados competentes si compra una empresa",{ph:"Ej.: Murcia",list:"ct-ubics"}):""}
-      <label>Observaciones y pactos adicionales<textarea data-c="observaciones" rows="3">${esc(c.observaciones||"")}</textarea></label></div></div>
+            <label>Observaciones y pactos adicionales<textarea data-c="observaciones" rows="3">${esc(c.observaciones||"")}</textarea></label></div></div>
   <div class="bar"><button class="btn" data-ct="guardar">Guardar</button><button class="btn primary" data-ct="pdf">Descargar PDF</button>
-    <label style="flex-direction:row;display:flex;gap:6px;align-items:center;color:var(--ink);font-weight:500"><input type="checkbox" data-c="incluirDNI" ${c.incluirDNI!==false?"checked":""} style="width:auto"> Añadir las páginas con la copia de los DNI</label>
+    <span class="muted">Añadir copia del DNI:</span><label style="flex-direction:row;display:flex;gap:6px;align-items:center;color:var(--ink);font-weight:500"><input type="checkbox" data-c="dniPagComprador" ${dniSi(c,"Comprador")?"checked":""} style="width:auto"> comprador</label><label style="flex-direction:row;display:flex;gap:6px;align-items:center;color:var(--ink);font-weight:500"><input type="checkbox" data-c="dniPagVendedor" ${dniSi(c,"Vendedor")?"checked":""} style="width:auto"> vendedor</label>
     ${c.facturaId&&S.facturas.has(c.facturaId)?`<button class="btn" data-ct="refrescar">Volver a coger datos de la factura</button><button class="btn" data-ct="ir-factura">Ir a la factura</button>`:""}
     <span style="flex:1"></span>${CT.lista.has(c.id)?`<button class="btn peligro" data-ct="borrar">Borrar contrato</button>`:""}</div>`;
 }
@@ -312,7 +310,7 @@ async function pdfContrato(c,k){
   await titulo("Reunidos");
   await parrafo("De una parte, como PARTE VENDEDORA:",{b:1,sep:0});
   await fila([{l:"Razón social",v:e.razonSocial||"Huelsan SL",w:1.4},{l:"CIF",v:e.nif},{l:"Domicilio social",v:[e.domicilio,[e.cp,e.municipio].filter(Boolean).join(" "),e.provincia].filter(Boolean).join(", "),w:2.6}]);
-  await fila([{l:"Datos registrales",v:e.registro,w:2},{l:"Representada por (nombre y apellidos)",v:c.vendedor.nombre,w:1.8},{l:"DNI / NIE",v:c.vendedor.dni},{l:"Cargo",v:c.vendedor.cargo}]);
+  await fila([{l:"Representada por (nombre y apellidos)",v:c.vendedor.nombre,w:1.8},{l:"DNI / NIE",v:c.vendedor.dni},{l:"Cargo",v:c.vendedor.cargo}]);
   await parrafo("De otra parte, como PARTE COMPRADORA:",{b:1,sep:0});
   await opciones("",[["particular","Particular (consumidor)"],["empresa","Empresa o profesional"]],tipo);
   if(tipo!=="particular")await fila([{l:"Razón social (si es empresa)",v:p.razonSocial,w:1.6},{l:"CIF",v:p.cif},{l:"Domicilio social",v:p.domicilioEmpresa,w:2.2},{l:"Cargo de quien firma",v:p.cargo}]);
@@ -323,7 +321,7 @@ async function pdfContrato(c,k){
   /* --- 1. vehículo --- */
   await titulo("1. Vehículo objeto de la compraventa");
   await fila([{l:"Marca",v:v.marca},{l:"Modelo",v:v.modelo},{l:"Versión",v:v.version,w:1.6},{l:"Color",v:v.color,w:.8}]);
-  await fila([{l:"Matrícula",v:v.matricula,w:.8},{l:"Nº de bastidor (VIN)",v:v.bastidor,w:1.7},{l:"Fecha 1ª matriculación",v:fechaS(v.fechaMatric)},{l:"Kilómetros",v:v.km?miles(String(Math.round(+v.km)))+" km":"",w:.9}]);
+  await fila([{l:"Matrícula",v:v.matricula,w:.8},{l:"Nº de bastidor (VIN)",v:v.bastidor,w:1.7},{l:"Fecha 1ª matriculación",v:fechaS(v.fechaMatric)},{l:"Kilómetros",v:"",w:.9}]);
   await fila([{l:"Combustible",v:v.combustible},{l:"Cambio",v:v.cambio},{l:"Potencia (CV)",v:v.cv,w:.8},{l:"Distintivo DGT",v:v.etiqueta,w:.8},{l:"ITV válida hasta",v:fechaS(v.itvHasta)},{l:"Nº de llaves",v:v.llaves,w:.7}]);
   await parrafo("Estado y kilometraje. La PARTE COMPRADORA sabe que adquiere un vehículo usado cuyo estado y desgaste corresponden a su antigüedad y kilometraje. HUELSAN declara que, según su leal saber y entender, los kilómetros indicados son los reales. Se informan los siguientes defectos o particularidades conocidos, que la PARTE COMPRADORA acepta de forma expresa y que no constituirán falta de conformidad:",{sep:.4});
   if(String(c.defectos||"").trim())await parrafo(c.defectos,{s:8,sep:.4});else await lineasVacias(2);
@@ -357,12 +355,12 @@ async function pdfContrato(c,k){
   const gCons="Al tratarse de un vehículo de segunda mano, las partes pactan expresamente, conforme al art. 120.1 del Real Decreto Legislativo 1/2007 (TRLGDCU), que HUELSAN responde de las faltas de conformidad que se manifiesten en el plazo de UN (1) AÑO desde la entrega y, conforme a su art. 121, que se presumirá que las faltas de conformidad manifestadas en ese año ya existían al entregarlo, salvo que sea incompatible con la naturaleza del vehículo o de la falta. La PARTE COMPRADORA podrá exigir la reparación o, si procede, la sustitución, gratis y en un plazo razonable, y en los casos legales la rebaja del precio o la resolución del contrato. La acción prescribe a los cinco años desde la manifestación de la falta de conformidad.";
   const gEmp="Si la PARTE COMPRADORA compra para su actividad empresarial o profesional, no se aplica el régimen del TRLGDCU; HUELSAN le otorga contractualmente una garantía de UN (1) AÑO desde la entrega frente a averías o defectos preexistentes, mediante reparación sin coste en el taller que HUELSAN designe, y supletoriamente rigen el Código de Comercio y el Código Civil.";
   const ga=c.garantia||{};
-  const gCia=`La garantía se presta a través de la compañía de garantías ${ga.empresa||"______________________________"}, nº de garantía o póliza ${ga.referencia||"____________________"}, contratada por HUELSAN, cuyas condiciones se entregan aparte a la PARTE COMPRADORA; ello no limita la responsabilidad legal de HUELSAN como vendedora. `;
+  const gCia="La garantía se presta a través de una compañía de garantías contratada por HUELSAN. Su nombre y el número de garantía o póliza, que se conocen después de la venta, se comunicarán a la PARTE COMPRADORA junto con las condiciones de la garantía: compañía ______________________________, nº ____________________. Ello no limita la responsabilidad legal de HUELSAN como vendedora. ";
   const gComun=gCia+"Procedimiento: comunicar la incidencia por escrito lo antes posible a HUELSAN o a la compañía de garantías y poner el vehículo a disposición de HUELSAN o del taller que se designe; el plazo se suspende mientras el vehículo esté en reparación. No son falta de conformidad ni están cubiertos: el desgaste normal de piezas de uso y consumo (neumáticos, frenos, embrague, escobillas, batería, lámparas, filtros, líquidos y similares) acorde con la antigüedad y los kilómetros; las averías por uso inadecuado, accidente, falta del mantenimiento del fabricante, competición o modificaciones posteriores a la entrega; los defectos aceptados en la cláusula 1; y las reparaciones hechas por terceros sin avisar antes a HUELSAN, salvo urgencia justificada o falta de respuesta en un plazo razonable. Todo ello sin perjuicio de los derechos irrenunciables de los consumidores.";
   await clausula(n++,"Garantía de un año",(tipo==="empresa"?gEmp:tipo==="particular"?gCons:"Si la PARTE COMPRADORA es consumidora: "+gCons+" "+gEmp)+" "+gComun);
   if(c.contratacion==="distancia")await clausula(n++,"Derecho de desistimiento","Al celebrarse el contrato a distancia o fuera del establecimiento, la PARTE COMPRADORA consumidora puede desistir sin justificación en el plazo de 14 días naturales desde la entrega (arts. 102 y ss. TRLGDCU), comunicándolo por cualquier medio fehaciente. HUELSAN reembolsará lo pagado en 14 días desde la comunicación, pudiendo retenerlo hasta recibir el vehículo; la PARTE COMPRADORA asume el coste directo de devolución y responde de la pérdida de valor por un uso distinto del necesario para comprobar el vehículo.");
   await clausula(n++,"Protección de datos",`Responsable: ${e.razonSocial||"Huelsan SL"}${e.nif?", CIF "+e.nif:""}. Los datos se tratan para gestionar este contrato, la transferencia, la factura, la garantía y las obligaciones legales (base: ejecución del contrato y obligación legal; RGPD y LO 3/2018). Se comunican a la DGT, a la Administración tributaria, a la gestoría y, en su caso, a la entidad financiera, y se conservan los plazos legales. Puede ejercer sus derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad en ${e.email||"__________________________"} y reclamar ante la AEPD.`);
-  await clausula(n++,"Reclamaciones, ley y jurisdicción","HUELSAN dispone de hojas de reclamaciones. El contrato se rige por la ley española. "+(tipo==="empresa"?`Las partes se someten a los juzgados de ${c.jurisdiccion||"______________"}.`:tipo==="particular"?"Serán competentes los juzgados del domicilio de la PARTE COMPRADORA.":`Si la PARTE COMPRADORA es consumidora, serán competentes los juzgados de su domicilio; si es empresa, las partes se someten a los juzgados de ${c.jurisdiccion||"______________"}.`));
+  await clausula(n++,"Reclamaciones, ley y jurisdicción","HUELSAN dispone de hojas de reclamaciones. El contrato se rige por la ley española. "+(tipo==="particular"?"Serán competentes los juzgados del domicilio de la PARTE COMPRADORA, conforme a la normativa de consumidores.":tipo==="empresa"?"Las partes se someten a los juzgados y tribunales de Murcia, con renuncia a cualquier otro fuero.":"Las partes se someten a los juzgados y tribunales de Murcia, salvo que la PARTE COMPRADORA sea consumidora, en cuyo caso serán competentes los de su domicilio."));
   await clausula(n++,"Observaciones y pactos adicionales",String(c.observaciones||"").trim()||" ");
   if(!String(c.observaciones||"").trim())await lineasVacias(2);
   await parrafo("Y en prueba de conformidad, las partes firman este contrato por duplicado y en cada una de sus hojas, en el lugar, fecha y hora del encabezamiento.",{sep:1});
@@ -414,9 +412,8 @@ async function generarContrato(c){
   for(;;){doc=await pdfContrato(c,k);if(doc.getNumberOfPages()<=2||k<=.72)break;k=Math.round((k-.04)*100)/100}
   doc.__principal=doc.getNumberOfPages();
   const p=c.comprador||{},rep=(CT.reps||{})[c.rep]||{};
-  if(c.incluirDNI!==false){
-  await anexoDNI(doc,c,"Parte compradora",[p.nombre,p.apellidos].filter(Boolean).join(" "),p.dni,c.dniComprador);
-  await anexoDNI(doc,c,"Parte vendedora · representante de HUELSAN",(c.vendedor||{}).nombre,(c.vendedor||{}).dni,c.rep?rep.dniArchivos:[]);}
+  if(dniSi(c,"Comprador"))await anexoDNI(doc,c,"Parte compradora",[p.nombre,p.apellidos].filter(Boolean).join(" "),p.dni,c.dniComprador);
+  if(dniSi(c,"Vendedor"))await anexoDNI(doc,c,"Parte vendedora · representante de HUELSAN",(c.vendedor||{}).nombre,(c.vendedor||{}).dni,c.rep?rep.dniArchivos:[]);
   pies(doc,c);
   return doc;
 }
