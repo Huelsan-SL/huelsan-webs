@@ -13,3 +13,6 @@ Ambos sitios son estáticos en Netlify (sin compilación), cada uno con su carpe
 - `supabase/07-duplicados.sql`: un coche = bastidor + subasta (BCA a veces cambia el LotId del mismo coche).
 - `supabase/08-busquedas-resenas.sql` + función `supabase/functions/avisos`: coincidencias de búsquedas clave, reseñas, texto de venta en la web y formulario v2. Tarea pg_cron `huelsan-avisos` cada 15 min.
 - `gestion/index.html` ya no se regenera desde el artifact: se edita directamente (el artifact quedó como copia el 27/10).
+
+## Contratos de compraventa (13/11/2026)
+- `gestion/facturacion/contrato.js`: pestaña «Contratos» en Facturación y botón «Contrato de compraventa» en cada factura. Genera el PDF (máx. 2 páginas) con los datos de la factura; lo que no se rellena sale en blanco para completarlo a mano. Incluye la ubicación de la compra (lista `config/ubicaciones`). Datos en `ajustes` → `contratos/<id>` y representantes en `contratoscfg/representantes`. No necesita SQL.
