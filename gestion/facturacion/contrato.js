@@ -178,6 +178,7 @@ function vistaEditorC(){
       ${p.tipo!=="particular"?inp("jurisdiccion","Juzgados competentes si compra una empresa",{ph:"Ej.: Murcia",list:"ct-ubics"}):""}
       <label>Observaciones y pactos adicionales<textarea data-c="observaciones" rows="3">${esc(c.observaciones||"")}</textarea></label></div></div>
   <div class="bar"><button class="btn" data-ct="guardar">Guardar</button><button class="btn primary" data-ct="pdf">Descargar PDF</button>
+    <label style="flex-direction:row;display:flex;gap:6px;align-items:center;color:var(--ink);font-weight:500"><input type="checkbox" data-c="incluirDNI" ${c.incluirDNI!==false?"checked":""} style="width:auto"> Añadir las páginas con la copia de los DNI</label>
     ${c.facturaId&&S.facturas.has(c.facturaId)?`<button class="btn" data-ct="refrescar">Volver a coger datos de la factura</button><button class="btn" data-ct="ir-factura">Ir a la factura</button>`:""}
     <span style="flex:1"></span>${CT.lista.has(c.id)?`<button class="btn peligro" data-ct="borrar">Borrar contrato</button>`:""}</div>`;
 }
@@ -413,8 +414,9 @@ async function generarContrato(c){
   for(;;){doc=await pdfContrato(c,k);if(doc.getNumberOfPages()<=2||k<=.72)break;k=Math.round((k-.04)*100)/100}
   doc.__principal=doc.getNumberOfPages();
   const p=c.comprador||{},rep=(CT.reps||{})[c.rep]||{};
+  if(c.incluirDNI!==false){
   await anexoDNI(doc,c,"Parte compradora",[p.nombre,p.apellidos].filter(Boolean).join(" "),p.dni,c.dniComprador);
-  await anexoDNI(doc,c,"Parte vendedora · representante de HUELSAN",(c.vendedor||{}).nombre,(c.vendedor||{}).dni,c.rep?rep.dniArchivos:[]);
+  await anexoDNI(doc,c,"Parte vendedora · representante de HUELSAN",(c.vendedor||{}).nombre,(c.vendedor||{}).dni,c.rep?rep.dniArchivos:[]);}
   pies(doc,c);
   return doc;
 }
