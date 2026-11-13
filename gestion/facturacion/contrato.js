@@ -9,7 +9,7 @@
 (function(){
 "use strict";
 const CT={lista:new Map(),ed:null,sucio:false,reps:{},ubics:["Huelva","Murcia"],forzar:false};
-const REPS_DEF={francisco:{nombre:"Francisco Álvarez González",dni:"",cargo:""},gustavo:{nombre:"Gustavo Fornell Lacida",dni:"",cargo:""}};
+const REPS_DEF={francisco:{nombre:"Francisco José Álvarez González",dni:"49107393R",cargo:"",dniArchivos:[]},gustavo:{nombre:"Gustavo Fornell Lacida",dni:"48121035K",cargo:"",dniArchivos:[]},garantiaEmpresa:""};
 const DOCS=[["permiso","Permiso de circulación"],["ficha","Tarjeta ITV (ficha técnica)"],["itv","Informe ITV en vigor"],["factura","Factura de compraventa"],["libro","Libro de mantenimiento"],["manual","Manual de usuario"],["llaves","Llaves"],["garantia","Documento de garantía"],["dgt","Informe DGT del vehículo"]];
 const MEDIOS=["Transferencia bancaria","Financiación","Tarjeta","Efectivo","Bizum","Mixto"];
 const get=(o,r)=>r.split(".").reduce((x,k)=>x==null?x:x[k],o);
@@ -46,7 +46,7 @@ function contratoVacio(){
     precio:{regimen:"",base:"",cuota:"",total:"",letra:"",gastos:"",gastosImporte:""},
     pago:{senal:"",senalFecha:"",medio:"",fechaLimite:"",entidad:"",financiado:"",detalle:""},
     permuta:{marcaModelo:"",matricula:"",bastidor:"",km:"",valor:""},
-    entrega:{fecha:"",hora:"",lugar:""},docs:{},transferencia:"",contratacion:"establecimiento",jurisdiccion:"",observaciones:"",
+    entrega:{fecha:"",hora:"",lugar:""},docs:{},transferencia:"",garantia:{empresa:(CT.reps&&CT.reps.garantiaEmpresa)||"",referencia:""},dniComprador:[],contratacion:"establecimiento",jurisdiccion:"",observaciones:"",
     creado:new Date().toISOString()};
 }
 const loteDe=id=>S.lotes.find(x=>x.id===id);
@@ -104,6 +104,7 @@ function enLetra(n){
 
 /* ---------- vistas ---------- */
 const nombreComprador=c=>{const p=c.comprador||{};const pers=[p.nombre,p.apellidos].filter(Boolean).join(" ");return p.tipo==="empresa"&&p.razonSocial?p.razonSocial+(pers?" ("+pers+")":""):pers||p.razonSocial||""};
+const listaArch=(arr,quien)=>`<div class="files">${(arr||[]).map((a,i)=>`<div><span>${esc(a.nombre||"Copia")} <span class="muted">${a.size?Math.round(a.size/1024)+" KB":""}</span></span><span class="row"><button class="btn sm" data-ver-archivo="${esc(a.ruta)}" data-nombre="${esc(a.nombre||"dni.jpg")}">Ver</button><button class="btn sm" data-ct-quitar="${esc(quien)}|${i}">Quitar</button></span></div>`).join("")||`<span class="muted">Sin copia: en el contrato sale una página con recuadros para grapar la fotocopia.</span>`}</div>`;
 function vistaLista(){
   const ls=[...CT.lista.values()].sort((a,b)=>String(b.fecha||b.creado||"").localeCompare(String(a.fecha||a.creado||"")));
   const facts=[...S.facturas.values()].sort((a,b)=>String(b.fechaExpedicion||"").localeCompare(String(a.fechaExpedicion||""))).slice(0,80);
@@ -116,8 +117,10 @@ function vistaLista(){
       <td>${esc([c.vehiculo.marca,c.vehiculo.modelo].filter(Boolean).join(" ")||"—")} ${c.vehiculo.matricula?`<span class="mat">${esc(c.vehiculo.matricula)}</span>`:""}</td><td>${esc(c.ubicacion||"—")}</td><td>${esc(c.facturaCodigo||(c.facturaId?"Borrador":"—"))}</td></tr>`).join("")}</tbody></table></div>`
     :`<div class="vacio">Aún no hay contratos. Crea uno en blanco o desde una factura (también con el botón «Contrato de compraventa» dentro de cada factura).</div>`}
   <div class="card"><h3>Representantes de Huelsan (firman por la empresa)</h3>
-    ${["francisco","gustavo"].map(k=>`<div class="g3"><label>Nombre y apellidos<input data-rep="${k}.nombre" value="${esc((r[k]||{}).nombre||"")}"></label><label>DNI / NIE<input data-rep="${k}.dni" value="${esc((r[k]||{}).dni||"")}"></label><label>Cargo <small>administrador, apoderado…</small><input data-rep="${k}.cargo" value="${esc((r[k]||{}).cargo||"")}"></label></div>`).join("")}
-    <div class="row"><button class="btn" data-ct="guardar-reps">Guardar representantes</button><span class="muted">Se copian en cada contrato al elegir quién firma.</span></div></div>`;
+    ${["francisco","gustavo"].map(k=>`<div class="g3"><label>Nombre y apellidos<input data-rep="${k}.nombre" value="${esc((r[k]||{}).nombre||"")}"></label><label>DNI / NIE<input data-rep="${k}.dni" value="${esc((r[k]||{}).dni||"")}"></label><label>Cargo <small>administrador, apoderado…</small><input data-rep="${k}.cargo" value="${esc((r[k]||{}).cargo||"")}"></label></div>
+      <div class="row sp"><span class="muted">Copia del DNI de ${esc(((r[k]||{}).nombre||k).split(" ")[0])} (anverso y reverso):</span><label class="btn sm" style="display:inline-flex;color:var(--ink)">Subir foto o PDF<input type="file" data-ct-file="rep:${k}" accept="image/*,application/pdf" multiple hidden></label></div>${listaArch((r[k]||{}).dniArchivos,"rep:"+k)}`).join("")}
+    <label>Compañía de garantía por defecto <small>sale en la cláusula de garantía de los contratos nuevos</small><input data-rep="garantiaEmpresa" value="${esc(r.garantiaEmpresa||"")}" placeholder="Nombre de la empresa de garantías"></label>
+    <div class="row"><button class="btn" data-ct="guardar-reps">Guardar representantes</button><span class="muted">Se copian en cada contrato al elegir quién firma. La copia del DNI sale en una página aparte del contrato.</span></div></div>`;
 }
 const inp=(ruta,lab,o={})=>{const v=get(CT.ed,ruta);return`<label${o.cls?` class="${o.cls}"`:""}>${lab}${o.small?` <small>${o.small}</small>`:""}<input data-c="${ruta}" value="${esc(v??"")}"${o.type?` type="${o.type}"`:""}${o.list?` list="${o.list}"`:""}${o.ph?` placeholder="${esc(o.ph)}"`:""}${o.num?' inputmode="decimal"':""}></label>`};
 const sel=(ruta,lab,ops)=>{const v=get(CT.ed,ruta)||"";return`<label>${lab}<select data-c="${ruta}"><option value="">— En blanco —</option>${ops.map(o=>{const[k,t]=Array.isArray(o)?o:[o,o];return`<option value="${esc(k)}" ${v===k?"selected":""}>${esc(t)}</option>`}).join("")}</select></label>`};
@@ -137,14 +140,17 @@ function vistaEditorC(){
     <div class="card"><h3>Vendedor · ${esc((S.emisor||{}).razonSocial||"Huelsan SL")}</h3>
       <p class="muted" style="margin:0">Razón social, CIF, domicilio y registro salen de «Datos fiscales».</p>
       <label>Firma por Huelsan<select data-ct-change="rep"><option value="">— En blanco —</option>${["francisco","gustavo"].map(k=>`<option value="${k}" ${c.rep===k?"selected":""}>${esc(((CT.reps||{})[k]||REPS_DEF[k]).nombre)}</option>`).join("")}</select></label>
-      <div class="g3">${inp("vendedor.nombre","Nombre y apellidos")}${inp("vendedor.dni","DNI / NIE")}${inp("vendedor.cargo","Cargo")}</div></div>
+      <div class="g3">${inp("vendedor.nombre","Nombre y apellidos")}${inp("vendedor.dni","DNI / NIE")}${inp("vendedor.cargo","Cargo")}</div>
+      ${(()=>{const n=c.rep&&((CT.reps||{})[c.rep]||{}).dniArchivos?CT.reps[c.rep].dniArchivos.length:0;return`<p class="muted" style="margin:0">Copia del DNI del vendedor: ${n?`${n} ${n===1?"imagen guardada":"imágenes guardadas"} en «Representantes»`:"sin copia (se sube en la lista de Contratos → Representantes); sale una página con recuadros"}.</p>`})()}</div>
     <div class="card"><div class="row sp"><h3>Comprador</h3>${seg("comprador.tipo",[["","Sin indicar"],["particular","Particular"],["empresa","Empresa"]])}</div>
       <label>Coger de un cliente guardado<select data-ct-change="cliente"><option value="">— Elige —</option>${[...S.clientes.values()].sort((a,b)=>nombreCliente(a).localeCompare(nombreCliente(b))).map(x=>`<option value="${esc(x.id)}">${esc(nombreCliente(x))} · ${esc(x.nif||"")}</option>`).join("")}</select></label>
       ${emp?`<div class="g3">${inp("comprador.razonSocial","Razón social")}${inp("comprador.cif","CIF")}${inp("comprador.cargo","Cargo de quien firma")}</div>${inp("comprador.domicilioEmpresa","Domicilio social")}<p class="muted" style="margin:0">Persona que firma en nombre de la empresa:</p>`:""}
       <div class="g3">${inp("comprador.nombre","Nombre")}${inp("comprador.apellidos","Apellidos")}${inp("comprador.dni","DNI / NIE")}</div>
       ${inp("comprador.domicilio","Domicilio")}
       <div class="g3">${inp("comprador.cp","C. P.")}${inp("comprador.municipio","Localidad")}${inp("comprador.provincia","Provincia")}</div>
-      <div class="g2">${inp("comprador.telefono","Teléfono")}${inp("comprador.email","Correo")}</div></div></div>
+      <div class="g2">${inp("comprador.telefono","Teléfono")}${inp("comprador.email","Correo")}</div>
+      <div class="row sp"><b style="font-size:13px">Copia del DNI del comprador</b><label class="btn sm" style="display:inline-flex;color:var(--ink)">Subir foto o PDF<input type="file" data-ct-file="comprador" accept="image/*,application/pdf" multiple hidden></label></div>
+      ${listaArch(c.dniComprador,"comprador")}</div></div>
   <div class="card"><div class="row sp"><h3>Vehículo</h3><label style="flex:1 1 320px;max-width:520px">Coger datos de un coche de la app<select data-ct-change="lote"><option value="">— Elige un coche —</option>${lotesOpc.map(l=>`<option value="${esc(l.id)}" ${c.loteId===l.id?"selected":""}>${esc([l.marca,l.modelo].filter(Boolean).join(" "))} · ${esc(l.matricula||"sin matrícula")}</option>`).join("")}</select></label></div>
     <div class="g4">${inp("vehiculo.marca","Marca")}${inp("vehiculo.modelo","Modelo")}${inp("vehiculo.version","Versión")}${inp("vehiculo.color","Color")}</div>
     <div class="g4">${inp("vehiculo.matricula","Matrícula")}${inp("vehiculo.bastidor","Nº de bastidor (VIN)")}${inp("vehiculo.fechaMatric","1ª matriculación",{type:"date"})}${inp("vehiculo.km","Kilómetros",{num:1})}</div>
@@ -168,6 +174,7 @@ function vistaEditorC(){
       <div class="g3">${DOCS.map(([k,t])=>`<label style="flex-direction:row;display:flex;gap:6px;align-items:center;color:var(--ink);font-weight:500"><input type="checkbox" data-c="docs.${k}" ${c.docs[k]?"checked":""} style="width:auto"> ${t}</label>`).join("")}</div></div>
     <div class="card"><h3>Transferencia y otros</h3>
       <div class="row"><span class="muted">Gestiona el cambio de titular:</span>${seg("transferencia",[["","Sin indicar"],["huelsan","Huelsan"],["comprador","El comprador"]])}</div>
+      <div class="g2">${inp("garantia.empresa","Compañía de garantía",{ph:"Empresa de garantías"})}${inp("garantia.referencia","Nº de garantía / póliza")}</div>
       ${p.tipo!=="particular"?inp("jurisdiccion","Juzgados competentes si compra una empresa",{ph:"Ej.: Murcia",list:"ct-ubics"}):""}
       <label>Observaciones y pactos adicionales<textarea data-c="observaciones" rows="3">${esc(c.observaciones||"")}</textarea></label></div></div>
   <div class="bar"><button class="btn" data-ct="guardar">Guardar</button><button class="btn primary" data-ct="pdf">Descargar PDF</button>
@@ -189,6 +196,7 @@ function escribir(t){
 $("#vista").addEventListener("input",e=>{const t=e.target;if(S.tab!=="contratos"||!CT.ed||!t.dataset.c||t.type==="radio"||t.type==="checkbox")return;escribir(t)});
 $("#vista").addEventListener("change",e=>{const t=e.target;if(S.tab!=="contratos")return;
   if(t.dataset.ctChange==="desde-factura"){const f=S.facturas.get(t.value);if(f)abrirDesdeFactura(f);return}
+  if(t.dataset.ctFile){const files=[...t.files];t.value="";if(files.length)subirCopias(t.dataset.ctFile,files).catch(err=>toast(err.message||String(err),6000));return}
   if(!CT.ed)return;
   if(t.dataset.c){const r=escribir(t);if(t.type==="radio"||t.tagName==="SELECT"||REPINTA.test(r))repintar();return}
   const a=t.dataset.ctChange;
@@ -204,6 +212,7 @@ function abrirDesdeFactura(f){const ex=[...CT.lista.values()].find(c=>c.facturaI
 document.addEventListener("click",async e=>{
   const t=e.target;
   const ab=t.closest("[data-ct-abrir]");if(ab&&S.tab==="contratos"&&!CT.ed){const c=CT.lista.get(ab.dataset.ctAbrir);if(c)abrir(c);return}
+  const qa=t.closest("[data-ct-quitar]");if(qa){e.preventDefault();const[quien,i]=qa.dataset.ctQuitar.split("|");quitarCopia(quien,+i).catch(err=>toast(err.message||String(err),6000));return}
   const b=t.closest("[data-ct]");if(!b)return;e.preventDefault();const a=b.dataset.ct;
   try{
     if(a==="desde-factura"){if(S.edSucio&&S.ed.estado==="borrador"&&!confirm("La factura tiene cambios sin guardar. El contrato se hará con los datos que ves ahora. ¿Seguir sin guardar la factura?"))return;abrirDesdeFactura(S.ed)}
@@ -214,11 +223,39 @@ document.addEventListener("click",async e=>{
     else if(a==="letra"){CT.ed.precio.letra=enLetra(+CT.ed.precio.total);CT.sucio=true;repintar()}
     else if(a==="refrescar"){const f=S.facturas.get(CT.ed.facturaId);if(f&&confirm("Se sustituyen comprador, vehículo y precio por los de la factura. ¿Seguir?")){desdeFactura(f,CT.ed);CT.sucio=true;repintar();toast("Datos de la factura cogidos")}}
     else if(a==="ir-factura"){if(CT.sucio&&!confirm("Hay cambios sin guardar. ¿Salir sin guardarlos?"))return;const id=CT.ed.facturaId;CT.ed=null;CT.sucio=false;S.tab="facturas";pintarTabs();abrirFactura(id)}
-    else if(a==="borrar"){if(await confirmar("¿Borrar este contrato?","Solo se borra el contrato; la factura no cambia.","Borrar")){await S.db.doc("contratos/"+CT.ed.id).delete();CT.ed=null;CT.sucio=false;repintar();toast("Contrato borrado")}}
-    else if(a==="guardar-reps"){const r=JSON.parse(JSON.stringify(CT.reps&&CT.reps.francisco?CT.reps:REPS_DEF));$$("[data-rep]").forEach(i=>setRuta(r,i.dataset.rep,i.value.trim()));
-      await S.db.doc("contratoscfg/representantes").set(r);CT.reps=r;toast("Representantes guardados")}
+    else if(a==="borrar"){if(await confirmar("¿Borrar este contrato?","Solo se borra el contrato; la factura no cambia.","Borrar")){for(const x of CT.ed.dniComprador||[])await HUELSAN.borrarArchivo("documentos",x.ruta).catch(()=>{});await S.db.doc("contratos/"+CT.ed.id).delete();CT.ed=null;CT.sucio=false;repintar();toast("Contrato borrado")}}
+    else if(a==="guardar-reps"){await guardarReps(repsDelFormulario());toast("Representantes guardados")}
   }catch(err){toast(err.message||String(err),6000)}
 });
+/* ---------- copias del DNI (almacén privado «documentos», como imágenes JPEG) ---------- */
+const BASE=new URL("../",location.href).href;
+async function pdfjs(){if(window.__pdfjs)return window.__pdfjs;const lib=await import(BASE+"pdf.min.mjs");
+  if(!globalThis.pdfjsWorker)globalThis.pdfjsWorker=await import(BASE+"pdf.worker.min.mjs");lib.GlobalWorkerOptions.workerSrc=BASE+"pdf.worker.min.mjs";return window.__pdfjs=lib}
+const aJPEG=cv=>new Promise((ok,ko)=>cv.toBlob(b=>b?ok(b):ko(new Error("No se pudo convertir la imagen")),"image/jpeg",.85));
+function lienzo(src,w,h,max=1800){const r=Math.min(1,max/Math.max(w,h));const cv=document.createElement("canvas");cv.width=Math.round(w*r);cv.height=Math.round(h*r);
+  const x=cv.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,cv.width,cv.height);x.drawImage(src,0,0,cv.width,cv.height);return cv}
+async function imagenesDe(file){
+  if(file.type==="application/pdf"||/\.pdf$/i.test(file.name)){const lib=await pdfjs();const d=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false}).promise;const out=[];
+    for(let n=1;n<=Math.min(2,d.numPages);n++){const pg=await d.getPage(n);const v1=pg.getViewport({scale:1});const vp=pg.getViewport({scale:Math.min(3,1800/Math.max(v1.width,v1.height))});
+      const cv=document.createElement("canvas");cv.width=vp.width;cv.height=vp.height;const x=cv.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,cv.width,cv.height);await pg.render({canvasContext:x,viewport:vp}).promise;out.push(await aJPEG(cv))}
+    return out}
+  let src;try{src=await createImageBitmap(file,{imageOrientation:"from-image"})}catch(e){src=new Image();src.src=URL.createObjectURL(file);await src.decode()}
+  return[await aJPEG(lienzo(src,src.width,src.height))]}
+async function subirArchivos(files){const res=[];for(const f of files){toast("Subiendo "+f.name+"…",20000);
+  for(const b of await imagenesDe(f)){const r=await HUELSAN.subir("documentos",b);res.push({ruta:r.id,nombre:f.name.replace(/\.[^.]+$/,"")+".jpg",tipo:"image/jpeg",size:b.size,subido:new Date().toISOString()})}}return res}
+function repsDelFormulario(){const r=JSON.parse(JSON.stringify(CT.reps&&CT.reps.francisco?CT.reps:REPS_DEF));$$("[data-rep]").forEach(i=>setRuta(r,i.dataset.rep,i.value.trim()));return r}
+async function guardarReps(r){await S.db.doc("contratoscfg/representantes").set(r);CT.reps=r}
+async function subirCopias(quien,files){
+  const nuevos=await subirArchivos(files);
+  if(quien==="comprador"){CT.ed.dniComprador=[...(CT.ed.dniComprador||[]),...nuevos];await guardarC();repintar()}
+  else{const k=quien.split(":")[1];const r=repsDelFormulario();r[k]=r[k]||{};r[k].dniArchivos=[...(r[k].dniArchivos||[]),...nuevos];await guardarReps(r);repintar()}
+  toast("Copia guardada");
+}
+async function quitarCopia(quien,i){
+  if(!confirm("¿Quitar esta copia del DNI? Se borra del almacén."))return;
+  if(quien==="comprador"){const[x]=CT.ed.dniComprador.splice(i,1);if(x)await HUELSAN.borrarArchivo("documentos",x.ruta).catch(()=>{});await guardarC();repintar()}
+  else{const k=quien.split(":")[1];const r=repsDelFormulario();const[x]=((r[k]||{}).dniArchivos||[]).splice(i,1);if(x)await HUELSAN.borrarArchivo("documentos",x.ruta).catch(()=>{});await guardarReps(r);repintar()}
+}
 async function guardarC(){const d=JSON.parse(JSON.stringify(CT.ed));delete d.id;d.actualizado=new Date().toISOString();await S.db.doc("contratos/"+CT.ed.id).set(d);CT.sucio=false}
 
 /* ======================================================================
@@ -318,7 +355,9 @@ async function pdfContrato(c,k){
   await opciones("Gestiona la transferencia:",[["huelsan","HUELSAN"],["comprador","La PARTE COMPRADORA"]],c.transferencia||"");
   const gCons="Al tratarse de un vehículo de segunda mano, las partes pactan expresamente, conforme al art. 120.1 del Real Decreto Legislativo 1/2007 (TRLGDCU), que HUELSAN responde de las faltas de conformidad que se manifiesten en el plazo de UN (1) AÑO desde la entrega y, conforme a su art. 121, que se presumirá que las faltas de conformidad manifestadas en ese año ya existían al entregarlo, salvo que sea incompatible con la naturaleza del vehículo o de la falta. La PARTE COMPRADORA podrá exigir la reparación o, si procede, la sustitución, gratis y en un plazo razonable, y en los casos legales la rebaja del precio o la resolución del contrato. La acción prescribe a los cinco años desde la manifestación de la falta de conformidad.";
   const gEmp="Si la PARTE COMPRADORA compra para su actividad empresarial o profesional, no se aplica el régimen del TRLGDCU; HUELSAN le otorga contractualmente una garantía de UN (1) AÑO desde la entrega frente a averías o defectos preexistentes, mediante reparación sin coste en el taller que HUELSAN designe, y supletoriamente rigen el Código de Comercio y el Código Civil.";
-  const gComun="Procedimiento: comunicar la incidencia por escrito lo antes posible y poner el vehículo a disposición de HUELSAN o del taller que designe; el plazo se suspende mientras el vehículo esté en reparación. No son falta de conformidad ni están cubiertos: el desgaste normal de piezas de uso y consumo (neumáticos, frenos, embrague, escobillas, batería, lámparas, filtros, líquidos y similares) acorde con la antigüedad y los kilómetros; las averías por uso inadecuado, accidente, falta del mantenimiento del fabricante, competición o modificaciones posteriores a la entrega; los defectos aceptados en la cláusula 1; y las reparaciones hechas por terceros sin avisar antes a HUELSAN, salvo urgencia justificada o falta de respuesta en un plazo razonable. Todo ello sin perjuicio de los derechos irrenunciables de los consumidores.";
+  const ga=c.garantia||{};
+  const gCia=`La garantía se presta a través de la compañía de garantías ${ga.empresa||"______________________________"}, nº de garantía o póliza ${ga.referencia||"____________________"}, contratada por HUELSAN, cuyas condiciones se entregan aparte a la PARTE COMPRADORA; ello no limita la responsabilidad legal de HUELSAN como vendedora. `;
+  const gComun=gCia+"Procedimiento: comunicar la incidencia por escrito lo antes posible a HUELSAN o a la compañía de garantías y poner el vehículo a disposición de HUELSAN o del taller que se designe; el plazo se suspende mientras el vehículo esté en reparación. No son falta de conformidad ni están cubiertos: el desgaste normal de piezas de uso y consumo (neumáticos, frenos, embrague, escobillas, batería, lámparas, filtros, líquidos y similares) acorde con la antigüedad y los kilómetros; las averías por uso inadecuado, accidente, falta del mantenimiento del fabricante, competición o modificaciones posteriores a la entrega; los defectos aceptados en la cláusula 1; y las reparaciones hechas por terceros sin avisar antes a HUELSAN, salvo urgencia justificada o falta de respuesta en un plazo razonable. Todo ello sin perjuicio de los derechos irrenunciables de los consumidores.";
   await clausula(n++,"Garantía de un año",(tipo==="empresa"?gEmp:tipo==="particular"?gCons:"Si la PARTE COMPRADORA es consumidora: "+gCons+" "+gEmp)+" "+gComun);
   if(c.contratacion==="distancia")await clausula(n++,"Derecho de desistimiento","Al celebrarse el contrato a distancia o fuera del establecimiento, la PARTE COMPRADORA consumidora puede desistir sin justificación en el plazo de 14 días naturales desde la entrega (arts. 102 y ss. TRLGDCU), comunicándolo por cualquier medio fehaciente. HUELSAN reembolsará lo pagado en 14 días desde la comunicación, pudiendo retenerlo hasta recibir el vehículo; la PARTE COMPRADORA asume el coste directo de devolución y responde de la pérdida de valor por un uso distinto del necesario para comprobar el vehículo.");
   await clausula(n++,"Protección de datos",`Responsable: ${e.razonSocial||"Huelsan SL"}${e.nif?", CIF "+e.nif:""}. Los datos se tratan para gestionar este contrato, la transferencia, la factura, la garantía y las obligaciones legales (base: ejecución del contrato y obligación legal; RGPD y LO 3/2018). Se comunican a la DGT, a la Administración tributaria, a la gestoría y, en su caso, a la entidad financiera, y se conservan los plazos legales. Puede ejercer sus derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad en ${e.email||"__________________________"} y reclamar ante la AEPD.`);
@@ -335,25 +374,55 @@ async function pdfContrato(c,k){
      font(0,7.6*k);doc.text(lin.filter(Boolean),x+3,y+hF-6.5*k)});
   y+=hF;
 
-  /* --- pies --- */
-  const N=doc.getNumberOfPages();
+  return doc;
+}
+function pies(doc,c){
+  const e=S.emisor||{},W=210,M=14,N=doc.getNumberOfPages();
   for(let i=1;i<=N;i++){doc.setPage(i);doc.setDrawColor(217,214,208);doc.setLineWidth(.2);doc.line(M,283,W-M,283);
-    font(0,6.6,GR);doc.text([e.razonSocial||"Huelsan SL",e.nif?"CIF "+e.nif:"",[e.domicilio,[e.cp,e.municipio].filter(Boolean).join(" ")].filter(Boolean).join(", ")].filter(Boolean).join(" · "),M,287);
+    doc.setFont("helvetica","normal");doc.setFontSize(6.6);doc.setTextColor(94,99,106);
+    doc.text([e.razonSocial||"Huelsan SL",e.nif?"CIF "+e.nif:"",[e.domicilio,[e.cp,e.municipio].filter(Boolean).join(" ")].filter(Boolean).join(", ")].filter(Boolean).join(" · "),M,287);
     doc.text(`Contrato ${c.numero||""} · Página ${i} de ${N}`,W-M,287,{align:"right"});
     doc.text("Firma vendedor: ____________   Firma comprador: ____________",M,292)}
-  return doc;
+}
+const aDataURL=b=>new Promise((ok,ko)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=()=>ko(r.error);r.readAsDataURL(b)});
+async function anexoDNI(doc,c,titulo,nombre,dni,archivos){
+  doc.addPage();const W=210,M=14,AW=W-2*M,CH=[140,110,68],GR=[94,99,106];
+  doc.setFont("helvetica","bold");doc.setFontSize(11);doc.setTextColor(27,29,32);doc.text("ANEXO · COPIA DEL DOCUMENTO DE IDENTIDAD",M,16);
+  doc.setFontSize(8.5);doc.setTextColor(...CH);doc.text(titulo.toUpperCase(),W-M,16,{align:"right"});
+  doc.setDrawColor(...CH);doc.setLineWidth(.6);doc.line(M,19,W-M,19);
+  doc.setFont("helvetica","normal");doc.setFontSize(6);doc.setTextColor(...GR);doc.text("Titular (nombre y apellidos)",M,24.5);doc.text("DNI / NIE",M+128,24.5);
+  doc.setDrawColor(150,150,150);doc.setLineWidth(.15);doc.line(M,30,M+124,30);doc.line(M+128,30,W-M,30);
+  doc.setFont("helvetica","bold");doc.setFontSize(9);doc.setTextColor(27,29,32);if(nombre)doc.text(nombre,M,29);if(dni)doc.text(dni,M+128,29);
+  const y0=36,y1=272,hueco=6;
+  const imgs=[];for(const a of (archivos||[]).slice(0,4)){try{const u=await aDataURL(await HUELSAN.bajar("documentos",a.ruta));const im=new Image();im.src=u;await im.decode();imgs.push({u,w:im.naturalWidth,h:im.naturalHeight})}catch(e){console.warn("Copia DNI no disponible",e)}}
+  if(!imgs.length){const h=(y1-y0-hueco)/2;["Anverso","Reverso"].forEach((t,i)=>{const y=y0+i*(h+hueco);doc.setDrawColor(170,170,170);doc.setLineWidth(.3);doc.setLineDashPattern([2,1.5],0);doc.rect(M,y,AW,h);doc.setLineDashPattern([],0);
+      doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(...GR);doc.text(`${t}: adjuntar aquí la fotocopia del documento de identidad`,W/2,y+h/2,{align:"center"})});
+    doc.setFontSize(6.5);doc.text(`Copia aportada solo para el contrato de compraventa nº ${c.numero||"________"}.`,W/2,y1+4,{align:"center"});return}
+  const h=(y1-y0-hueco*(imgs.length-1))/imgs.length;
+  imgs.forEach((im,i)=>{const r=Math.min(AW/im.w,h/im.h);const w=im.w*r,hh=im.h*r;const x=M+(AW-w)/2,y=y0+i*(h+hueco)+(h-hh)/2;
+    doc.addImage(im.u,"JPEG",x,y,w,hh,undefined,"FAST");doc.setDrawColor(200,197,190);doc.setLineWidth(.2);doc.rect(x,y,w,hh);
+    try{doc.saveGraphicsState();doc.setGState(new doc.GState({opacity:.35}))}catch(e){}
+    doc.setFont("helvetica","bold");doc.setFontSize(Math.max(9,Math.min(16,w/11)));doc.setTextColor(150,40,30);
+    doc.text(`COPIA SOLO PARA EL CONTRATO Nº ${c.numero||"______"} · HUELSAN`,x+w/2,y+hh/2,{align:"center",angle:18});
+    try{doc.restoreGraphicsState()}catch(e){}});
+  if((archivos||[]).length>4){doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.setTextColor(...GR);doc.text("Solo caben 4 imágenes por página: se muestran las 4 primeras.",W/2,y1+4,{align:"center"})}
 }
 async function generarContrato(c){
   if(!window.jspdf)throw new Error("No se ha podido cargar el generador de PDF");
   let k=1,doc=null;
   for(;;){doc=await pdfContrato(c,k);if(doc.getNumberOfPages()<=2||k<=.72)break;k=Math.round((k-.04)*100)/100}
+  doc.__principal=doc.getNumberOfPages();
+  const p=c.comprador||{},rep=(CT.reps||{})[c.rep]||{};
+  await anexoDNI(doc,c,"Parte compradora",[p.nombre,p.apellidos].filter(Boolean).join(" "),p.dni,c.dniComprador);
+  await anexoDNI(doc,c,"Parte vendedora · representante de HUELSAN",(c.vendedor||{}).nombre,(c.vendedor||{}).dni,c.rep?rep.dniArchivos:[]);
+  pies(doc,c);
   return doc;
 }
 async function descargarContrato(c){
   const doc=await generarContrato(c);
   const quien=nombreComprador(c).replace(/[^\wÀ-ÿ ]+/g,"").trim().replace(/\s+/g,"-");
   doc.save("Contrato"+(c.numero?"-"+c.numero:"")+(quien?"-"+quien:"")+(c.vehiculo&&c.vehiculo.matricula?"-"+c.vehiculo.matricula:"")+".pdf");
-  if(doc.getNumberOfPages()>2)toast("El contrato ocupa más de 2 páginas: acorta las observaciones o los defectos.",6000);
+  if(doc.__principal>2)toast("El contrato ocupa más de 2 páginas: acorta las observaciones o los defectos.",6000);
 }
 window.HuelsanContratos={generarContrato,desdeFactura,contratoVacio,enLetra};
 })();
