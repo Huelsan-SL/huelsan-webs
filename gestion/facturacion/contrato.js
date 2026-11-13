@@ -8,7 +8,7 @@
    cambio de titularidad en 30 días (Reglamento General de Vehículos); efectivo máx. 1.000 € (Ley 7/2012); REBU (arts. 135-139 Ley 37/1992); RGPD y LO 3/2018. */
 (function(){
 "use strict";
-const CT={lista:new Map(),ed:null,sucio:false,reps:{},ubics:["Huelva","Murcia"],forzar:false};
+const CT={paginas:[],mejorar:true,lista:new Map(),ed:null,sucio:false,reps:{},ubics:["Huelva","Murcia"],forzar:false};
 const REPS_DEF={francisco:{nombre:"Francisco José Álvarez González",dni:"49107393R",cargo:"",dniArchivos:[]},gustavo:{nombre:"Gustavo Fornell Lacida",dni:"48121035K",cargo:"",dniArchivos:[]}};
 const DOCS=[["permiso","Permiso de circulación"],["ficha","Tarjeta ITV (ficha técnica)"],["itv","Informe ITV en vigor"],["factura","Factura de compraventa"],["libro","Libro de mantenimiento"],["manual","Manual de usuario"],["llaves","Llaves"],["garantia","Documento de garantía"],["dgt","Informe DGT del vehículo"]];
 const MEDIOS=["Transferencia bancaria","Financiación","Tarjeta","Efectivo","Bizum","Mixto"];
@@ -113,9 +113,9 @@ function vistaLista(){
   return`<div class="row sp"><div><h1>Contratos de compraventa</h1><p class="muted" style="margin:4px 0 0">PDF de 2 páginas. Lo que no rellenes sale en blanco para completarlo a mano con el cliente.</p></div>
     <div class="row"><button class="btn primary" data-ct="nuevo">+ Contrato en blanco</button>
       <select data-ct-change="desde-factura" style="width:auto;max-width:340px"><option value="">Crear desde una factura…</option>${facts.map(f=>`<option value="${esc(f.id)}">${esc(f.codigo||"Borrador")} · ${esc((f.cliente||{}).nombre||"sin cliente")} · ${esc((f.vehiculo||{}).matricula||"")}</option>`).join("")}</select></div></div>
-  ${ls.length?`<div class="tw"><table><thead><tr><th>Nº</th><th>Fecha</th><th>Comprador</th><th>Vehículo</th><th>Ubicación</th><th>Factura</th></tr></thead><tbody>
+  ${ls.length?`<div class="tw"><table><thead><tr><th>Nº</th><th>Fecha</th><th>Comprador</th><th>Vehículo</th><th>Ubicación</th><th>Factura</th><th>Firmado</th></tr></thead><tbody>
     ${ls.map(c=>`<tr data-ct-abrir="${esc(c.id)}" style="cursor:pointer"><td>${esc(c.numero||"—")}</td><td>${fecha(c.fecha)}</td><td>${esc(nombreComprador(c)||"—")}</td>
-      <td>${esc([c.vehiculo.marca,c.vehiculo.modelo].filter(Boolean).join(" ")||"—")} ${c.vehiculo.matricula?`<span class="mat">${esc(c.vehiculo.matricula)}</span>`:""}</td><td>${esc(c.ubicacion||"—")}</td><td>${esc(c.facturaCodigo||(c.facturaId?"Borrador":"—"))}</td></tr>`).join("")}</tbody></table></div>`
+      <td>${esc([c.vehiculo.marca,c.vehiculo.modelo].filter(Boolean).join(" ")||"—")} ${c.vehiculo.matricula?`<span class="mat">${esc(c.vehiculo.matricula)}</span>`:""}</td><td>${esc(c.ubicacion||"—")}</td><td>${esc(c.facturaCodigo||(c.facturaId?"Borrador":"—"))}</td><td>${((c.firmado||{}).archivos||[]).length?`<span class="tag ok">Firmado</span>`:`<span class="tag">Pendiente</span>`}</td></tr>`).join("")}</tbody></table></div>`
     :`<div class="vacio">Aún no hay contratos. Crea uno en blanco o desde una factura (también con el botón «Contrato de compraventa» dentro de cada factura).</div>`}
   <div class="card"><h3>Representantes de Huelsan (firman por la empresa)</h3>
     ${["francisco","gustavo"].map(k=>`<div class="g3"><label>Nombre y apellidos<input data-rep="${k}.nombre" value="${esc((r[k]||{}).nombre||"")}"></label><label>DNI / NIE<input data-rep="${k}.dni" value="${esc((r[k]||{}).dni||"")}"></label><label>Cargo <small>administrador, apoderado…</small><input data-rep="${k}.cargo" value="${esc((r[k]||{}).cargo||"")}"></label></div>
@@ -175,6 +175,15 @@ function vistaEditorC(){
     <div class="card"><h3>Transferencia y otros</h3>
       <div class="row"><span class="muted">Gestiona el cambio de titular:</span>${seg("transferencia",[["","Sin indicar"],["huelsan","Huelsan"],["comprador","El comprador"]])}</div>
             <label>Observaciones y pactos adicionales<textarea data-c="observaciones" rows="3">${esc(c.observaciones||"")}</textarea></label></div></div>
+  <div class="card"><div class="row sp"><h3>Contrato firmado (escaneado)</h3>${((c.firmado||{}).archivos||[]).length?`<span class="tag ok">Firmado${c.firmado.fecha?" · "+fecha(c.firmado.fecha):""}</span>`:`<span class="tag">Pendiente de firmar</span>`}</div>
+    ${listaArch((c.firmado||{}).archivos,"firmado").replace(/Sin copia:[^<]*/,"Aún no se ha subido el contrato firmado.")}
+    <div class="row"><label class="btn sm" style="display:inline-flex;color:var(--ink)">📷 Hacer foto de una página<input type="file" data-ct-scan="foto" accept="image/*" capture="environment" hidden></label>
+      <label class="btn sm" style="display:inline-flex;color:var(--ink)">Subir PDF o fotos<input type="file" data-ct-scan="subir" accept="image/*,application/pdf" multiple hidden></label>
+      <label style="flex-direction:row;display:flex;gap:6px;align-items:center;color:var(--ink);font-weight:500"><input type="checkbox" id="ct-mejorar" ${CT.mejorar!==false?"checked":""} style="width:auto"> Mejorar como escáner (blanco y negro, más contraste)</label></div>
+    ${CT.paginas.length?`<div class="aviso">Páginas escaneadas sin guardar: <b>${CT.paginas.length}</b>. Haz foto de la siguiente página o pulsa «Guardar PDF firmado».</div>
+      <div class="row">${CT.paginas.map((p,i)=>`<span style="position:relative;display:inline-block"><img src="${p.url}" alt="Página ${i+1}" style="height:110px;border:1px solid var(--line);border-radius:6px;display:block"><button class="btn sm" data-ct-quitar-pag="${i}" style="position:absolute;top:2px;right:2px;padding:2px 6px" aria-label="Quitar página">✕</button><span class="muted" style="font-size:11px">Pág. ${i+1}</span></span>`).join("")}</div>
+      <div class="row"><button class="btn primary" data-ct="guardar-firmado">Guardar PDF firmado (${CT.paginas.length} ${CT.paginas.length===1?"página":"páginas"})</button><button class="btn" data-ct="descartar-escaneo">Descartar páginas</button></div>`:""}
+    <p class="muted" style="margin:0">Desde el móvil: «Hacer foto» una vez por página, en orden; al terminar, «Guardar PDF firmado» las junta en un solo PDF.</p></div>
   <div class="bar"><button class="btn" data-ct="guardar">Guardar</button><button class="btn primary" data-ct="pdf">Descargar PDF</button>
     <span class="muted">Añadir copia del DNI:</span><label style="flex-direction:row;display:flex;gap:6px;align-items:center;color:var(--ink);font-weight:500"><input type="checkbox" data-c="dniPagComprador" ${dniSi(c,"Comprador")?"checked":""} style="width:auto"> comprador</label><label style="flex-direction:row;display:flex;gap:6px;align-items:center;color:var(--ink);font-weight:500"><input type="checkbox" data-c="dniPagVendedor" ${dniSi(c,"Vendedor")?"checked":""} style="width:auto"> vendedor</label>
     ${c.facturaId&&S.facturas.has(c.facturaId)?`<button class="btn" data-ct="refrescar">Volver a coger datos de la factura</button><button class="btn" data-ct="ir-factura">Ir a la factura</button>`:""}
@@ -195,6 +204,8 @@ function escribir(t){
 $("#vista").addEventListener("input",e=>{const t=e.target;if(S.tab!=="contratos"||!CT.ed||!t.dataset.c||t.type==="radio"||t.type==="checkbox")return;escribir(t)});
 $("#vista").addEventListener("change",e=>{const t=e.target;if(S.tab!=="contratos")return;
   if(t.dataset.ctChange==="desde-factura"){const f=S.facturas.get(t.value);if(f)abrirDesdeFactura(f);return}
+  if(t.id==="ct-mejorar"){CT.mejorar=t.checked;return}
+  if(t.dataset.ctScan&&CT.ed){const files=[...t.files];t.value="";if(files.length)escanear(files).catch(err=>toast(err.message||String(err),6000));return}
   if(t.dataset.ctFile){const files=[...t.files];t.value="";if(files.length)subirCopias(t.dataset.ctFile,files).catch(err=>toast(err.message||String(err),6000));return}
   if(!CT.ed)return;
   if(t.dataset.c){const r=escribir(t);if(t.type==="radio"||t.tagName==="SELECT"||REPINTA.test(r))repintar();return}
@@ -206,23 +217,26 @@ $("#vista").addEventListener("change",e=>{const t=e.target;if(S.tab!=="contratos
     else Object.assign(p,{tipo:"particular",nombre:g.nombre||"",apellidos:g.apellidos||"",dni:nifLimpio(g.nif),domicilio:g.direccion||"",cp:g.cp||"",municipio:g.municipio||"",provincia:g.provincia||""});
     Object.assign(p,{telefono:g.telefono||"",email:g.email||""});CT.sucio=true;repintar()}
 });
-function abrir(c){CT.ed=JSON.parse(JSON.stringify(c));CT.sucio=false;S.tab="contratos";S.ed=null;S.edSucio=false;history.replaceState(null,"","?tab=contratos");pintarTabs();repintar();scrollTo(0,0)}
+function abrir(c){limpiarPaginas();CT.ed=JSON.parse(JSON.stringify(c));CT.sucio=false;S.tab="contratos";S.ed=null;S.edSucio=false;history.replaceState(null,"","?tab=contratos");pintarTabs();repintar();scrollTo(0,0)}
 function abrirDesdeFactura(f){const ex=[...CT.lista.values()].find(c=>c.facturaId===f.id);if(ex)return abrir(ex);const c=desdeFactura(f);abrir(c);CT.sucio=true}
 document.addEventListener("click",async e=>{
   const t=e.target;
   const ab=t.closest("[data-ct-abrir]");if(ab&&S.tab==="contratos"&&!CT.ed){const c=CT.lista.get(ab.dataset.ctAbrir);if(c)abrir(c);return}
+  const qp=t.closest("[data-ct-quitar-pag]");if(qp){e.preventDefault();const[x]=CT.paginas.splice(+qp.dataset.ctQuitarPag,1);if(x)URL.revokeObjectURL(x.url);repintar();return}
   const qa=t.closest("[data-ct-quitar]");if(qa){e.preventDefault();const[quien,i]=qa.dataset.ctQuitar.split("|");quitarCopia(quien,+i).catch(err=>toast(err.message||String(err),6000));return}
   const b=t.closest("[data-ct]");if(!b)return;e.preventDefault();const a=b.dataset.ct;
   try{
     if(a==="desde-factura"){if(S.edSucio&&S.ed.estado==="borrador"&&!confirm("La factura tiene cambios sin guardar. El contrato se hará con los datos que ves ahora. ¿Seguir sin guardar la factura?"))return;abrirDesdeFactura(S.ed)}
     else if(a==="nuevo"){abrir(contratoVacio());CT.sucio=true}
-    else if(a==="volver"){if(CT.sucio&&!confirm("Hay cambios sin guardar. ¿Salir sin guardarlos?"))return;CT.ed=null;CT.sucio=false;repintar()}
+    else if(a==="volver"){if(CT.paginas.length&&!confirm("Hay páginas escaneadas sin guardar. ¿Salir y descartarlas?"))return;if(CT.sucio&&!confirm("Hay cambios sin guardar. ¿Salir sin guardarlos?"))return;CT.ed=null;CT.sucio=false;repintar()}
     else if(a==="guardar"){await guardarC();toast("Contrato guardado")}
+    else if(a==="guardar-firmado")await guardarFirmado();
+    else if(a==="descartar-escaneo"){if(confirm("¿Descartar las páginas escaneadas sin guardar?")){limpiarPaginas();repintar()}}
     else if(a==="pdf"){if(CT.sucio)await guardarC();await descargarContrato(CT.ed)}
     else if(a==="letra"){CT.ed.precio.letra=enLetra(+CT.ed.precio.total);CT.sucio=true;repintar()}
     else if(a==="refrescar"){const f=S.facturas.get(CT.ed.facturaId);if(f&&confirm("Se sustituyen comprador, vehículo y precio por los de la factura. ¿Seguir?")){desdeFactura(f,CT.ed);CT.sucio=true;repintar();toast("Datos de la factura cogidos")}}
     else if(a==="ir-factura"){if(CT.sucio&&!confirm("Hay cambios sin guardar. ¿Salir sin guardarlos?"))return;const id=CT.ed.facturaId;CT.ed=null;CT.sucio=false;S.tab="facturas";pintarTabs();abrirFactura(id)}
-    else if(a==="borrar"){if(await confirmar("¿Borrar este contrato?","Solo se borra el contrato; la factura no cambia.","Borrar")){for(const x of CT.ed.dniComprador||[])await HUELSAN.borrarArchivo("documentos",x.ruta).catch(()=>{});await S.db.doc("contratos/"+CT.ed.id).delete();CT.ed=null;CT.sucio=false;repintar();toast("Contrato borrado")}}
+    else if(a==="borrar"){if(await confirmar("¿Borrar este contrato?","Solo se borra el contrato; la factura no cambia.","Borrar")){for(const x of [...(CT.ed.dniComprador||[]),...((CT.ed.firmado||{}).archivos||[])])await HUELSAN.borrarArchivo("documentos",x.ruta).catch(()=>{});await S.db.doc("contratos/"+CT.ed.id).delete();CT.ed=null;CT.sucio=false;repintar();toast("Contrato borrado")}}
     else if(a==="guardar-reps"){await guardarReps(repsDelFormulario());toast("Representantes guardados")}
   }catch(err){toast(err.message||String(err),6000)}
 });
@@ -251,9 +265,38 @@ async function subirCopias(quien,files){
   toast("Copia guardada");
 }
 async function quitarCopia(quien,i){
-  if(!confirm("¿Quitar esta copia del DNI? Se borra del almacén."))return;
+  if(!confirm(quien==="firmado"?"¿Quitar este contrato firmado? Se borra del almacén.":"¿Quitar esta copia del DNI? Se borra del almacén."))return;
+  if(quien==="firmado"){const[x]=CT.ed.firmado.archivos.splice(i,1);if(x)await HUELSAN.borrarArchivo("documentos",x.ruta).catch(()=>{});if(!CT.ed.firmado.archivos.length)CT.ed.firmado={};await guardarC();repintar();return}
   if(quien==="comprador"){const[x]=CT.ed.dniComprador.splice(i,1);if(x)await HUELSAN.borrarArchivo("documentos",x.ruta).catch(()=>{});await guardarC();repintar()}
   else{const k=quien.split(":")[1];const r=repsDelFormulario();const[x]=((r[k]||{}).dniArchivos||[]).splice(i,1);if(x)await HUELSAN.borrarArchivo("documentos",x.ruta).catch(()=>{});await guardarReps(r);repintar()}
+}
+/* ---------- contrato firmado: fotos del móvil → un PDF ---------- */
+function limpiarPaginas(){CT.paginas.forEach(p=>URL.revokeObjectURL(p.url));CT.paginas=[]}
+async function paginaEscaneada(file){
+  let src;try{src=await createImageBitmap(file,{imageOrientation:"from-image"})}catch(e){src=new Image();src.src=URL.createObjectURL(file);await src.decode()}
+  const r=Math.min(1,2200/Math.max(src.width,src.height));const cv=document.createElement("canvas");cv.width=Math.round(src.width*r);cv.height=Math.round(src.height*r);
+  const x=cv.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,cv.width,cv.height);
+  if(CT.mejorar!==false)x.filter="grayscale(1) contrast(1.45) brightness(1.12)";
+  x.drawImage(src,0,0,cv.width,cv.height);
+  const blob=await aJPEG(cv);return{blob,url:URL.createObjectURL(blob),data:await aDataURL(blob),w:cv.width,h:cv.height};
+}
+async function escanear(files){
+  const pdfs=files.filter(f=>f.type==="application/pdf"||/\.pdf$/i.test(f.name)),imgs=files.filter(f=>!pdfs.includes(f));
+  for(const f of pdfs){toast("Subiendo "+f.name+"…",20000);const r=await HUELSAN.subir("documentos",f);
+    CT.ed.firmado={fecha:hoyISO(),...(CT.ed.firmado||{}),archivos:[...((CT.ed.firmado||{}).archivos||[]),{ruta:r.id,nombre:f.name,tipo:"application/pdf",size:f.size,subido:new Date().toISOString()}]};await guardarC();toast("Contrato firmado guardado")}
+  for(const f of imgs)CT.paginas.push(await paginaEscaneada(f));
+  repintar();
+}
+async function guardarFirmado(){
+  if(!CT.paginas.length)return;toast("Creando el PDF…",20000);
+  const doc=new window.jspdf.jsPDF({unit:"mm",format:"a4",compress:true});
+  CT.paginas.forEach((p,i)=>{const apaisada=p.w>p.h*1.15;if(i)doc.addPage("a4",apaisada?"landscape":"portrait");else if(apaisada){doc.addPage("a4","landscape");doc.deletePage(1)}
+    const W=apaisada?297:210,H=apaisada?210:297,m=6;const r=Math.min((W-2*m)/p.w,(H-2*m)/p.h);const w=p.w*r,h=p.h*r;doc.addImage(p.data,"JPEG",(W-w)/2,(H-h)/2,w,h,undefined,"FAST")});
+  const blob=doc.output("blob");
+  const nombre="Contrato-firmado"+(CT.ed.numero?"-"+CT.ed.numero:"")+(CT.ed.vehiculo&&CT.ed.vehiculo.matricula?"-"+CT.ed.vehiculo.matricula:"")+".pdf";
+  const r=await HUELSAN.subir("documentos",new Blob([blob],{type:"application/pdf"}));
+  CT.ed.firmado={fecha:hoyISO(),...(CT.ed.firmado||{}),archivos:[...((CT.ed.firmado||{}).archivos||[]),{ruta:r.id,nombre,tipo:"application/pdf",size:blob.size,subido:new Date().toISOString()}]};
+  limpiarPaginas();await guardarC();repintar();toast("Contrato firmado guardado");
 }
 async function guardarC(){const d=JSON.parse(JSON.stringify(CT.ed));delete d.id;d.actualizado=new Date().toISOString();await S.db.doc("contratos/"+CT.ed.id).set(d);CT.sucio=false}
 
