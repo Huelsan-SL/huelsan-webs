@@ -225,7 +225,7 @@ async function guardarC(){const d=JSON.parse(JSON.stringify(CT.ed));delete d.id;
    PDF del contrato (A4, máximo 2 páginas)
    ====================================================================== */
 async function pdfContrato(c,k){
-  const doc=new window.jspdf.jsPDF({unit:"mm",format:"a4"});
+  const doc=new window.jspdf.jsPDF({unit:"mm",format:"a4",compress:true});
   const W=210,M=14,AW=W-2*M,LIM=279,CH=[140,110,68],GR=[94,99,106],INK=[27,29,32];
   const e=S.emisor||{};const p=c.comprador||{},v=c.vehiculo||{},pr=c.precio||{},pg=c.pago||{},pm=c.permuta||{},en=c.entrega||{};
   const tipo=p.tipo||"";
@@ -244,7 +244,7 @@ async function pdfContrato(c,k){
   const caja=(x,yy,on)=>{const s=2.7*k;doc.setDrawColor(...INK);doc.setLineWidth(.25);doc.rect(x,yy-s+.35,s,s);if(on){doc.setLineWidth(.45);doc.line(x+.5,yy-s+.85,x+s-.5,yy-.15);doc.line(x+s-.5,yy-s+.85,x+.5,yy-.15)}};
   const opciones=async(lab,ops,valor)=>{const h=5.2*k;await sitio(h);let x=M;font(1,7.4*k);if(lab){doc.text(lab,x,y+3.4*k);x+=doc.getTextWidth(lab)+3}
     for(const[kk,t]of ops){caja(x,y+3.4*k,valor===kk);font(0,7.6*k);doc.text(t,x+3.6*k,y+3.4*k);x+=3.6*k+doc.getTextWidth(t)+5}y+=h};
-  const titulo=async t=>{await sitio(9*k);y+=2.2*k;font(1,8.2*k,CH);doc.text(t.toUpperCase(),M,y+2.6*k);doc.setDrawColor(...CH);doc.setLineWidth(.3);doc.line(M,y+3.8*k,W-M,y+3.8*k);y+=6*k};
+  const titulo=async t=>{await sitio(22*k);y+=2.2*k;font(1,8.2*k,CH);doc.text(t.toUpperCase(),M,y+2.6*k);doc.setDrawColor(...CH);doc.setLineWidth(.3);doc.line(M,y+3.8*k,W-M,y+3.8*k);y+=6*k};
   const parrafo=async(t,o={})=>{const s=(o.s||7.5)*k;font(0,s,o.c);const w=o.w||AW,x=o.x||M;
     const partes=doc.splitTextToSize(t,w);const h=partes.length*lh(s);
     if(y+h>LIM){ // partir el párrafo entre páginas
