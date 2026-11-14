@@ -51,7 +51,7 @@ const get=(o,r)=>r.split(".").reduce((x,k)=>x==null?x:x[k],o);
   S.db.collection("contratos").onSnapshot(sn=>{CT.lista.clear();sn.docs.forEach(d=>CT.lista.set(d.id,{...d.data(),id:d.id}));if(S.tab==="contratos"&&!CT.ed)pintar()},e=>console.error(e));
   S.db.doc("contratoscfg/representantes").onSnapshot(sn=>{const d=sn&&sn.exists&&sn.data&&sn.data();CT.reps=d&&d.francisco?d:JSON.parse(JSON.stringify(REPS_DEF));if(S.tab==="contratos"&&!CT.ed)pintar()},()=>{CT.reps=JSON.parse(JSON.stringify(REPS_DEF))});
   S.db.doc("contratoscfg/plantillaDocs").onSnapshot(sn=>{const d=sn&&sn.exists&&sn.data&&sn.data();CT.plantilla=d&&Array.isArray(d.items)?d.items:null;if(S.tab==="contratos"&&!CT.ed)pintar()},()=>{});
-  (function abrirLote(){const id=new URLSearchParams(location.search).get("contratoLote");if(!id)return;const l=S.lotes.find(x=>x.id===id);if(!l){if(!abrirLote.n||abrirLote.n<40){abrirLote.n=(abrirLote.n||0)+1;setTimeout(abrirLote,250)}return}abrirDesdeLote(l)})();
+  {const abrirLote=function abrirLote(){const id=new URLSearchParams(location.search).get("contratoLote");if(!id)return;const l=S.lotes.find(x=>x.id===id);if(!l){if(!abrirLote.n||abrirLote.n<40){abrirLote.n=(abrirLote.n||0)+1;setTimeout(abrirLote,250)}return}abrirDesdeLote(l)};setTimeout(abrirLote,0)}
   S.db.doc("config/ubicaciones").onSnapshot(sn=>{const d=sn&&sn.exists&&sn.data&&sn.data();if(d&&Array.isArray(d.lista))CT.ubics=d.lista.filter(x=>typeof x==="string"&&x.trim())},()=>{});
 })();
 
