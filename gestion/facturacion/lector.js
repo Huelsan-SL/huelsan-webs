@@ -49,13 +49,15 @@ const MESES={enero:1,febrero:2,marzo:3,abril:4,mayo:5,junio:6,julio:7,agosto:8,s
 function iso(d,m,a){a=+a;if(a<100)a+=2000;d=+d;m=+m;if(!(d>=1&&d<=31&&m>=1&&m<=12&&a>=2000&&a<=2100))return"";return`${a}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`}
 function fechaDe(t){
   let m=t.match(/fecha[^\n\d]{0,40}?(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/i);if(m&&iso(m[1],m[2],m[3]))return iso(m[1],m[2],m[3]);
+  m=t.match(/fecha[^\n]{0,30}?\b([a-záé]+)\s+(\d{1,2}),?\s+(\d{4})/i);if(m&&MESES[m[1].toLowerCase()])return iso(m[2],MESES[m[1].toLowerCase()],m[3]);
   m=t.match(/(\d{1,2})\s+de\s+([a-záé]+)\s+(?:de\s+)?(\d{4})/i);if(m&&MESES[m[2].toLowerCase()])return iso(m[1],MESES[m[2].toLowerCase()],m[3]);
+  m=t.match(/\b([a-záé]+)\s+(\d{1,2}),\s+(\d{4})/i);if(m&&MESES[m[1].toLowerCase()])return iso(m[2],MESES[m[1].toLowerCase()],m[3]);
   const re=/\b(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4}|\d{2})\b/g;while((m=re.exec(t))){const f=iso(m[1],m[2],m[3]);if(f)return f}
   m=t.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);if(m)return iso(m[3],m[2],m[1]);return"";
 }
 function numeroDe(t,nombreArchivo){
   const malas=/^(FECHA|DE|DEL|N[ºO°]?|NUMERO|NÚMERO|CLIENTE|PAGINA|PÁGINA|DATE|NO|NUMBER|SIMPLIFICADA|RECTIFICATIVA)$/i;
-  const re=/(?:n[º°o]\.?\s*(?:de\s*)?factura|factura\s*(?:simplificada\s*)?(?:n[º°o]\.?|n[uú]m(?:ero)?\.?|n\.)?|invoice\s*(?:no\.?|number|n[º°])?|fra\.?\s*(?:n[º°o]\.?)?|ticket\s*(?:n[º°o]\.?)?|n[º°]\s*documento)\s*[:#]?\s*([A-Z0-9][A-Z0-9\-\/\.]{2,24})/gi;let m;
+  const re=/(?:n[º°o]\.?\s*(?:de\s*)?factura|factura\s*(?:simplificada\s*|de\s+venta\s*|venta\s*|de\s+compra\s*|compra\s*)?(?:n[º°o]\.?|n[uú]m(?:ero)?\.?|n\.)?|invoice\s*(?:no\.?|number|n[º°])?|fra\.?\s*(?:n[º°o]\.?)?|ticket\s*(?:n[º°o]\.?)?|n[º°]\s*documento)\s*[:#]?\s*([A-Z0-9][A-Z0-9\-\/\.]{2,24})/gi;let m;
   while((m=re.exec(t))){const v=m[1].replace(/[.\-\/]+$/,"");if(/\d/.test(v)&&!malas.test(v)&&!/^\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}$/.test(v))return v}
   m=String(nombreArchivo||"").match(/(?:invoice|factura|fra)[\s_\-]*(?:n[º°o]?[\s_\-]*)?([A-Z]{0,4}[\-_]?\d{4,})/i);return m?m[1].replace(/_/g,"-"):"";
 }
@@ -68,11 +70,28 @@ function nombreProveedor(lineas,nif,nifPropio){
   for(const l of lineas.slice(0,20)){const p=l.split(/\s{3,}/)[0].trim();if(soc.test(p)&&!/huelsan/i.test(p)&&p.length<70)return p}
   return"";
 }
+/* Tabla de conceptos con columna de IVA (p. ej. BCA): «5976KFZ  Comisión del comprador  353.00  IVA21  427.13» o «… REBU 21  450.12» o «… NO SUJETO  55.70» */
+const AMT1="-?\\d{1,3}(?:[.,]\\d{3})*[.,]\\d{2}|-?\\d+[.,]\\d{2}";
+const RE_FILA=new RegExp("^\\s*(?:(\\d{4}\\s?[A-Z]{3})\\s+)?(.*?[A-Za-zÁÉÍÓÚáéíóúñÑ].*?)\\s+(?:("+AMT1+")\\s+)?(IVA\\s?\\d{1,2}(?:[.,]\\d+)?\\s?%?|REBU(?:\\s?\\d{1,2})?|NO\\s+SUJET[OA]|EXENT[OA]|SUPLIDO)\\s+("+AMT1+")\\s*$","i");
+function lineasTabla(lineas){
+  const out=[];
+  for(const l of lineas){const m=l.replace(/\s+/g," ").match(RE_FILA);if(!m)continue;
+    const concepto=m[2].trim();if(/^(iva|total|base|identific|importe|%)/i.test(concepto)||/^[\d\s.,%]+$/.test(concepto))continue;
+    const cod=m[4].toUpperCase().replace(/\s+/g," "),imp=num(m[5]),pre=m[3]?num(m[3]):null;if(!(imp>0))continue;
+    const esVeh=/\bcar\b|veh[íi]culo|turismo|qualified|margin/i.test(concepto);
+    if(/^IVA/.test(cod)){const t=+(cod.match(/\d+(?:[.,]\d+)?/)||[21])[0].replace(",",".");const base=pre&&pre<imp?pre:r2(imp/(1+t/100));
+      out.push({concepto,regimen:"General",base:r2(base),ivaTipo:t,cuota:r2(imp-base),total:r2(imp),vehiculo:esVeh})}
+    else if(/^REBU/.test(cod))out.push({concepto,regimen:"REBU",base:r2(imp),ivaTipo:0,cuota:0,total:r2(imp),vehiculo:esVeh})
+    else out.push({concepto,regimen:"Exento",base:r2(imp),ivaTipo:0,cuota:0,total:r2(imp),vehiculo:false})}
+  return out;
+}
 function interpretar(texto,op={}){
   const lineas=texto.split(/\n/).map(l=>l.replace(/\s+$/,"")).filter(l=>l.trim());
   const t=lineas.join("\n");
   const propio=limpiarNif(op.nifPropio);
-  const todos=nifs(t).filter(n=>n!==propio);
+  const numF=limpiarNif(numeroDe(t,op.nombreArchivo));
+  const conEtiqueta=[];{const re=/(?:C\.?\s?I\.?\s?F|N\.?\s?I\.?\s?F)[^A-Z0-9\n]{0,10}([A-Z0-9][A-Z0-9\-.\s]{7,12})/gi;let m;while((m=re.exec(t))){const v=nifs(m[1])[0];if(v&&!conEtiqueta.includes(v))conEtiqueta.push(v)}}
+  const todos=[...conEtiqueta,...nifs(t)].filter((n,i,a)=>n!==propio&&n!==numF&&a.indexOf(n)===i);
   const provs=op.proveedores||[];
   let prov=provs.find(p=>p.nif&&todos.includes(limpiarNif(p.nif)));
   if(!prov)prov=provs.find(p=>p.nombre&&p.nombre.length>3&&new RegExp(p.nombre.split(/\s+/).slice(0,2).join("\\s+").replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"i").test(t))||null;
@@ -95,6 +114,10 @@ function interpretar(texto,op={}){
   let total=Math.max(0,...lt.flatMap(importes));
   const maxDoc=Math.max(0,...amtsTodos);
   if(!total||total<grupos.reduce((s,g)=>s+g.base+g.cuota,0)-0.05)total=maxDoc;
+  const tabla=lineasTabla(lineas),sumTabla=r2(tabla.reduce((s,l)=>s+l.total,0));
+  if(tabla.length&&(!total||Math.abs(sumTabla-total)<=0.05||Math.abs(sumTabla-maxDoc)<=0.05)){
+    return{proveedorId:prov?prov.id:"",proveedor:prov?prov.nombre:nombreProveedor(lineas,nif,propio),nif,numFactura:numeroDe(t,op.nombreArchivo),fecha:fechaDe(t),matricula:matriculaDe(t),
+      lineas:tabla,total:sumTabla,rebu,compraVehiculo:vehiculo||tabla.some(l=>l.vehiculo),texto:t,desglosado:true}}
   const lineasOut=[];
   const sumGen=r2(grupos.reduce((s,g)=>s+g.base+g.cuota,0));
   for(const g of grupos.sort((a,b)=>b.base-a.base))lineasOut.push({concepto:`Conceptos con IVA ${g.tipo} %`,regimen:"General",base:r2(g.base),ivaTipo:g.tipo,cuota:r2(g.cuota),total:r2(g.base+g.cuota)});

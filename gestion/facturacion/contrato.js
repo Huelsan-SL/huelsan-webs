@@ -9,6 +9,7 @@
 (function(){
 "use strict";
 const CT={plantilla:null,paginas:[],mejorar:true,lista:new Map(),ed:null,sucio:false,reps:{},ubics:["Huelva","Murcia"],forzar:false};
+// Los DNI y el cargo se guardan en la base de datos (contratoscfg/representantes), no en el código
 const REPS_DEF={francisco:{nombre:"Francisco José Álvarez González",dni:"",cargo:"",dniArchivos:[]},gustavo:{nombre:"Gustavo Fornell Lacida",dni:"",cargo:"",dniArchivos:[]}};
 const DOCS=[["permiso","Permiso de circulación"],["ficha","Tarjeta ITV (ficha técnica)"],["itv","Informe ITV en vigor"],["factura","Factura de compraventa"],["libro","Libro de mantenimiento"],["manual","Manual de usuario"],["llaves","Llaves"],["garantia","Documento de garantía"],["dgt","Informe DGT del vehículo"]];
 /* Plantilla de documentos que pedir al comprador para la venta (editable en Contratos → Plantilla de documentos).

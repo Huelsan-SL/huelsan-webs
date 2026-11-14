@@ -538,7 +538,7 @@ function vistaGastos(){
   return`<div class="row sp"><div><h1>Compras y gastos</h1><p class="muted" style="margin:4px 0 0">Cada compra o gasto con su factura (PDF o foto). Al subirla se leen el proveedor, el nº de factura, la fecha y las líneas con IVA y sin IVA (o REBU): revísalas antes de guardar. Los pagos en efectivo sin factura no entran en los libros de IVA, pero sí en el balance del coche.</p></div>
     <button class="btn primary" data-acc="gasto-alta">+ Nueva compra o gasto</button></div>
   ${app?`<div class="aviso">Hay <b>${app}</b> ${app===1?"gasto anotado":"gastos anotados"} en las fichas de los coches sin su factura. Súbelas desde <a href="#" data-ir-tab="matriculas">Por matrícula</a>.</div>`:""}
-  ${sinArchivo?`<div class="aviso bad">${sinArchivo} ${sinArchivo===1?"gasto no tiene":"gastos no tienen"} la factura subida.</div>`:""}
+  ${sinArchivo?`<div class="aviso bad">⚠ Falta subir la factura de ${sinArchivo} ${sinArchivo===1?"gasto":"gastos"} (marcados como «Falta factura»).</div>`:""}
   <div class="row"><label style="max-width:120px">Año<select data-gf="anio">${anios.map(a=>`<option ${a===F.anio?"selected":""}>${a}</option>`).join("")}<option value="" ${!F.anio?"selected":""}>Todos</option></select></label>
     <label style="max-width:260px">Categoría<select data-gf="cat"><option value="">Todas</option>${CATS_GASTO.map(c=>`<option ${c===F.cat?"selected":""}>${c}</option>`).join("")}</select></label>
     <label style="flex:1 1 240px">Buscar<input type="search" data-gf="q" value="${esc(F.q)}" placeholder="Proveedor, concepto, nº factura, matrícula…"></label></div>
@@ -571,7 +571,7 @@ function abrirGasto(id,pre={}){
     const archivos=[...(g.archivos||[]),...nuevos.map(n=>({nombre:n.name,nuevo:true,size:n.size}))];
     f.innerHTML=`<h2>${id?"Editar":"Nueva"} compra o gasto</h2>
       <div class="card" style="background:var(--bg)"><div class="row sp"><b>Factura (PDF o foto)</b><label class="btn sm primary" style="display:inline-flex">${leyendo?"Leyendo la factura…":archivos.length?"Subir otro archivo":"Subir la factura y leerla"}<input type="file" id="g-files" accept="application/pdf,image/*" multiple hidden></label></div>
-        <div class="files">${archivos.map((a,i)=>`<div><span>${esc(a.nombre)} <span class="muted">${a.size?Math.round(a.size/1024)+" KB":""}${a.nuevo?" · se subirá al guardar":""}</span></span><span class="row">${a.ruta?`<button type="button" class="btn sm" data-g-ver="${esc(a.ruta)}" data-nombre="${esc(a.nombre)}">Ver</button>`:""}${!a.ruta&&a.nuevo?`<button type="button" class="btn sm" data-g-leer="${i-(g.archivos||[]).length}">Leer otra vez</button>`:""}<button type="button" class="btn sm" data-g-quitar="${i}">Quitar</button></span></div>`).join("")||`<span class="muted">${g.sinFactura?"Pago en efectivo sin factura.":"Falta la factura: es obligatoria salvo pago en efectivo sin factura."}</span>`}</div>
+        <div class="files">${archivos.map((a,i)=>`<div><span>${esc(a.nombre)} <span class="muted">${a.size?Math.round(a.size/1024)+" KB":""}${a.nuevo?" · se subirá al guardar":""}</span></span><span class="row">${a.ruta?`<button type="button" class="btn sm" data-g-ver="${esc(a.ruta)}" data-nombre="${esc(a.nombre)}">Ver</button><button type="button" class="btn sm" data-g-leerruta="${esc(a.ruta)}" data-nombre="${esc(a.nombre)}">Leer</button>`:""}${!a.ruta&&a.nuevo?`<button type="button" class="btn sm" data-g-leer="${i-(g.archivos||[]).length}">Leer otra vez</button>`:""}<button type="button" class="btn sm" data-g-quitar="${i}">Quitar</button></span></div>`).join("")||`<span class="muted">${g.sinFactura?"Pago en efectivo sin factura.":"⚠ Falta la factura. Puedes guardar el gasto y subirla después: quedará marcado como pendiente."}</span>`}</div>
         ${lectura?`<div class="aviso ${lectura.ok?"ok":""}">${lectura.msg}</div>`:""}
         <label class="row" style="flex-direction:row;color:var(--ink);font-weight:500"><input type="checkbox" id="g-sinf" ${g.sinFactura?"checked":""} style="width:auto"> Pago en efectivo sin factura <small class="muted">— no entra en los libros de IVA; sí en el balance del coche (por el total)</small></label></div>
       <div class="g3"><label>Proveedor guardado<select id="g-prov"><option value="">— Elegir —</option>${provs().map(p=>`<option value="${esc(p.id)}" ${g.proveedorId===p.id?"selected":""}>${esc(p.nombre)}${p.nif?" · "+esc(p.nif):""}</option>`).join("")}</select></label>
@@ -623,6 +623,7 @@ function abrirGasto(id,pre={}){
   f.onclick=async e=>{const t=e.target;
     const ver=t.closest("[data-g-ver]");if(ver){e.preventDefault();verArchivo(ver.dataset.gVer,ver.dataset.nombre);return}
     const q=t.closest("[data-g-quitar]");if(q){e.preventDefault();const i=+q.dataset.gQuitar,n=(g.archivos||[]).length;if(i<n)borrados.push(...g.archivos.splice(i,1));else nuevos.splice(i-n,1);pintarF();return}
+    const lr=t.closest("[data-g-leerruta]");if(lr){e.preventDefault();try{const b=await HUELSAN.bajar("documentos",lr.dataset.gLeerruta);const nm=lr.dataset.nombre||"factura.pdf";leer(new File([b],nm,{type:b.type||(/\.pdf$/i.test(nm)?"application/pdf":"image/jpeg")}),true)}catch(err){toast(err.message,6000)}return}
     const rl=t.closest("[data-g-leer]");if(rl){e.preventDefault();const fi=nuevos[+rl.dataset.gLeer];if(fi)leer(fi,true);return}
     const nl=t.closest("[data-g-linea]");if(nl){e.preventDefault();g.lineas.push(lineaNueva(false,nl.dataset.gLinea));pintarF();return}
     const ql=t.closest("[data-g-qlinea]");if(ql){e.preventDefault();g.lineas.splice(+ql.dataset.gQlinea,1);pintarF();return}};
@@ -651,7 +652,6 @@ function abrirGasto(id,pre={}){
     if(!String(g.proveedor||"").trim())return"Falta el proveedor";
     if(!g.fecha)return"Falta la fecha de la factura";
     if(!(totales().total>0))return"Falta el importe en las líneas";
-    if(!g.sinFactura&&!(g.archivos||[]).length&&!nuevos.length)return"Sube la factura (PDF o foto) o marca «Pago en efectivo sin factura»";
     return"";
   };
   const d=$("#dlg-gasto");d.returnValue="";d.showModal();
@@ -682,7 +682,7 @@ function abrirGasto(id,pre={}){
       await S.db.doc("gastos/"+gid).set(dato);
       if(id&&g.loteId!==(S.gastos.get(id)||{}).loteId){const ant=S.gastos.get(id);if(ant&&ant.loteId)await sincronizarLote({...ant,id:gid,_borrar:true})}
       await sincronizarLote({...dato,id:gid});
-      toast("Guardado");
+      toast(!dato.sinFactura&&!dato.archivos.length?"Guardado. ⚠ Falta subir la factura: queda marcado como pendiente.":"Guardado",!dato.sinFactura&&!dato.archivos.length?6000:3200);
     }catch(err){toast(err.message,6000)}
   };
 }

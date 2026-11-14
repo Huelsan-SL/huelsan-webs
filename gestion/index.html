@@ -999,6 +999,22 @@ function calculoHtml(l){if(!(l.mercado>0))return"";const d=dedEstado(l),v=ventaE
     ${fila("Venta estimada según estado",eur(v),1)}
     ${r!=null?fila(priceLbl(l),"− "+eur(r))+fila(`Comisión de compra BCA${l.combustible==="Eléctrico"?" (eléctrico, fija)":""}`,"− "+eur(t.comision))+fila("Gestión de documentación BCA","− "+eur(t.honorarios))+fila("Tasa de tráfico (DGT, sin IVA)","− "+eur(t.transferencia))+(t.iva?fila("IVA 21 % de comisión y honorarios","− "+eur(t.iva)):"")+(transporte(l)?fila(`Transporte ${transporte(l).ruta} (${eur(transporte(l).base)} + IVA)`,"− "+eur(transporte(l).total)):"")+fila("Margen estimado",`${eur(m)}${margenSalPct(l)!=null?" ("+Math.round(margenSalPct(l))+" % sobre el coste)":""}`,1):fila("Margen estimado","sin precio de subasta",1)}
   </tbody></table><div style="margin-top:6px">${transporte(l)?"Antes de preparación y venta.":"Sin transporte (no hay tarifa para esta ubicación); antes de preparación y venta."} El precio del coche va sin IVA; tarifas de BCA en vigor desde el 21/03/2023. Descuentos por daños y mecánica orientativos. Si la puja final es más alta, el margen baja.</div></div>`}
+/* Calculadora de gastos previstos (solo para estudiar si un coche merece la pena; NO es contabilidad ni pasa a Facturación). Se guarda en «calc» del lote. */
+const CALC_PRESETS=[["Transporte",0],["Limpieza y estética",0],["Mecánica y mantenimiento",0],["Chapa y pintura",0],["Neumáticos",0],["ITV",0],["Gestoría y transferencia",0],["Garantía",0],["Publicidad",0],["Otros",0]];
+function calcPrevistosHtml(l){
+  const c=l.calc||{};const gs=Array.isArray(c.gastos)?c.gastos:[];
+  const r=refPrice(l),t=r!=null&&!isOwned(l)?tasasBCA(r,l):null;
+  const compraDef=isOwned(l)?(l.precioCompra||0):(r!=null?r+(t?t.total:0):0);
+  const ventaDef=l.precioVenta||(l.mercado>0?ventaEst(l):0);
+  const compra=c.compra!=null&&c.compra!==""?+c.compra:compraDef,venta=c.venta!=null&&c.venta!==""?+c.venta:ventaDef;
+  const reales=isOwned(l)?gastosTotal(l):0,prev=gs.reduce((s,g)=>s+(+g.importe||0),0);
+  const coste=compra+reales+prev,mg=venta-coste;
+  return`<div class="note tnum" style="display:grid;gap:6px"><b>Calculadora: ¿merece la pena? <span class="muted" style="font-weight:400">(solo para calcular; no cuenta en la contabilidad)</span></b>
+    <div class="form" style="grid-template-columns:repeat(2,minmax(0,1fr))"><label>Compra (€)${isOwned(l)?"":" <small>puja + tasas BCA</small>"}<input type="number" step="50" data-calc="compra" value="${esc(c.compra??"")}" placeholder="${Math.round(compraDef)||""}"></label>
+      <label>Venta (€)<input type="number" step="50" data-calc="venta" value="${esc(c.venta??"")}" placeholder="${Math.round(ventaDef)||""}"></label></div>
+    ${gs.length?`<table class="gtab"><tbody>${gs.map(g=>`<tr><td>${esc(g.concepto||"Gasto")}</td><td class="num">${eur(g.importe)}</td><td><button type="button" class="btn sm ghost" data-calc-del="${esc(g.id)}">Quitar</button></td></tr>`).join("")}</tbody></table>`:""}
+    <div class="gadd"><label>Gasto previsto<select id="calc-con">${CALC_PRESETS.map(([n])=>`<option>${n}</option>`).join("")}</select></label><label>Importe (€)<input type="number" id="calc-imp" step="10" min="0"></label><button class="btn" type="button" id="calc-add">Añadir</button></div>
+    <div>Compra ${eur(compra)}${reales?` + gastos con factura ${eur(reales)}`:""} + previstos ${eur(prev)} = coste <b>${eur(coste)}</b> · Venta ${eur(venta)} → margen <b style="color:${mg>=0?"#067647":"#B42318"}">${eur(mg)}</b>${venta?` (${Math.round(mg/venta*100)} %)`:""}</div></div>`}
 function tri(field,val){return`<span class="tri">${[["true","Sí"],["null","Sin dato"],["false","No"]].map(([k,v])=>`<button type="button" data-tri="${field}" data-v="${k}" aria-pressed="${String(val??null)===k}">${v}</button>`).join("")}</span>`}
 function renderDrawer(){
   let sc=$("#scrim"),dr=$("#drawer");
@@ -1054,6 +1070,7 @@ function renderDrawer(){
       <a href="${compUrl(l,"as24")}" target="_blank" rel="noopener">AutoScout24 ↗</a></div>
     <div class="muted" style="font-size:12px">Los enlaces de Wallapop y AutoScout24 ya van filtrados: año ±1, km ±30 %${l.combustible?", mismo combustible":""}${l.cv?", potencia ±15 CV (AutoScout24)":""}, ordenados de más barato a más caro.</div>
     ${calculoHtml(l)}
+    ${calcPrevistosHtml(l)}
     ${pujaMaxEst(l)!=null?`<div class="note tnum">Puja máxima sugerida: <b>${eur(pujaMaxEst(l))}</b> (con sus tasas BCA de ${eur(tasasBCA(pujaMaxEst(l),l).total)}${transporte(l)?` y ${eur(transporte(l).total)} de transporte`:""}, el coste queda en el 70 % de la venta estimada de ${eur(ventaEst(l))})${refPrice(l)!=null&&refPrice(l)>pujaMaxEst(l)?` · <span style="color:var(--warn)">el ${priceLbl(l).toLowerCase()} ya la supera</span>`:""}.${l.pujaMax==null&&!isOwned(l)?` <button class="btn sm" type="button" id="usar-pujamax">Usarla como puja máxima</button>`:""}</div>`:""}
     ${sim.length?`<div class="equip">Referencias propias del mismo modelo: ${sim.map(x=>`${x.anio} · ${num(x.km)} km → ${x.precioRemate?"remate "+eur(x.precioRemate):"vendido "+eur(x.precioVenta)}`).join(" | ")}</div>`:""}</div>
   ${isOwned(l)?`<div class="dsec"><h3>Stock y venta</h3><div class="form">
@@ -1340,6 +1357,7 @@ document.addEventListener("change",async e=>{const t=e.target;
   if(t.dataset.fgroup){const g=t.dataset.fgroup,d=draftF();const set=new Set(d[g]);t.checked?set.add(t.value):set.delete(t.value);d[g]=[...set];aplicarFiltros(t)}
   if(t.dataset.fb){draftF()[t.dataset.fb]=t.checked;aplicarFiltros(t)}
   if(t.dataset.aucsel){S.aucSel=t.value||null;S.limit=60;render()}
+  if(t.dataset.calc&&S.open){const l=S.lots.get(S.open);const c={...(l.calc||{})};c[t.dataset.calc]=t.value===""?null:+t.value;await saveLot(l.id,{calc:c});return}
   if(t.dataset.e&&S.open){let v=t.value;if(t.dataset.kind==="text")v=v.trim()||null;else v=v===""?null:+v;
     const patch={[t.dataset.e]:v,manual:{...(S.lots.get(S.open).manual||{}),[t.dataset.e]:true}};if(t.dataset.e==="tipo")patch.tipoManual=true;await saveLot(S.open,patch)}
   if(t.id==="d-publico"&&S.open)await saveLot(S.open,{publico:t.checked});
@@ -1398,6 +1416,9 @@ document.addEventListener("click",async e=>{const t=e.target;
     for(const l of target){S.lots.set(l.id,{...l,estado:st});if(S.db){try{await S.db.doc("lotes/"+l.id).update({estado:st})}catch(err){}}}
     toast(`${target.length} lotes marcados como ${ESTADO_LBL[st].toLowerCase()}`);render();return}
   if(t.closest("#g-add")){addGasto();return}
+  if(t.closest("#calc-add")&&S.open){const l=S.lots.get(S.open);const imp=+($("#calc-imp").value||0);if(!(imp>0)){toast("Pon el importe");$("#calc-imp").focus();return}
+    const c={...(l.calc||{})};c.gastos=[...(Array.isArray(c.gastos)?c.gastos:[]),{id:"c"+Date.now().toString(36),concepto:$("#calc-con").value,importe:Math.round(imp*100)/100}];await saveLot(l.id,{calc:c});return}
+  const cd=t.closest("[data-calc-del]");if(cd&&S.open){const l=S.lots.get(S.open);const c={...(l.calc||{})};c.gastos=(c.gastos||[]).filter(g=>g.id!==cd.dataset.calcDel);await saveLot(l.id,{calc:c});return}
   const gd=t.closest("[data-gdel]");if(gd){delGasto(gd.dataset.gdel,gd);return}
   if(t.closest("#imp-stock")){$("#file-stock").click();return}
   const dlu=t.closest("[data-dlfotos]");if(dlu){const l=S.lots.get(dlu.dataset.dlfotos);if(l)descargarFotos(dlu,[l]);return}
