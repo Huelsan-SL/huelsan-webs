@@ -437,7 +437,12 @@ document.addEventListener("click",async e=>{const t=e.target;
 /* ---------- publicar en la web con paso previo ----------
    La web pública lee la copia publicada del coche (l.web), no los datos que se están editando (supabase/09-publicar-web.sql).
    «Revisar y publicar» / «Revisar y actualizar» enseñan qué va a salir y avisan de lo que falta antes de confirmar. */
-const CAMPOS_WEB=["marca","modelo","derivado","anio","km","combustible","cv","motor","cambio","tipo","plazas","color","equipamiento","etiquetaDGT","ubicacionVenta","precioVenta","textoVenta","fotosWeb"];
+const CAMPOS_WEB=["marca","modelo","derivado","anio","km","combustible","cv","motor","cambio","tipo","plazas","color","equipamiento","etiquetaDGT","ubicacionVenta","precioVenta","textoVenta","fotosWeb","ofertaCampana","ofertaEtiqueta","ofertaHasta","ofertaPrecioNormal"];
+/* Campañas de oferta (las mismas claves que publica/index.html, CAMPANAS; la vista coches_web_v2 las da en `oferta`).
+   El «Precio de venta en la web» pasa a ser el precio de oferta y «Precio normal» sale tachado; con fecha de fin, la oferta se quita sola (supabase/11-ofertas.sql). */
+const CAMPANAS=[["oferta-especial","Oferta especial"],["black-friday","Black Friday"],["cyber-monday","Cyber Monday"],["navidad","Oferta de Navidad"],["fin-de-ano","Oferta de Fin de Año"],["reyes","Oferta de Reyes"],["rebajas-invierno","Rebajas de invierno"],["semana-santa","Oferta de Semana Santa"],["rebajas-verano","Rebajas de verano"],["vuelta-vacaciones","Vuelta de vacaciones"],["oferta-flash","Oferta flash"],["liquidacion","Liquidación"],["otra","Otra (escribir el nombre)…"]];
+const nombreOferta=o=>o&&o.ofertaCampana==="otra"?(String(o.ofertaEtiqueta||"").trim()||"Oferta especial"):((CAMPANAS.find(c=>c[0]===(o&&o.ofertaCampana))||[])[1]||"Oferta especial");
+const fechaCorta=d=>{const x=new Date(String(d).slice(0,10)+"T12:00:00");return isNaN(x)?String(d):x.toLocaleDateString("es-ES",{day:"numeric",month:"long"})};
 const fichaWeb=l=>{const o={};for(const k of CAMPOS_WEB){const v=k==="fotosWeb"?(l.fotosWeb||[]):l[k];if(v!=null&&v!==""&&!(k==="fotosWeb"&&!v.length))o[k]=v}return o};
 // precioAnterior: al publicar una bajada de precio se guarda el precio que había en la web y sale tachado
 function precioAnteriorNuevo(l,mostrar){const w=l.web||{},nuevo=l.precioVenta,viejo=w.precioVenta,ant=w.precioAnterior;
@@ -449,13 +454,20 @@ const copiaWeb=(l,mostrarRebaja=true)=>{const o={};for(const k of CAMPOS_WEB)o[k
 const publicada=l=>!!(l&&l.publico&&l.web&&typeof l.web==="object");
 function cambiosWeb(l){if(!publicada(l))return[];const a=fichaWeb(l),b=fichaWeb(l.web),out=[];
   for(const k of CAMPOS_WEB){if(JSON.stringify(a[k]??null)===JSON.stringify(b[k]??null))continue;
-    const n=k==="precioVenta"?"precio":k==="textoVenta"?"texto de venta":k==="fotosWeb"?"fotos":k==="equipamiento"?"equipamiento":k==="ubicacionVenta"?"ubicación":"datos del coche";if(!out.includes(n))out.push(n)}return out}
+    const n=k.startsWith("oferta")?"oferta":k==="precioVenta"?"precio":k==="textoVenta"?"texto de venta":k==="fotosWeb"?"fotos":k==="equipamiento"?"equipamiento":k==="ubicacionVenta"?"ubicación":"datos del coche";if(!out.includes(n))out.push(n)}return out}
 window.cambiosWeb=cambiosWeb;window.publicadaWeb=publicada;
 function revisionWeb(l,actualizar){const owned=isOwned(l),w=l.fotosWeb||[],mat=l.fotosWebMat||{};
   const avisos=[],ok=[];const t=titleOf(l);
   if(!l.marca||/^nuevo coche$/i.test(String(l.marca).trim())||!l.modelo)avisos.push("Revisa la marca y el modelo: ahora sale «"+(t||"sin nombre")+"».");else ok.push("Nombre: "+t);
   if(!owned&&cerrado(l))avisos.push("La subasta ya ha cerrado: no saldrá en la web hasta que el coche esté en stock.");
   if(owned){if(l.precioVenta==null)avisos.push("Sin precio de venta: saldrá «Consultar precio».");else ok.push("Precio: "+eur(l.precioVenta))}
+  if(owned&&l.ofertaCampana){const nm=nombreOferta(l),pn=l.ofertaPrecioNormal,hoy=new Date().toLocaleDateString("sv-SE");
+    if(l.precioVenta==null)avisos.push("La oferta necesita el precio de oferta (arriba, «Precio de oferta»).");
+    else if(pn==null||!(pn>l.precioVenta))avisos.push("Oferta «"+nm+"»: pon un «Precio normal» mayor que el de oferta para que salga el precio tachado y lo que se ahorra.");
+    else ok.push("Oferta «"+nm+"»: "+eur(pn)+" → "+eur(l.precioVenta)+" (ahorro "+eur(pn-l.precioVenta)+")"+(l.ofertaHasta?" · hasta el "+fechaCorta(l.ofertaHasta):" · sin fecha de fin"));
+    if(l.ofertaCampana==="otra"&&!String(l.ofertaEtiqueta||"").trim())avisos.push("Escribe el nombre de la oferta: si no, sale como «Oferta especial».");
+    if(l.ofertaHasta&&String(l.ofertaHasta).slice(0,10)<hoy)avisos.push("La fecha de fin ya ha pasado: la oferta no saldrá en la web.")}
+  else if(owned&&actualizar&&(l.web||{}).ofertaCampana)avisos.push("Quitas la oferta «"+nombreOferta(l.web)+"»: el precio en la web pasa a ser "+(l.precioVenta!=null?eur(l.precioVenta):"«Consultar precio»")+". Si debe volver al precio normal, cámbialo antes.");
   if(!w.length)avisos.push("Sin fotos: saldrá «Fotos disponibles bajo petición».");else{ok.push(w.length+" foto"+(w.length>1?"s":""));
     const sinRev=w.filter(n=>mat[n]===false).length;if(sinRev)avisos.push(sinRev+" foto"+(sinRev>1?"s":"")+" con la matrícula sin tapar automáticamente: compruébala"+(sinRev>1?"s":"")+" antes.")}
   if(!String(l.textoVenta||"").trim())avisos.push("Sin texto de venta (es opcional).");else ok.push("Texto de venta");
@@ -467,7 +479,7 @@ function revisionWeb(l,actualizar){const owned=isOwned(l),w=l.fotosWeb||[],mat=l
   return`<div class="xrev" role="region" aria-label="Revisión antes de publicar"><b>${actualizar?"Revisa los cambios antes de actualizar la web":"Revisa cómo va a salir en la web"}</b>
     <div class="xrev-car">${f0?`<img src="${esc(/^https?:/.test(f0)?f0:FOTOS_WEB()+f0)}" alt="">`:`<div class="xrev-nof">Sin fotos</div>`}<div><div style="font-weight:700">${esc(t)}</div><div class="muted" style="font-size:12.5px">${[l.anio,l.km!=null?num(l.km)+" km":null,l.combustible,l.cv?l.cv+" CV":null].filter(Boolean).map(esc).join(" · ")}</div><div style="font-weight:700;margin-top:2px">${owned?(l.precioVenta!=null?eur(l.precioVenta):"Consultar precio"):"Por encargo"}</div></div></div>
     ${actualizar?`<div style="font-size:13px">Se va a cambiar en la web: <b>${esc(det.join(", ")||"nada")}</b>.</div>`:""}
-    ${actualizar&&precioAnteriorNuevo(l,true)!=null?`<label class="toggle"><input type="checkbox" id="xw-rebaja" checked><span>Mostrarlo como rebaja: <s>${eur(precioAnteriorNuevo(l,true))}</s> <b>${eur(l.precioVenta)}</b><br><span class="muted">El precio anterior sale tachado en la web.</span></span></label>`:""}
+    ${actualizar&&!(l.ofertaCampana&&l.ofertaPrecioNormal>l.precioVenta)&&precioAnteriorNuevo(l,true)!=null?`<label class="toggle"><input type="checkbox" id="xw-rebaja" checked><span>Mostrarlo como rebaja: <s>${eur(precioAnteriorNuevo(l,true))}</s> <b>${eur(l.precioVenta)}</b><br><span class="muted">El precio anterior sale tachado en la web.</span></span></label>`:""}
     ${l.estado==="vendido"?`<div style="font-size:13px">Está vendido: en la web sale con la etiqueta <b>VENDIDO</b> y sin precio.</div>`:""}
     ${ok.length?`<ul class="xrev-ok">${ok.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
     ${avisos.length?`<ul class="xrev-av">${avisos.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
@@ -523,7 +535,12 @@ function ampliarFicha(){
   web.innerHTML=`<h3>En la web <a href="https://huelsanautomocion.com/#stock" target="_blank" rel="noopener" style="font-weight:400;font-size:12.5px;margin-left:6px">Ver la web ↗</a></h3>
     ${estadoWeb(l)}
     <div class="muted" style="font-size:12px">Lo que cambies aquí (precio, texto, fotos) no sale en la web hasta que pulses ${publicada(l)?"«Revisar y actualizar cambios»":"«Revisar y publicar»"}, abajo.</div>
-    ${owned?`<div class="form"><label>Precio de venta en la web (€)<input type="number" id="xw-precio" data-e="precioVenta" step="100" value="${esc(l.precioVenta??"")}" placeholder="Sin precio: «Consultar precio»"></label></div>`:""}
+    ${owned?`<div class="form"><label>${l.ofertaCampana?"Precio de oferta en la web (€)":"Precio de venta en la web (€)"}<input type="number" id="xw-precio" data-e="precioVenta" step="100" value="${esc(l.precioVenta??"")}" placeholder="Sin precio: «Consultar precio»"></label>
+      <label>Oferta<select id="xw-oferta" data-e="ofertaCampana" data-kind="text"><option value="">Sin oferta</option>${CAMPANAS.map(([k,n])=>`<option value="${k}" ${l.ofertaCampana===k?"selected":""}>${esc(n)}</option>`).join("")}</select></label>
+      ${l.ofertaCampana?`${l.ofertaCampana==="otra"?`<label class="wide">Nombre de la oferta<input data-e="ofertaEtiqueta" data-kind="text" maxlength="40" value="${esc(l.ofertaEtiqueta??"")}" placeholder="Ej.: Oferta de aniversario"></label>`:""}
+      <label>Precio normal, sin oferta (€)<input type="number" data-e="ofertaPrecioNormal" step="100" value="${esc(l.ofertaPrecioNormal??"")}" placeholder="Sale tachado"></label>
+      <label>Válida hasta (opcional)<input type="date" data-e="ofertaHasta" data-kind="text" value="${esc(String(l.ofertaHasta||"").slice(0,10))}"></label>
+      <div class="muted wide" style="font-size:12px">En la web sale la etiqueta «${esc(nombreOferta(l))}», el precio normal tachado y lo que se ahorra. Con fecha de fin, la oferta se quita sola y el precio vuelve al normal; sin fecha, sigue hasta que la quites.</div>`:""}</div>`:""}
     <label style="display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--muted)">Texto de venta <span style="font-weight:400">(sale en la ficha del coche, debajo de las fotos)</span>
       <textarea id="xw-texto" data-e="textoVenta" data-kind="text" rows="4" maxlength="1500" placeholder="Ej.: Único propietario, libro de revisiones al día y neumáticos nuevos. Garantía de 12 meses.">${esc(l.textoVenta??"")}</textarea></label>
     <div class="row">${anun?`<button class="btn sm" id="xw-anuncio">Usar el texto del anuncio</button>`:""}${S.sample?`<button class="btn sm" id="xw-ia" ${X.iaOcupada?"disabled":""}>${X.iaOcupada?"Redactando…":"Redactar con IA"}</button>`:""}</div>

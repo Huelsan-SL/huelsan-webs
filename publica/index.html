@@ -205,6 +205,15 @@ nav.menu a:hover{border-color:var(--green)}
 .badge.encargo{background:var(--gold);color:#1B1D20}
 .badge.vendido{background:#B42318;color:#fff;font-size:13px;padding:6px 14px}
 .badge.rebaja{top:auto;bottom:12px;background:#1E9E52;color:#fff}
+.badge.oferta,.tag.oferta{background:#D92D20;color:#fff}
+.badge.oferta{top:auto;bottom:12px;font-size:12px}
+.oferta-black-friday,.oferta-cyber-monday{background:#111 !important;color:#E7C887 !important}
+.oferta-navidad,.oferta-fin-de-ano,.oferta-reyes{background:#B3122F !important;color:#fff !important}
+.oferta-rebajas-invierno,.oferta-rebajas-verano,.oferta-liquidacion{background:#0E2A47 !important;color:#fff !important}
+.hasta-oferta{font-size:13px;font-weight:700;color:#B42318;margin:0}
+.banner-ofertas{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin:0 0 16px;padding:12px 16px;border-radius:14px;background:#FDECEA;border:1px solid #F5C6C0;color:#7A1A12;font-weight:700}
+.banner-ofertas[hidden]{display:none}
+.banner-ofertas button{border:0;border-radius:999px;padding:8px 16px;background:#D92D20;color:#fff;font:inherit;font-size:14px;font-weight:800;cursor:pointer}
 .car.es-vendido .ph img{filter:grayscale(.55) brightness(.92)}
 .car.es-vendido .ph::after{content:"";position:absolute;inset:0;background:rgba(14,42,71,.12);pointer-events:none}
 .vendido-txt{color:#B42318;text-transform:uppercase;letter-spacing:.06em}
@@ -556,6 +565,7 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
   <section id="stock" class="gris">
     <div class="wrap">
       <div class="cab"><h2 data-t="stock.titulo">Vehículos disponibles en stock</h2><p class="lead" data-t="stock.intro">Disponemos de una selección de vehículos disponibles para quienes prefieren elegir entre nuestro stock actual. Consulta los anuncios y descubre las características de cada vehículo.</p></div>
+      <div class="banner-ofertas" id="ofertas-banner" hidden><span id="ofertas-txt"></span><button type="button" id="ofertas-ver" data-t="ofertas.ver">Ver ofertas</button></div>
       <div class="buscador">
         <div class="busq-fila">
           <label class="busq-texto"><span class="sr" data-t="filtros.buscar">Buscar</span><svg aria-hidden="true"><use href="#i-lupa"/></svg><input type="search" id="f-q" autocomplete="off" data-t-ph="filtros.buscar.ejemplo" placeholder="Busca por marca, modelo o versión"></label>
@@ -574,6 +584,7 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
           <label><span data-t="filtros.cambio">Cambio</span><select id="f-cambio"><option value="" data-t="filtros.indiferente">Indiferente</option><option value="Automático" data-t="filtros.cambio.auto">Automático</option><option value="Manual" data-t="filtros.cambio.manual">Manual</option></select></label>
           <label><span data-t="filtros.tipo">Carrocería</span><select id="f-tipo"><option value="" data-t="filtros.todos">Todos</option></select></label>
           <label><span data-t="filtros.potencia">Potencia desde</span><select id="f-cv"><option value="" data-t="filtros.cualquiera">Cualquiera</option></select></label>
+          <label><span data-t="filtros.ofertas">Ofertas</span><select id="f-oferta"><option value="" data-t="filtros.todos">Todos</option><option value="1" data-t="filtros.solo.ofertas">Solo ofertas</option></select></label>
           <label><span data-t="filtros.disponibilidad">Disponibilidad</span><select id="f-disp"><option value="" data-t="filtros.todos">Todos</option><option value="stock" data-t="estado.stock">En stock</option><option value="encargo" data-t="estado.encargo">Por encargo</option><option value="vendido" data-t="filtros.vendidos">Vendidos</option></select></label>
           <button type="button" class="btn verde aplicar" id="f-aplicar"><span data-t="filtros.aplicar">Aplicar filtros</span></button>
         </div>
@@ -675,6 +686,26 @@ let toastT;function toast(m){let t=$("#toast");if(!t){t=document.createElement("
 /* Textos editables desde la app: T(clave, texto por defecto) y elementos con data-t */
 const T=(k,def)=>{const v=EMPRESA.textos&&EMPRESA.textos[k];return v!=null&&String(v).trim()!==""?String(v):def};
 const DISP={stock:"En stock",encargo:"Por encargo",vendido:"Vendido"};
+/* Campañas de oferta: la clave es la que guarda la gestión (gestion/extra.js, CAMPANAS) y la que devuelve coches_web_v2.oferta */
+const CAMPANAS={
+  "oferta-especial":()=>T("oferta.oferta-especial","Oferta especial"),
+  "black-friday":()=>T("oferta.black-friday","Black Friday"),
+  "cyber-monday":()=>T("oferta.cyber-monday","Cyber Monday"),
+  "navidad":()=>T("oferta.navidad","Oferta de Navidad"),
+  "fin-de-ano":()=>T("oferta.fin-de-ano","Oferta de Fin de Año"),
+  "reyes":()=>T("oferta.reyes","Oferta de Reyes"),
+  "rebajas-invierno":()=>T("oferta.rebajas-invierno","Rebajas de invierno"),
+  "semana-santa":()=>T("oferta.semana-santa","Oferta de Semana Santa"),
+  "rebajas-verano":()=>T("oferta.rebajas-verano","Rebajas de verano"),
+  "vuelta-vacaciones":()=>T("oferta.vuelta-vacaciones","Vuelta de vacaciones"),
+  "oferta-flash":()=>T("oferta.oferta-flash","Oferta flash"),
+  "liquidacion":()=>T("oferta.liquidacion","Liquidación")};
+const claveOferta=k=>/^[a-z0-9-]{1,40}$/.test(String(k||""))?String(k):"oferta-especial";
+const campanaNombre=c=>{if(!c.oferta)return"";const t=(c.oferta_etiqueta||"").trim();if(c.oferta==="otra"&&t)return t;const f=CAMPANAS[c.oferta];return f?f():(t||T("oferta.oferta-especial","Oferta especial"))};
+// «Black Friday» → «Oferta · Black Friday»; si el nombre ya dice oferta/rebajas/liquidación, se deja tal cual
+const etiquetaOferta=c=>{const n=campanaNombre(c);return/oferta|rebaja|liquidaci/i.test(n)?n:T("oferta.etiqueta","Oferta · {c}").replace("{c}",n)};
+const claseOferta=c=>"oferta oferta-"+claveOferta(c.oferta);
+const hastaOferta=c=>{if(!c.oferta||!c.oferta_hasta)return"";const d=new Date(String(c.oferta_hasta).slice(0,10)+"T12:00:00");return isNaN(d)?"":T("oferta.hasta","Oferta válida hasta el {v}").replace("{v}",d.toLocaleDateString("es-ES",{day:"numeric",month:"long"}))};
 function aplicarTextos(){
   document.querySelectorAll("[data-t]").forEach(el=>{const v=T(el.dataset.t,null);if(v==null)return;
     if(el.dataset.tEnlace){const m=v.match(/^(.*?)\{(.+?)\}(.*)$/s);el.textContent="";if(m){el.append(m[1]);const a=document.createElement("a");a.href=el.dataset.tEnlace;a.textContent=m[2];el.append(a,m[3])}else el.textContent=v}
@@ -771,7 +802,7 @@ function redes(){const r=EMPRESA.redes||{};const l=REDES.map(([k,n])=>[k,n,urlRe
 const esAuto=c=>/autom/i.test(c.cambio||"")||/\b(aut|autom\w*|dsg|tiptronic|s[ -]?tronic|steptronic|eat\d?|edc|dct|xtronic|cvt|powershift|at\d)\b/i.test([c.version,c.modelo].join(" "));
 const cambioDe=c=>c.cambio?(/autom/i.test(c.cambio)?"Automático":"Manual"):(esAuto(c)?"Automático":null);
 const norm=t=>String(t||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g," ").trim();
-const FIL=["f-marca","f-modelo","f-ubic","f-precio","f-km","f-anio","f-comb","f-cambio","f-tipo","f-cv","f-disp"];
+const FIL=["f-marca","f-modelo","f-ubic","f-precio","f-km","f-anio","f-comb","f-cambio","f-tipo","f-cv","f-disp","f-oferta"];
 const v=id=>$("#"+id).value;
 /* Los filtros solo se aplican al pulsar «Aplicar filtros» (o Intro en el buscador); quitar un filtro o «Quitar filtros» sí es inmediato. */
 let AP={};const va=id=>AP[id]||"";
@@ -794,6 +825,8 @@ function opcionesFiltros(){
   // con muy pocos coches, ocultamos los filtros que no sirven para nada
   for(const id of ["f-precio","f-km","f-cv","f-tipo","f-comb","f-ubic"]){const s=$("#"+id);s.closest("label").hidden=s.options.length<=2&&!s.value}
   $("#f-cambio").closest("label").hidden=new Set(C.map(cambioDe).filter(Boolean)).size<2&&!v("f-cambio");
+  $("#f-oferta").closest("label").hidden=!C.some(c=>c.oferta)&&!v("f-oferta");
+  bannerOfertas();
 }
 function opcionesModelo(){const m=v("f-marca"),s=$("#f-modelo");llenar("f-modelo",m?[...new Set(COCHES.filter(c=>c.marca===m).map(c=>c.modelo).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")):[]);s.disabled=!m;if(!m)s.value=""}
 function filtrar(ignorar){
@@ -811,15 +844,21 @@ function filtrar(ignorar){
     if(f["f-tipo"]&&c.tipo!==f["f-tipo"])return false;
     if(f["f-cv"]&&!((c.cv||0)>=+f["f-cv"]))return false;
     if(f["f-disp"]&&c.disponibilidad!==f["f-disp"])return false;
+    if(f["f-oferta"]&&!c.oferta)return false;
     return true})}
 function ordenar(l){const o=va("f-orden"),n=x=>x==null?Infinity:+x;
-  const r=[...l];if(o==="precio-asc")r.sort((a,b)=>n(a.precio)-n(b.precio));else if(o==="precio-desc")r.sort((a,b)=>(+b.precio||0)-(+a.precio||0));
+  const r=[...l];if(!o)r.sort((a,b)=>(b.oferta?1:0)-(a.oferta?1:0));  // destacados: primero las ofertas
+  if(o==="precio-asc")r.sort((a,b)=>n(a.precio)-n(b.precio));else if(o==="precio-desc")r.sort((a,b)=>(+b.precio||0)-(+a.precio||0));
   else if(o==="km-asc")r.sort((a,b)=>n(a.km)-n(b.km));else if(o==="anio-desc")r.sort((a,b)=>(b.anio||0)-(a.anio||0));
   else if(o==="nuevo")r.sort((a,b)=>String(b.actualizado||"").localeCompare(String(a.actualizado||"")));
   return r.sort((a,b)=>(a.disponibilidad==="vendido")-(b.disponibilidad==="vendido"))}
-function chipsActivos(){const out=[];const et={"f-precio":x=>T("filtros.chip.precio","Hasta {v}").replace("{v}",num(x)+" €"),"f-km":x=>T("filtros.chip.km","Hasta {v}").replace("{v}",num(x)+" km"),"f-anio":x=>T("filtros.chip.anio","Desde {v}").replace("{v}",x),"f-cv":x=>T("filtros.chip.cv","Desde {v}").replace("{v}",x+" CV"),"f-disp":x=>DISP[x]||x};
+function chipsActivos(){const out=[];const et={"f-precio":x=>T("filtros.chip.precio","Hasta {v}").replace("{v}",num(x)+" €"),"f-km":x=>T("filtros.chip.km","Hasta {v}").replace("{v}",num(x)+" km"),"f-anio":x=>T("filtros.chip.anio","Desde {v}").replace("{v}",x),"f-cv":x=>T("filtros.chip.cv","Desde {v}").replace("{v}",x+" CV"),"f-disp":x=>DISP[x]||x,"f-oferta":()=>T("filtros.chip.oferta","Solo ofertas")};
   if(va("f-q"))out.push(["f-q","«"+va("f-q")+"»"]);
   FIL.forEach(id=>{const x=va(id);if(x)out.push([id,(et[id]||(y=>y))(x)])});return out}
+function bannerOfertas(){const of=COCHES.filter(c=>c.oferta),b=$("#ofertas-banner");if(!b)return;b.hidden=!of.length;if(!of.length)return;
+  const cam=[...new Set(of.map(campanaNombre))];
+  $("#ofertas-txt").textContent=cam.length===1?T("ofertas.banner.campana","{c}: {n} en oferta").replace("{c}",cam[0]).replace("{n}",of.length===1?T("ofertas.un.vehiculo","1 vehículo"):T("ofertas.n.vehiculos","{n} vehículos").replace("{n}",of.length))
+    :T("ofertas.banner.varias","{n} vehículos en oferta").replace("{n}",of.length)}
 function pintarCoches(){
   const lista=ordenar(filtrar()),act=chipsActivos();
   $("#f-total").textContent=COCHES.length?(lista.length===1?T("filtros.total1","1 vehículo"):T("filtros.total","{n} vehículos").replace("{n}",lista.length)):"";
@@ -827,7 +866,7 @@ function pintarCoches(){
   $("#f-limpiar").hidden=!act.length;
   const nf=act.filter(([id])=>id!=="f-q").length;$("#f-n").hidden=!nf;$("#f-n").textContent=nf;
   $("#cars").innerHTML=lista.length?lista.map(c=>`<button type="button" class="car${c.disponibilidad==="vendido"?" es-vendido":""}" data-ficha="${esc(c.id)}" aria-label="Ver ${esc(titulo(c))}">
-    <div class="ph">${c.fotos[0]?`<img src="${esc(c.fotos[0])}" alt="" loading="lazy">`:""}<span class="badge ${esc(c.disponibilidad)}">${esc(DISP[c.disponibilidad]||"")}</span>${c.precio_anterior>c.precio&&c.disponibilidad!=="vendido"?`<span class="badge rebaja">${esc(T("coches.rebajado","Precio rebajado"))}</span>`:""}${c.fotos.length>1?`<span class="nfotos">${c.fotos.length} ${esc(T("coches.fotos","fotos"))}</span>`:""}</div>
+    <div class="ph">${c.fotos[0]?`<img src="${esc(c.fotos[0])}" alt="" loading="lazy">`:""}<span class="badge ${esc(c.disponibilidad)}">${esc(DISP[c.disponibilidad]||"")}</span>${c.oferta&&c.disponibilidad!=="vendido"?`<span class="badge ${esc(claseOferta(c))}">${esc(etiquetaOferta(c))}</span>`:c.precio_anterior>c.precio&&c.disponibilidad!=="vendido"?`<span class="badge rebaja">${esc(T("coches.rebajado","Precio rebajado"))}</span>`:""}${c.fotos.length>1?`<span class="nfotos">${c.fotos.length} ${esc(T("coches.fotos","fotos"))}</span>`:""}</div>
     <div class="b"><div class="t">${esc(titulo(c))}</div>${c.version?`<div class="v">${esc(c.version)}</div>`:""}
       <div class="sp tnum">${[c.anio,c.km!=null?num(c.km)+" km":null,c.combustible,cambioDe(c),c.cv?c.cv+" CV":null].filter(Boolean).map(x=>`<span>${esc(x)}</span>`).join("")}</div>
       ${c.ubicacion?`<div class="ubic"><svg aria-hidden="true"><use href="#i-pin"/></svg><span>${esc(c.ubicacion)}</span></div>`:""}
@@ -838,6 +877,7 @@ $("#f-orden").addEventListener("change",pendiente);
 $("#f-q").addEventListener("input",pendiente);
 $("#f-q").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();aplicar()}});
 $("#f-aplicar").addEventListener("click",aplicar);
+$("#ofertas-ver").addEventListener("click",()=>{$("#f-oferta").value="1";aplicar();const c=$("#cars");c&&c.scrollIntoView({behavior:"smooth",block:"start"})});
 $("#f-abrir").addEventListener("click",()=>{const f=$("#filtros"),a=!f.classList.contains("abierto");f.classList.toggle("abierto",a);$("#f-abrir").setAttribute("aria-expanded",a)});
 $("#f-limpiar").addEventListener("click",()=>{$("#f-q").value="";FIL.forEach(id=>$("#"+id).value="");opcionesModelo();aplicar()});
 $("#f-chips").addEventListener("click",e=>{const b=e.target.closest("[data-quitar]");if(!b)return;const id=b.dataset.quitar;$("#"+id).value="";if(id==="f-marca"){$("#f-modelo").value="";opcionesModelo()}aplicar()});
@@ -909,12 +949,13 @@ function pintarFicha(){
   document.body.style.overflow="hidden";
   const datos=[["Marca",c.marca],["Modelo",c.modelo],["Versión",c.version],["Año",c.anio],["Kilómetros",c.km!=null?num(c.km)+" km":null],["Combustible",c.combustible],["Potencia",c.cv?c.cv+" CV":null],["Motor",c.motor?String(c.motor).replace(".",",")+" l":null],["Cambio",c.cambio||cambioDe(c)],["Tipo",c.tipo],["Plazas",c.plazas],["Color",c.color]].filter(([,v])=>v!=null&&v!=="");
   f.setAttribute("aria-label",titulo(c));
-  f.innerHTML=`<div class="ficha-in"><div class="fh"><div><span class="tag ${esc(c.disponibilidad)}">${esc(DISP[c.disponibilidad]||"")}</span><h3 style="margin-top:8px">${esc(titulo(c))}</h3></div><button class="xbtn" id="fclose" aria-label="Cerrar">✕</button></div>
+  f.innerHTML=`<div class="ficha-in"><div class="fh"><div><span class="tag ${esc(c.disponibilidad)}">${esc(DISP[c.disponibilidad]||"")}</span>${c.oferta&&c.disponibilidad!=="vendido"?` <span class="tag ${esc(claseOferta(c))}">${esc(etiquetaOferta(c))}</span>`:""}<h3 style="margin-top:8px">${esc(titulo(c))}</h3></div><button class="xbtn" id="fclose" aria-label="Cerrar">✕</button></div>
     <div class="fbody"><div>${c.fotos.length?`<button type="button" class="gal-main" id="galmain" aria-label="Ver fotos a pantalla completa"><img src="${esc(c.fotos[fotoI])}" alt="${esc(titulo(c))}, foto ${fotoI+1}">${c.fotos.length>1?`<span class="nfotos">${fotoI+1} / ${c.fotos.length}</span>`:""}</button>
       ${c.fotos.length>1?`<div class="thumbs">${c.fotos.map((u,i)=>`<button type="button" data-foto="${i}" aria-label="Foto ${i+1}" ${i===fotoI?'aria-current="true"':""}><img src="${esc(u)}" alt=""></button>`).join("")}</div>`:""}
       <p class="legalfoto">${esc(T("ficha.aviso.fotos","Fotos del propio vehículo. Matrículas ocultadas por protección de datos. Imágenes y datos orientativos, sin valor contractual."))} <a href="#fotos-info">${esc(T("ficha.mas.info","Más información"))}</a>.</p>`:`<div class="empty">${esc(T("ficha.sinfotos","Fotos disponibles bajo petición."))}</div>`}
       ${c.descripcion?`<div class="desc-venta">${esc(c.descripcion)}</div>`:""}</div>
     <div class="fside"><div class="fprice${c.disponibilidad==="vendido"?" es-vendido":""}"><b class="tnum">${precioHtml(c)}</b>${c.precio_anterior>c.precio&&c.disponibilidad!=="vendido"?`<span class="ahorro tnum">${esc(T("ficha.ahorro","Ahorras {v}").replace("{v}",eur(c.precio_anterior-c.precio)))}</span>`:""}</div>
+      ${hastaOferta(c)?`<p class="hasta-oferta">${esc(hastaOferta(c))}</p>`:""}
       ${c.ubicacion?`<div class="ubic ficha-ubic"><svg aria-hidden="true"><use href="#i-pin"/></svg><span>${esc(T("ficha.ubicacion","Puedes verlo en {v}").replace("{v}",c.ubicacion))}</span></div>`:""}
       ${c.disponibilidad==="vendido"?`<p class="legalfoto" style="margin:0">${esc(T("ficha.vendido","Este vehículo ya está vendido. Si buscas uno parecido, te lo encontramos."))}</p>`:""}
       <dl class="kv tnum">${datos.map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
