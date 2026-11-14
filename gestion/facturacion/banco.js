@@ -32,6 +32,10 @@ function leerN43(texto){
     else if(t==="23"&&ult){ult.concepto=[ult.concepto,l.slice(4,42).trim(),l.slice(42,80).trim()].filter(Boolean).join(" ").replace(/\s+/g," ").trim()}}
   return out;
 }
+async function textoArchivo(file){const buf=new Uint8Array(await file.arrayBuffer());let t=new TextDecoder("utf-8").decode(buf);if(t.includes("\uFFFD"))t=new TextDecoder("windows-1252").decode(buf);return t.replace(/^\uFEFF/,"")}
+function leerCSV(t){const lin=t.split(/\r?\n/);const muestra=lin.slice(0,30).join("\n");
+  const sep=[";","\t",","].map(c=>[c,(muestra.match(new RegExp(c==="\t"?"\t":c,"g"))||[]).length]).sort((a,b)=>b[1]-a[1])[0][0];
+  return lin.map(l=>{const out=[];let cur="",q=false;for(let i=0;i<l.length;i++){const ch=l[i];if(q){if(ch==='"'){if(l[i+1]==='"'){cur+='"';i++}else q=false}else cur+=ch}else if(ch==='"')q=true;else if(ch===sep){out.push(cur);cur=""}else cur+=ch}out.push(cur);return out.map(x=>x.trim())})}
 function leerTabla(filas){
   const norm=v=>String(v??"").trim().toLowerCase();
   let h=-1;for(let i=0;i<Math.min(filas.length,40);i++){const r=filas[i].map(norm);if(r.some(c=>/^f(echa|\.)/.test(c)||c==="fecha")&&r.some(c=>/importe|cantidad|cargo|abono|debe|haber/.test(c))){h=i;break}}
@@ -51,7 +55,8 @@ function leerTabla(filas){
 }
 async function importar(file){
   let movs;
-  if(/\.(n43|aeb|q43|txt)$/i.test(file.name)){movs=leerN43(await file.text())}
+  if(/\.(n43|aeb|q43|txt)$/i.test(file.name)&&/^(11|22)/m.test(await textoArchivo(file))){movs=leerN43(await textoArchivo(file))}
+  else if(/\.(csv|txt)$/i.test(file.name)){movs=leerTabla(leerCSV(await textoArchivo(file)))}
   else{await cargarXLSX();const wb=XLSX.read(new Uint8Array(await file.arrayBuffer()),{type:"array",cellDates:true});
     movs=[];for(const n of wb.SheetNames){try{movs=leerTabla(XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:true,defval:null}));if(movs.length)break}catch(e){if(n===wb.SheetNames[wb.SheetNames.length-1])throw e}}}
   if(!movs.length)throw new Error("No he encontrado movimientos en el archivo");
@@ -165,5 +170,5 @@ function crearGasto(id){const m=B.movs.get(id);if(!m)return;
   const vigila=setInterval(async()=>{if(d.open)return;clearInterval(vigila);if(window.__bkPendiente!==id)return;window.__bkPendiente=null;
     for(let i=0;i<20;i++){const nuevo=[...S.gastos.keys()].find(k=>!antes.has(k));if(nuevo){await enlazar(id,{tipo:"gasto",id:nuevo});toast("Gasto creado y enlazado con el movimiento");return}await new Promise(r=>setTimeout(r,500))}},400);
 }
-window.HuelsanBanco={leerN43,leerTabla,candidatos};
+window.HuelsanBanco={leerN43,leerTabla,leerCSV,candidatos};
 })();
