@@ -851,7 +851,7 @@ function vistaResumen(){
     <label style="max-width:120px">Año<select data-ra>${anios.map(a=>`<option ${a===anio?"selected":""}>${a}</option>`).join("")}</select></label></div>
   <div class="tw"><table><thead><tr><th>Trimestre</th><th class="num">Facturas</th><th class="num">Base general</th><th class="num">IVA repercutido</th><th class="num">Ventas REBU</th><th class="num">Margen REBU</th><th class="num">IVA del REBU</th><th class="num">IVA soportado</th><th class="num">Resultado</th><th></th></tr></thead><tbody>
     ${filas.map(r=>`<tr><td><b>${r.tq}T ${anio}</b></td><td class="num">${r.n}</td><td class="num">${eur(Object.values(r.rep).reduce((s,x)=>s+x.base,0))}</td><td class="num">${eur(r.cuotaRep)}</td><td class="num">${eur(r.rebuVentas)}</td><td class="num">${eur(r.margenRebu)}</td><td class="num">${eur(r.cuotaRebu)}</td><td class="num">${eur(r.sop)}</td>
-      <td class="num"><b style="color:${r.resultado>0?"var(--bad)":"var(--ok)"}">${eur(r.resultado)}</b><div class="muted">${r.resultado>0?"a ingresar":r.resultado<0?"a compensar":""}</div></td><td><button class="btn sm" data-tq-bajar="${r.tq}">Descargar ${r.tq}T</button></td></tr>`).join("")}
+      <td class="num"><b style="color:${r.resultado>0?"var(--bad)":"var(--ok)"}">${eur(r.resultado)}</b><div class="muted">${r.resultado>0?"a ingresar":r.resultado<0?"a compensar":""}</div></td><td><button class="btn sm" data-tq-bajar="${r.tq}">Libros del ${r.tq}T ↓</button></td></tr>`).join("")}
   </tbody></table></div>
   <div class="card"><div class="row sp"><h3>Descargas</h3><label style="max-width:200px;flex-direction:row;align-items:center;gap:8px">Periodo<select data-rt><option value="">Año ${anio} completo</option>${[1,2,3,4].map(t=>`<option value="${t}" ${+S.res.tq===t?"selected":""}>${t}º trimestre ${anio}</option>`).join("")}</select></label></div>
     <div class="row">
@@ -956,7 +956,7 @@ document.addEventListener("click",e=>{
   const pv=t.closest("[data-prov]");if(pv){abrirProveedor(pv.dataset.prov);return}
   const sd=t.closest("[data-subir-detalle]");if(sd){e.stopPropagation();const[lid,did]=sd.dataset.subirDetalle.split("|");subirFacturaDetalle(lid,did);return}
   const it=t.closest("[data-ir-tab]");if(it){e.preventDefault();S.tab=it.dataset.irTab;S.ed=null;history.replaceState(null,"","?tab="+S.tab);pintarTabs();pintar();return}
-  const tb=t.closest("[data-tq-bajar]");if(tb){S.res.tq=tb.dataset.tqBajar;pintar();toast("Periodo "+S.res.tq+"T elegido: descarga abajo los libros que necesites");return}
+  const tb=t.closest("[data-tq-bajar]");if(tb){S.res.tq=tb.dataset.tqBajar;pintar();const c=$("[data-rt]");if(c)c.closest(".card").scrollIntoView({behavior:"smooth",block:"center"});toast("Descargas del "+S.res.tq+"º trimestre");return}
 },true);
 
 /* ======================================================================
