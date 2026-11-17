@@ -1382,7 +1382,7 @@ document.addEventListener("click",async e=>{const t=e.target;
     const st=(cl.estado||"nuevo")===qk.dataset.quick?"nuevo":qk.dataset.quick;S.lots.set(id,{...cl,estado:st});render();
     toast(st==="nuevo"?"Vuelve a «Sin revisar»":"Marcado como "+ESTADO_LBL[st].toLowerCase());
     if(S.db){try{await S.db.doc("lotes/"+id).update({estado:st})}catch(err){toast("No se ha podido guardar: "+(err.message||err.code))}}return}
-  const op=t.closest("[data-open]");if(op&&!t.closest("#drawer")){S.open=op.dataset.open;renderDrawer();return}
+  const op=t.closest("[data-open]");if(op&&!t.closest("#drawer")&&!t.closest("a[href]")){S.open=op.dataset.open;renderDrawer();return}
   if(t.closest("#pick")){$("#file").click();return}
   if(t.closest("#more")){S.limit+=60;render();return}
   if(t.closest("#h-more")){S.histLimit=(S.histLimit||300)+300;render();return}
@@ -1510,5 +1510,6 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-hp]");if(b
 document.addEventListener("change",e=>{if(e.target.matches("[data-hp-arch]"))HP.archivo=e.target.checked});
 </script>
 
+<script src="catalogo.js"></script>
 <script src="extra.js"></script>
 </body></html>

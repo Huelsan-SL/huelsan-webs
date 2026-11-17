@@ -519,8 +519,8 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
         <p class="oblig" data-t="form.obligatorio">Todas las preguntas son obligatorias.</p>
         <div class="fila2">
           <label class="campo"><span class="tit"><span class="num-p">1</span><span data-t="form.p1">¿Qué tipo de vehículo buscas?</span></span><select id="op-tipo" required></select></label>
-          <label class="campo"><span class="tit"><span class="num-p">2</span><span data-t="form.p2m">¿Qué marca te interesa?</span></span><input id="c-marca" maxlength="60" required autocomplete="off" data-t-ph="form.p2m.ejemplo" placeholder="Ej. BMW, Audi, Volkswagen, Yamaha…"></label>
-          <label class="campo"><span class="tit"><span class="num-p">3</span><span data-t="form.p3m">¿Qué modelo?</span></span><input id="c-modelo" maxlength="60" required autocomplete="off" data-t-ph="form.p3m.ejemplo" placeholder="Ej. X3, A4, Transporter, TMAX… (o «Cualquiera»)"></label>
+          <label class="campo"><span class="tit"><span class="num-p">2</span><span data-t="form.p2m">¿Qué marca te interesa?</span></span><input id="c-marca" list="dl-marcas" maxlength="60" required autocomplete="off" data-t-ph="form.p2m.ejemplo" placeholder="Ej. BMW, Audi, Volkswagen, Yamaha…"></label>
+          <label class="campo"><span class="tit"><span class="num-p">3</span><span data-t="form.p3m">¿Qué modelo?</span></span><input id="c-modelo" list="dl-modelos" maxlength="60" required autocomplete="off" data-t-ph="form.p3m.ejemplo" placeholder="Ej. X3, A4, Transporter, TMAX… (o «Cualquiera»)"></label>
           <label class="campo"><span class="tit"><span class="num-p">4</span><span data-t="form.p3">¿Qué presupuesto aproximado tienes?</span></span><select id="op-pres" required></select></label>
           <label class="campo"><span class="tit"><span class="num-p">5</span><span data-t="form.pkm">¿Kilometraje máximo?</span></span><select id="op-km" required></select></label>
           <label class="campo"><span class="tit"><span class="num-p">6</span><span data-t="form.panio">¿Antigüedad máxima?</span></span><select id="op-antig" required></select></label>
@@ -584,12 +584,14 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
           <label><span data-t="filtros.cambio">Cambio</span><select id="f-cambio"><option value="" data-t="filtros.indiferente">Indiferente</option><option value="Automático" data-t="filtros.cambio.auto">Automático</option><option value="Manual" data-t="filtros.cambio.manual">Manual</option></select></label>
           <label><span data-t="filtros.tipo">Carrocería</span><select id="f-tipo"><option value="" data-t="filtros.todos">Todos</option></select></label>
           <label><span data-t="filtros.potencia">Potencia desde</span><select id="f-cv"><option value="" data-t="filtros.cualquiera">Cualquiera</option></select></label>
+          <label><span data-t="filtros.color">Color</span><select id="f-color"><option value="" data-t="filtros.todos">Todos</option></select></label>
           <label><span data-t="filtros.ofertas">Ofertas</span><select id="f-oferta"><option value="" data-t="filtros.todos">Todos</option><option value="1" data-t="filtros.solo.ofertas">Solo ofertas</option></select></label>
           <label><span data-t="filtros.disponibilidad">Disponibilidad</span><select id="f-disp"><option value="" data-t="filtros.todos">Todos</option><option value="stock" data-t="estado.stock">En stock</option><option value="encargo" data-t="estado.encargo">Por encargo</option><option value="vendido" data-t="filtros.vendidos">Vendidos</option></select></label>
           <button type="button" class="btn verde aplicar" id="f-aplicar"><span data-t="filtros.aplicar">Aplicar filtros</span></button>
         </div>
         <div class="resumen-f"><span id="f-total" class="tnum" aria-live="polite"></span><span class="chips-f" id="f-chips"></span><button type="button" class="limpiar" id="f-limpiar" hidden data-t="filtros.limpiar">Quitar filtros</button></div>
       </div>
+      <datalist id="dl-marcas"></datalist><datalist id="dl-modelos"></datalist>
       <div class="cars" id="cars"></div>
       <div class="aviso-stock"><b data-t="stock.aviso">Si buscas un vehículo con otras características, también podemos localizarlo a través de nuestro servicio de búsqueda personalizada.</b><a class="btn verde" href="#busqueda"><span data-t="stock.boton">Solicitar búsqueda personalizada</span></a></div>
     </div>
@@ -663,6 +665,7 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
   </div>
 </footer>
 
+<script src="catalogo.js"></script>
 <script>
 "use strict";
 /* ---------- Datos de la empresa (se editan en la app: Datos de empresa y Textos de la web) ---------- */
@@ -728,11 +731,14 @@ const RANGO=c=>({stock:0,encargo:1,vendido:2}[c.disponibilidad]??1);
 const precioHtml=c=>c.disponibilidad==="vendido"?`<span class="vendido-txt">${esc(T("coches.vendido","Vendido"))}</span>`
   :c.precio?`${c.precio_anterior>c.precio?`<s class="p-ant" aria-label="${esc(T("coches.antes","Antes"))} ${esc(eur(c.precio_anterior))}">${esc(eur(c.precio_anterior))}</s> `:""}<span class="${c.precio_anterior>c.precio?"p-oferta":""}">${esc(eur(c.precio))}</span>`
   :esc(T("coches.consultar","Consultar precio"));
+/* Marca, modelo, combustible y color «de catálogo» para los filtros (catalogo.js): agrupan las distintas formas en que BCA escribe lo mismo.
+   Nunca se descarta un coche por no estar en el catálogo: lo que no se reconoce se limpia y se usa como viene. El título que se ve no cambia. */
+function normalizarCoche(c){const K=window.HUELSAN_CAT;if(!K)return c;try{c.fmarca=K.marca(c.marca)||c.marca||"";c.fmodelo=K.modelo(c.fmarca,c.modelo)||c.modelo||"";c.fcomb=K.combustible(c.combustible)||c.combustible||"";c.fcolor=K.color(c.color)||""}catch(e){c.fmarca=c.marca||"";c.fmodelo=c.modelo||"";c.fcomb=c.combustible||"";c.fcolor=""}return c}
 async function cargarCoches(){
   const r=await fetch(SB_URL+"/rest/v1/coches_web_v2?select=*",{headers:H});
   if(!r.ok)throw new Error("HTTP "+r.status);
   const filas=await r.json();
-  COCHES=filas.map(c=>({...c,fotos:(Array.isArray(c.fotos)?c.fotos:[]).map(f=>/^https?:/.test(f)?f:FOTOS_WEB+String(f).replace(/^\/+/,""))}))
+  COCHES=filas.map(c=>normalizarCoche({...c,fotos:(Array.isArray(c.fotos)?c.fotos:[]).map(f=>/^https?:/.test(f)?f:FOTOS_WEB+String(f).replace(/^\/+/,""))}))
     .filter(c=>!c.caduca||new Date(c.caduca).getTime()>Date.now())
     .sort((a,b)=>RANGO(a)-RANGO(b));
 }
@@ -802,7 +808,7 @@ function redes(){const r=EMPRESA.redes||{};const l=REDES.map(([k,n])=>[k,n,urlRe
 const esAuto=c=>/autom/i.test(c.cambio||"")||/\b(aut|autom\w*|dsg|tiptronic|s[ -]?tronic|steptronic|eat\d?|edc|dct|xtronic|cvt|powershift|at\d)\b/i.test([c.version,c.modelo].join(" "));
 const cambioDe=c=>c.cambio?(/autom/i.test(c.cambio)?"Automático":"Manual"):(esAuto(c)?"Automático":null);
 const norm=t=>String(t||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g," ").trim();
-const FIL=["f-marca","f-modelo","f-ubic","f-precio","f-km","f-anio","f-comb","f-cambio","f-tipo","f-cv","f-disp","f-oferta"];
+const FIL=["f-marca","f-modelo","f-ubic","f-precio","f-km","f-anio","f-comb","f-cambio","f-tipo","f-cv","f-color","f-disp","f-oferta"];
 const v=id=>$("#"+id).value;
 /* Los filtros solo se aplican al pulsar «Aplicar filtros» (o Intro en el buscador); quitar un filtro o «Quitar filtros» sí es inmediato. */
 let AP={};const va=id=>AP[id]||"";
@@ -813,33 +819,35 @@ function llenar(id,vals,fmt=x=>x){const s=$("#"+id),cur=s.value,first=s.options[
 function escalones(vals,pasos){if(!vals.length)return[];const max=Math.max(...vals),r=pasos.filter(p=>vals.some(x=>x<=p));const i=r.findIndex(p=>p>=max);return i<0?r:r.slice(0,i+1)}
 function opcionesFiltros(){
   const C=COCHES;
-  llenar("f-marca",[...new Set(C.map(c=>c.marca).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")));
+  llenar("f-marca",[...new Set(C.map(c=>c.fmarca).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")));
   opcionesModelo();
   const pr=C.map(c=>+c.precio).filter(x=>x>0);llenar("f-precio",escalones(pr,[3000,5000,8000,10000,12000,15000,20000,25000,30000,40000,50000,75000,100000]),x=>num(x)+" €");
   const km=C.filter(c=>c.km!=null).map(c=>+c.km);llenar("f-km",escalones(km,[10000,25000,50000,75000,100000,125000,150000,200000,250000]),x=>num(x)+" km");
   llenar("f-ubic",[...new Set(C.map(c=>c.ubicacion).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")));
   llenar("f-anio",[...new Set(C.map(c=>c.anio).filter(Boolean))].sort((a,b)=>b-a).map(String));
-  llenar("f-comb",[...new Set(C.map(c=>c.combustible).filter(Boolean))].sort());
+  llenar("f-comb",[...new Set(C.map(c=>c.fcomb).filter(Boolean))].sort());
+  llenar("f-color",[...new Set(C.map(c=>c.fcolor).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")));
   llenar("f-tipo",[...new Set(C.map(c=>c.tipo).filter(Boolean))].sort());
   const cvs=C.map(c=>+c.cv).filter(x=>x>0);llenar("f-cv",[75,90,100,110,130,150,180,200,250,300].filter(p=>cvs.some(x=>x>=p)),x=>x+" CV");
   // con muy pocos coches, ocultamos los filtros que no sirven para nada
-  for(const id of ["f-precio","f-km","f-cv","f-tipo","f-comb","f-ubic"]){const s=$("#"+id);s.closest("label").hidden=s.options.length<=2&&!s.value}
+  for(const id of ["f-precio","f-km","f-cv","f-tipo","f-comb","f-ubic","f-color"]){const s=$("#"+id);s.closest("label").hidden=s.options.length<=2&&!s.value}
   $("#f-cambio").closest("label").hidden=new Set(C.map(cambioDe).filter(Boolean)).size<2&&!v("f-cambio");
   $("#f-oferta").closest("label").hidden=!C.some(c=>c.oferta)&&!v("f-oferta");
   bannerOfertas();
 }
-function opcionesModelo(){const m=v("f-marca"),s=$("#f-modelo");llenar("f-modelo",m?[...new Set(COCHES.filter(c=>c.marca===m).map(c=>c.modelo).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")):[]);s.disabled=!m;if(!m)s.value=""}
+function opcionesModelo(){const m=v("f-marca"),s=$("#f-modelo");llenar("f-modelo",m?[...new Set(COCHES.filter(c=>c.fmarca===m).map(c=>c.fmodelo).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")):[]);s.disabled=!m;if(!m)s.value=""}
 function filtrar(ignorar){
   const q=norm(va("f-q")).split(" ").filter(Boolean),f={};FIL.forEach(id=>f[id]=id===ignorar?"":va(id));
   return COCHES.filter(c=>{
-    if(q.length){const t=norm([c.marca,c.modelo,c.version,c.combustible,c.tipo,c.anio,c.color,cambioDe(c),c.ubicacion].join(" ")),tc=t.replace(/ /g,"");if(!q.every(w=>t.includes(w)||tc.includes(w)))return false}
-    if(f["f-marca"]&&c.marca!==f["f-marca"])return false;
-    if(f["f-modelo"]&&c.modelo!==f["f-modelo"])return false;
+    if(q.length){const t=norm([c.marca,c.modelo,c.fmarca,c.fmodelo,c.version,c.combustible,c.tipo,c.anio,c.color,cambioDe(c),c.ubicacion].join(" ")),tc=t.replace(/ /g,"");if(!q.every(w=>t.includes(w)||tc.includes(w)))return false}
+    if(f["f-marca"]&&c.fmarca!==f["f-marca"])return false;
+    if(f["f-modelo"]&&c.fmodelo!==f["f-modelo"])return false;
     if(f["f-ubic"]&&c.ubicacion!==f["f-ubic"])return false;
     if(f["f-precio"]&&!(c.precio>0&&c.precio<=+f["f-precio"]))return false;
     if(f["f-km"]&&!(c.km!=null&&c.km<=+f["f-km"]))return false;
     if(f["f-anio"]&&!((c.anio||0)>=+f["f-anio"]))return false;
-    if(f["f-comb"]&&c.combustible!==f["f-comb"])return false;
+    if(f["f-comb"]&&c.fcomb!==f["f-comb"])return false;
+    if(f["f-color"]&&c.fcolor!==f["f-color"])return false;
     if(f["f-cambio"]&&cambioDe(c)!==f["f-cambio"])return false;
     if(f["f-tipo"]&&c.tipo!==f["f-tipo"])return false;
     if(f["f-cv"]&&!((c.cv||0)>=+f["f-cv"]))return false;
@@ -886,6 +894,11 @@ document.addEventListener("click",e=>{if(!e.target.closest("#f-encargo"))return;
   if(va("f-marca"))$("#c-marca").value=va("f-marca");if(va("f-modelo"))$("#c-modelo").value=va("f-modelo");else if(va("f-q")&&!va("f-marca"))$("#c-marca").value=va("f-q");
   location.hash="busqueda"});
 $("#cars").innerHTML=`<div class="empty"><strong>Cargando coches…</strong></div>`;
+// sugerencias del formulario «Búscamelo»: todo el catálogo (no solo lo que hay en stock); se puede escribir cualquier otra cosa
+(function(){const K=window.HUELSAN_CAT;if(!K)return;const dm=$("#dl-marcas"),dd=$("#dl-modelos"),mi=$("#c-marca");
+  dm.innerHTML=K.marcas.map(m=>`<option value="${esc(m)}">`).join("");
+  const act=()=>{const m=K.marca(mi.value);dd.innerHTML=(m?K.modelos(m):[]).map(x=>`<option value="${esc(x)}">`).join("")};
+  mi.addEventListener("input",act);mi.addEventListener("change",act);act()})();
 
 /* ---------- formulario de búsqueda ---------- */
 // Cada opción: [texto, valor para la app] — tipos y combustibles usan los mismos nombres que la ficha de cliente de la app

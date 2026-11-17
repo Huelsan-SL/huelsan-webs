@@ -485,6 +485,75 @@ function revisionWeb(l,actualizar){const owned=isOwned(l),w=l.fotosWeb||[],mat=l
     ${avisos.length?`<ul class="xrev-av">${avisos.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
     <div class="row"><button class="btn primary sm" id="xw-confirmar">${actualizar?"Actualizar en la web":"Publicar en la web"}</button><button class="btn sm" id="xw-cancelar">Cancelar</button></div></div>`}
 
+/* ---------- collages para enviar al cliente (antes de pujar) ----------
+   Junta las fotos de 4 en 4 en imágenes cuadradas (2×2) y añade una última en negro con los datos básicos del coche.
+   Las imágenes se descargan o se comparten directamente (WhatsApp desde el móvil); no hace falta enviar ningún enlace.
+   Las fotos de BCA se leen con la extensión de Huelsan; se generan en el navegador y no se guarda nada. */
+const COL_N=1080;
+const fotosParaCollage=l=>(l.fotoIds||[]).length?l.fotoIds.map(i=>"bca:"+i):(l.fotos||[]).map(i=>"int:"+i);
+function collageHtml(l){const n=fotosParaCollage(l).length,c=X.collage&&X.collage.lote===l.id?X.collage:null;
+  if(!n)return`<h3>Collages para enviar al cliente</h3><div class="muted" style="font-size:12.5px">Este coche no tiene fotos.</div>`;
+  const nCol=Math.ceil(n/4);
+  return`<h3>Collages para enviar al cliente</h3>
+    <div class="muted" style="font-size:12.5px">${n} foto${n>1?"s":""} → ${nCol} collage${nCol>1?"s":""} de 4 fotos + 1 imagen final en negro con los datos del coche. Se descargan o se comparten directamente, sin enlaces.</div>
+    <div class="row"><button class="btn primary sm" id="xc-hacer" ${X.colBusy?"disabled":""}>${X.colBusy?"Preparando…":c?"Volver a generar":"Crear collages"}</button>
+      ${c&&c.items.length?`<button class="btn sm" id="xc-zip">Descargar todo</button>${navigator.canShare&&c.items[0]&&navigator.canShare({files:[c.items[0].file]})?`<button class="btn sm" id="xc-compartir">Compartir…</button>`:""}`:""}</div>
+    ${X.colMsg&&X.colMsg.lote===l.id?`<div class="note" role="status">${esc(X.colMsg.t)}</div>`:""}
+    ${c?`<div class="xfotos">${c.items.map((it,i)=>`<a class="xfoto on" href="${esc(it.url)}" download="${esc(it.nombre)}" title="Descargar ${esc(it.nombre)}"><img src="${esc(it.url)}" alt="Collage ${i+1}"><span class="src">${it.final?"Datos":"Collage "+(i+1)}</span></a>`).join("")}</div>`:""}`}
+function cubrir(x,bm,dx,dy,w,h){const k=Math.max(w/bm.width,h/bm.height),sw=w/k,sh=h/k;x.save();x.beginPath();x.rect(dx,dy,w,h);x.clip();x.drawImage(bm,(bm.width-sw)/2,(bm.height-sh)/2,sw,sh,dx,dy,w,h);x.restore()}
+async function dibujarCollage(bms){const c=document.createElement("canvas");c.width=c.height=COL_N;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,COL_N,COL_N);x.imageSmoothingQuality="high";
+  const g=6,N=COL_N,h=(N-g)/2;const celdas=bms.length===1?[[0,0,N,N]]:bms.length===2?[[0,0,N,h],[0,h+g,N,h]]:bms.length===3?[[0,0,N,h],[0,h+g,h,h],[h+g,h+g,h,h]]:[[0,0,h,h],[h+g,0,h,h],[0,h+g,h,h],[h+g,h+g,h,h]];
+  bms.forEach((bm,i)=>cubrir(x,bm,...celdas[i]));
+  return await new Promise(r=>c.toBlob(r,"image/jpeg",.9))}
+function datosBasicos(l){const K=window.HUELSAN_CAT;let marca=l.marca||"",modelo=l.derivado||l.modelo||"";
+  if(K){try{const m=K.marca(l.marca);if(m){marca=m;modelo=K.modelo(m,l.modelo)||l.modelo||""}}catch(e){}}
+  else if(marca)marca=marca[0].toUpperCase()+marca.slice(1).toLowerCase();
+  const comb=l.combustibleOrig||l.combustible||"",hib=/h[ií]brid|hybrid|phev|enchuf/i.test([comb,l.modelo,l.derivado].join(" "));
+  const mot=[l.motor?String(l.motor).replace(".",",")+" l":null,l.cv?l.cv+" CV":null].filter(Boolean).join(" · ");
+  const fm=l.fechaMatric?new Date(l.fechaMatric):null,mat=fm&&!isNaN(fm)?fm.toLocaleDateString("es-ES",{month:"long",year:"numeric"}):(l.anio?String(l.anio):"");
+  const filas=[["Marca",marca],["Modelo",modelo],["Kilómetros",l.km!=null?num(l.km)+" km":""],["Motor y potencia",mot],["Color",l.color?String(l.color).replace(/metalizad[oa]/i,"").trim().toLowerCase().replace(/^./,m=>m.toUpperCase()):""],["Matriculación",mat],["Plazas",l.plazas||""],["Combustible",comb.replace(/^./,m=>m.toUpperCase())],["Híbrido",hib?"Sí"+(/enchuf|phev/i.test(comb+l.modelo)?" (enchufable)":""):""]].filter(f=>f[1]!==""&&f[1]!=null);
+  const extra=[];if(l.duenos===1)extra.push("Único propietario");if(l.libro===true)extra.push("Libro de mantenimiento");
+  return{titulo:[marca,modelo].filter(Boolean).join(" "),filas:filas.filter(f=>f[0]!=="Marca"&&f[0]!=="Modelo"),extra}}
+async function dibujarDatos(l){const d=datosBasicos(l),N=COL_N,c=document.createElement("canvas");c.width=c.height=N;const x=c.getContext("2d");
+  x.fillStyle="#000";x.fillRect(0,0,N,N);x.textBaseline="alphabetic";
+  const oro="#B8976A",blanco="#F0EFED";
+  x.fillStyle=oro;x.font="700 26px Syncopate, Arial, sans-serif";x.fillText("HUELSAN",70,92);x.fillStyle=blanco;x.font="500 20px Arial, sans-serif";x.fillText("AUTOMOCIÓN",70,120);
+  x.fillStyle=oro;x.fillRect(70,150,N-140,3);
+  // título ajustado al ancho
+  let fs=64;const tt=d.titulo.toUpperCase();x.font=`700 ${fs}px Arial, sans-serif`;while(x.measureText(tt).width>N-140&&fs>30){fs-=2;x.font=`700 ${fs}px Arial, sans-serif`}
+  x.fillStyle=blanco;x.fillText(tt,70,235);
+  const filas=d.filas,hf=Math.min(84,Math.floor((N-330-(d.extra.length?150:60))/Math.max(filas.length,1)));let y=300;
+  filas.forEach(([k,v])=>{x.fillStyle="#9A9A9A";x.font="400 24px Arial, sans-serif";x.fillText(k.toUpperCase(),70,y);
+    x.fillStyle=blanco;x.font="600 34px Arial, sans-serif";let t=String(v);while(x.measureText(t).width>N-140-330&&t.length>3)t=t.slice(0,-2);if(t!==String(v))t=t.trim()+"…";x.fillText(t,70+330,y+2);
+    x.fillStyle="#2A2A2A";x.fillRect(70,y+hf*0.38,N-140,1);y+=hf});
+  let ex=Math.min(y+30,N-150);d.extra.forEach(t=>{x.fillStyle=oro;x.beginPath();x.arc(84,ex-9,9,0,7);x.fill();x.fillStyle=blanco;x.font="600 32px Arial, sans-serif";x.fillText(t,112,ex);ex+=52});
+  return await new Promise(r=>c.toBlob(r,"image/jpeg",.92))}
+async function crearCollages(l){
+  if(X.colBusy)return;const claves=fotosParaCollage(l);if(!claves.length)return;X.colBusy=true;X.colMsg={lote:l.id,t:"Leyendo las fotos…"};renderDrawer();
+  try{const bms=new Array(claves.length);let hechas=0,i0=0;
+    const obrero=async()=>{while(i0<claves.length){const i=i0++;try{const b=await blobDe(l,claves[i]);bms[i]=await createImageBitmap(b)}catch(e){bms[i]=null}hechas++;
+      if(hechas%4===0){X.colMsg={lote:l.id,t:`Leyendo las fotos… ${hechas} de ${claves.length}`};const m=$("#xcollage .note");m&&(m.textContent=X.colMsg.t)}}};
+    await Promise.all([obrero(),obrero(),obrero(),obrero()]);
+    const ok=bms.filter(Boolean),fallos=claves.length-ok.length;
+    if(!ok.length)throw new Error(document.documentElement.dataset.huelsanExt?"BCA no ha dado ninguna foto (¿hay sesión iniciada en BCA en este navegador?).":"Para leer las fotos de BCA instala la extensión de Huelsan en este navegador (Chrome o Edge).");
+    X.colMsg={lote:l.id,t:"Montando los collages…"};renderDrawer();
+    const base=(titleOf(l)+(l.matricula?" "+l.matricula:"")).replace(/[^\wÁÉÍÓÚÜÑáéíóúüñ]+/g,"-").replace(/^-|-$/g,"")||"coche";
+    const items=[];
+    for(let i=0;i<ok.length;i+=4){const blob=await dibujarCollage(ok.slice(i,i+4)),n=items.length+1,nombre=`${base}-${String(n).padStart(2,"0")}.jpg`;
+      items.push({blob,nombre,file:new File([blob],nombre,{type:"image/jpeg"}),url:URL.createObjectURL(blob)})}
+    const bd=await dibujarDatos(l),nd=`${base}-${String(items.length+1).padStart(2,"0")}-datos.jpg`;items.push({blob:bd,nombre:nd,final:true,file:new File([bd],nd,{type:"image/jpeg"}),url:URL.createObjectURL(bd)});
+    if(X.collage)X.collage.items.forEach(it=>URL.revokeObjectURL(it.url));
+    X.collage={lote:l.id,items};X.colMsg={lote:l.id,t:`Listo: ${items.length-1} collage${items.length>2?"s":""} + imagen de datos.${fallos?` ${fallos} foto${fallos>1?"s":""} no se ha${fallos>1?"n":""} podido leer.`:""}`}}
+  catch(err){X.colMsg={lote:l.id,t:"No se han podido crear: "+(err.message||err)}}
+  finally{X.colBusy=false;renderDrawer()}}
+document.addEventListener("click",async e=>{const t=e.target;if(!t.closest("#xcollage"))return;const l=S.open&&S.lots.get(S.open);if(!l)return;
+  if(t.closest("#xc-hacer")){e.stopPropagation();crearCollages(l);return}
+  const c=X.collage&&X.collage.lote===l.id?X.collage:null;if(!c)return;
+  if(t.closest("#xc-zip")){let Z=null;try{Z=await cargarJSZip()}catch(err){}if(!Z){c.items.forEach((it,i)=>setTimeout(()=>{const a=document.createElement("a");a.href=it.url;a.download=it.nombre;a.click()},i*400));return}
+    const z=new Z();c.items.forEach(it=>z.file(it.nombre,it.blob));const b=await z.generateAsync({type:"blob"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=c.items[0].nombre.replace(/-01\.jpg$/,"")+"-collages.zip";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);return}
+  if(t.closest("#xc-compartir")){try{await navigator.share({files:c.items.map(it=>it.file),title:titleOf(l)})}catch(err){if(err&&err.name!=="AbortError")toast("No se ha podido compartir: "+(err.message||err))}}
+});
+
 /* ---------- ficha del coche: panel «En la web», clientes y reseña ---------- */
 const origDrawer=window.renderDrawer;
 /* Al redibujar la ficha (cada vez que se guarda un campo) se mantiene la posición y el campo al que ibas:
@@ -554,6 +623,7 @@ function ampliarFicha(){
   bar.innerHTML=X.revisar===l.id?revisionWeb(l,publicada(l)):`<div class="xpubbar">${publicada(l)?(cambiosWeb(l).length?`<button class="btn primary sm" id="xw-revisar">Revisar y actualizar cambios</button>`:`<span class="muted" style="font-size:12.5px">La web está al día.</span>`)+(l.web.precioAnterior!=null&&l.estado!=="vendido"?`<button class="btn sm" id="xw-sinrebaja" title="Deja de mostrar el precio anterior tachado">Quitar precio tachado (${eur(l.web.precioAnterior)})</button>`:"")+`<button class="btn sm ghost" id="xw-retirar">Retirar de la web</button>`:`<button class="btn primary sm" id="xw-revisar">Revisar y publicar</button>`}</div>`;
   web.appendChild(bar);
   dec.after(web);
+  const col=document.createElement("div");col.className="dsec";col.id="xcollage";col.innerHTML=collageHtml(l);web.before(col);
   // datos del coche: en los añadidos a mano sustituye a «Datos del vendedor» (vacío); en los nuestros de BCA va antes
   if(!l.subasta&&!l.url||isOwned(l)){const vend=secs.find(s=>{const h=s.querySelector("h3");return h&&h.textContent.trim()==="Datos del vendedor"});
     const dat=document.createElement("div");dat.className="dsec";dat.id="xdatos";dat.innerHTML=seccionDatos(l);

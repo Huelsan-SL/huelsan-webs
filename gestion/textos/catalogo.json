@@ -714,6 +714,12 @@
     "largo": false
    },
    {
+    "clave": "filtros.color",
+    "etiqueta": "Filtro «Color»",
+    "defecto": "Color",
+    "largo": false
+   },
+   {
     "clave": "filtros.ofertas",
     "etiqueta": "Filtro «Ofertas»",
     "defecto": "Ofertas",
