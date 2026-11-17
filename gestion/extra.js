@@ -623,6 +623,7 @@ function ampliarFicha(){
   bar.innerHTML=X.revisar===l.id?revisionWeb(l,publicada(l)):`<div class="xpubbar">${publicada(l)?(cambiosWeb(l).length?`<button class="btn primary sm" id="xw-revisar">Revisar y actualizar cambios</button>`:`<span class="muted" style="font-size:12.5px">La web está al día.</span>`)+(l.web.precioAnterior!=null&&l.estado!=="vendido"?`<button class="btn sm" id="xw-sinrebaja" title="Deja de mostrar el precio anterior tachado">Quitar precio tachado (${eur(l.web.precioAnterior)})</button>`:"")+`<button class="btn sm ghost" id="xw-retirar">Retirar de la web</button>`:`<button class="btn primary sm" id="xw-revisar">Revisar y publicar</button>`}</div>`;
   web.appendChild(bar);
   dec.after(web);
+  const pcal=panelCalendario(l);if(pcal)dec.after(pcal);
   const col=document.createElement("div");col.className="dsec";col.id="xcollage";col.innerHTML=collageHtml(l);web.before(col);
   // datos del coche: en los añadidos a mano sustituye a «Datos del vendedor» (vacío); en los nuestros de BCA va antes
   if(!l.subasta&&!l.url||isOwned(l)){const vend=secs.find(s=>{const h=s.querySelector("h3");return h&&h.textContent.trim()==="Datos del vendedor"});
@@ -802,4 +803,67 @@ async function redactarIA(l){if(!S.sample||X.iaOcupada)return;X.iaOcupada=true;r
     await saveLot(l.id,{textoVenta:String(tx).trim().slice(0,1500)});toast("Texto redactado: revísalo antes de publicarlo")}
   catch(err){toast("No se ha podido redactar: "+(err.message||err))}
   finally{X.iaOcupada=false;renderDrawer()}}
+
+/* ---------- calendario de Google (17/11/2026) ----------
+   Paso intermedio tras «★ Interesante»: solo los coches interesantes (o «Pujar») de una subasta abierta tienen el botón
+   «📅 Calendario», en la lista y en la ficha. Crea un evento en el calendario de la cuenta de Huelsan con aviso 30 min antes
+   (función de Supabase «calendario»; ver supabase/functions/calendario). Un coche = un evento: volver a pulsar lo actualiza.
+   Se guarda en el lote: calendario {eventoId, enlace, inicio, creado, actualizado}. */
+X.calOcupado=new Set();
+const calPuede=l=>!isOwned(l)&&["interesante","pujar"].includes(l.estado)&&!isPast(l);
+// Cuándo hay que estar atento: en las presenciales, la hora de inicio; en las online, el cierre del lote (que es cuando se puja).
+// Para avisar siempre al abrirse una online, cambiar «cierreOf(l)» por «s.inicio||cierreOf(l)».
+function calFecha(l){const s=l.subasta||{};const iso=lotOnline(l)?cierreOf(l):(s.inicio||cierreOf(l));const d=iso?new Date(iso):null;return d&&!isNaN(d)?d:null}
+function calEvento(l){
+  const ini=calFecha(l);if(!ini)return{error:"Este lote no tiene fecha de subasta"};
+  if(+ini<=Date.now())return{error:"La subasta ya ha empezado o terminado"};
+  const s=l.subasta||{},on=lotOnline(l),url=l.url||urlPortal(l)||"";
+  const coche=titleOf(l)+(l.anio?" "+l.anio:""),pm=typeof pujaMaxEst==="function"?pujaMaxEst(l):null;
+  const cli=demandsFor(l).map(d=>d.nombre).filter(Boolean);
+  const desc=[
+    url?"Enlace a la subasta: "+url:"",
+    "Subasta: "+(s.nombre||"—")+" ("+(on?"online, cierra el lote":"presencial")+(s.ubicacion?" · "+s.ubicacion:"")+")",
+    l.lote?"Lote: "+l.lote:"",
+    "Coche: "+coche,
+    l.matricula?"Matrícula: "+l.matricula:"",
+    l.pujaMax?"Puja máxima fijada: "+eur(l.pujaMax):(pm?"Puja máx. sugerida: "+eur(pm):""),
+    cli.length?"Clientes que buscan algo así: "+cli.join(", "):"",
+    "",
+    "☐ Si se adjudica: proponérselo a algún cliente (ficha del coche → Proponer a clientes)."].filter((x,i,a)=>x!==""||(i>0&&a[i-1]!=="")).join("\n");
+  return{titulo:"Subasta"+(l.lote?" · lote "+l.lote:"")+" · "+titleOf(l)+(l.matricula?" · "+l.matricula:""),
+    descripcion:desc,lugar:on?"":(s.ubicacion||""),inicio:ini.toISOString(),fin:new Date(+ini+30*60000).toISOString()}}
+const errCal=e=>({sin_credenciales:"Falta conectar la cuenta de Google en Supabase (secretos GOOGLE_*).",google_auth:"Google ha rechazado el acceso: hay que volver a autorizar la cuenta de calendario.",
+  session_expired:"La sesión ha caducado. Vuelve a entrar.",network:"Sin conexión."}[e&&e.code]||("No se ha podido usar el calendario: "+((e&&e.message)||e)));
+async function calEnviar(id,accion){
+  const l=S.lots.get(id);if(!l||X.calOcupado.has(id))return;
+  if(!window.HUELSAN||!HUELSAN.funcion){toast("Esta versión de la app no puede usar el calendario");return}
+  let cuerpo;
+  if(accion==="quitar"){if(!l.calendario)return;cuerpo={accion:"quitar",eventoId:l.calendario.eventoId}}
+  else{const ev=calEvento(l);if(ev.error){toast(ev.error);return}cuerpo={accion:"crear",loteId:l.id,...ev}}
+  X.calOcupado.add(id);render();renderDrawer();
+  try{const r=await HUELSAN.funcion("calendario",cuerpo);
+    if(accion==="quitar"){await saveLot(id,{calendario:null});toast("Quitado del calendario")}
+    else{const ya=!!l.calendario;await saveLot(id,{calendario:{eventoId:r.eventoId,enlace:r.enlace||"",inicio:cuerpo.inicio,creado:(l.calendario&&l.calendario.creado)||ahora(),actualizado:ahora()}});
+      toast(ya?"Evento actualizado en el calendario":"Añadido al calendario con aviso 30 min antes")}}
+  catch(err){toast(errCal(err))}
+  finally{X.calOcupado.delete(id);render();renderDrawer()}}
+// botón en cada fila de la lista (Subastas e Interesantes)
+const origLotRow=window.lotRow;
+window.lotRow=function(l){let h=origLotRow.apply(this,arguments);
+  if(!calPuede(l))return h;
+  const on=!!l.calendario,oc=X.calOcupado.has(l.id);
+  const btn=`<span class="qk"><button type="button" class="qbtn ${on?"on":""}" data-xcal="${esc(l.id)}" ${oc?"disabled":""} title="${on?"Ya está en el calendario: pulsa para actualizar el evento":"Crear evento en el calendario de Google con aviso 30 min antes"}">${oc?"…":on?"📅 En calendario ✓":"📅 Calendario"}</button></span>`;
+  return h.includes('<span class="price">')?h.replace('<span class="price">',btn+'<span class="price">'):h}
+function panelCalendario(l){
+  if(isOwned(l)||!["interesante","pujar"].includes(l.estado))return null;
+  const d=document.createElement("div");d.className="dsec";d.id="xcal";const c=l.calendario,oc=X.calOcupado.has(l.id);
+  d.innerHTML=`<h3>Calendario de Google</h3>`+(isPast(l)&&!c?`<div class="muted" style="font-size:12.5px">La subasta ya ha terminado.</div>`:
+    c?`<div class="muted" style="font-size:12.5px">En el calendario: <b>${esc(fechaHora(c.inicio))}</b>, con aviso 30 min antes.${c.enlace?` <a href="${esc(c.enlace)}" target="_blank" rel="noopener">Abrir el evento ↗</a>`:""}</div>
+      <div class="row"><button class="btn sm" data-xcal="${esc(l.id)}" ${oc?"disabled":""}>${oc?"Un momento…":"Actualizar evento"}</button><button class="btn sm ghost" data-xcal="${esc(l.id)}" data-xaccion="quitar" ${oc?"disabled":""}>Quitar del calendario</button></div>`
+    :`<div class="muted" style="font-size:12.5px">Crea un evento con el enlace de la subasta, lote, modelo y matrícula, y aviso 30 min antes. La descripción recuerda proponérselo a un cliente si se adjudica.</div>
+      <div class="row"><button class="btn sm primary" data-xcal="${esc(l.id)}" ${oc?"disabled":""}>${oc?"Un momento…":"📅 Añadir al calendario"}</button></div>`);
+  return d}
+// en fase de captura para que el clic no abra además la ficha del coche
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-xcal]");if(!b)return;
+  e.stopPropagation();e.preventDefault();calEnviar(b.dataset.xcal,b.dataset.xaccion||"crear")},true);
 })();
