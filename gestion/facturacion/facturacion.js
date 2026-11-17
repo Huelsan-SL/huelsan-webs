@@ -28,7 +28,7 @@ const TXT_GARANTIA="Vehículo de ocasión con garantía legal de 1 año desde la
 const TXT_RGPD="Sus datos se tratan para gestionar la venta y cumplir obligaciones legales (fiscales y de Tráfico). Puede ejercer sus derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad escribiendo a nuestro correo.";
 
 /* ---------- estado ---------- */
-const S={db:null,tab:"facturas",emisor:{},facturas:new Map(),clientes:new Map(),gastos:new Map(),proveedores:new Map(),cont:new Map(),lotes:[],
+const S={db:null,tab:"facturas",emisor:{},facturas:new Map(),clientes:new Map(),gastos:new Map(),docsCoche:new Map(),proveedores:new Map(),cont:new Map(),lotes:[],
   ed:null,edSucio:false,filtro:{anio:String(new Date().getFullYear()),estado:"",q:""},gfiltro:{anio:String(new Date().getFullYear()),cat:"",q:""},mat:null,res:{anio:String(new Date().getFullYear())}};
 
 /* ---------- NIF / NIE / CIF ---------- */
@@ -107,7 +107,7 @@ const regimenTexto=g=>{if(g.sinFactura)return"Efectivo sin factura";const r=[...
   try{
     S.db=await window.claude.use("db");
     const vigilar=(col,mapa,cb)=>S.db.collection(col).onSnapshot(sn=>{mapa.clear();sn.docs.forEach(d=>mapa.set(d.id,{...d.data(),id:d.id}));cb&&cb();pintarSiProcede(col)},e=>console.error(e));
-    vigilar("facturas",S.facturas);vigilar("clientes",S.clientes);vigilar("gastos",S.gastos);vigilar("proveedores",S.proveedores);
+    vigilar("facturas",S.facturas);vigilar("clientes",S.clientes);vigilar("gastos",S.gastos);vigilar("docscoche",S.docsCoche);vigilar("proveedores",S.proveedores);
     S.db.collection("facturacion").onSnapshot(sn=>{S.cont.clear();let em=null;sn.docs.forEach(d=>{if(d.id==="emisor")em=d.data();else S.cont.set(d.id,d.data())});
       if(em)S.emisor=em;else if(!S.emisorCargado)prellenarEmisor();S.emisorCargado=true;pintarSiProcede("facturacion")});
     await cargarLotes();
@@ -790,6 +790,74 @@ async function verArchivo(ruta,nombre){
     if(!w){const a=document.createElement("a");a.href=u;a.download=nombre||ruta;a.click()}setTimeout(()=>URL.revokeObjectURL(u),60000)}catch(e){toast(e.message,6000)}}
 
 /* ======================================================================
+   DOCUMENTOS DEL COCHE (póliza, permiso, ficha técnica, ITV…): almacén privado «documentos»,
+   registro en docscoche/<id>. Las pólizas de seguro subidas a una factura de «Seguro» salen aquí solas,
+   y una póliza subida aquí se puede adjuntar (copia) a la factura de seguro del coche.
+   ====================================================================== */
+const DOC_TIPOS=["Póliza de seguro","Permiso de circulación","Ficha técnica","ITV","Contrato de compra","Informe o peritaje","Garantía","Mandato / transferencia","Otros"];
+const esPoliza=t=>t==="Póliza de seguro";
+const cocheDe=k=>porMatricula().find(y=>y.matricula===k);
+const gastosSeguro=x=>x.docs.filter(g=>g.categoria==="Seguro"&&!g.sinFactura).sort((a,b)=>String(b.fecha||"").localeCompare(String(a.fecha||"")));
+function docsPropios(x){const l=x.lote,k=x.matricula.startsWith("lote:")?null:x.matricula;
+  return[...S.docsCoche.values()].filter(d=>(l&&d.loteId===l.id)||(k&&normMat(d.matricula)===k)).sort((a,b)=>String(b.creado||"").localeCompare(String(a.creado||"")))}
+function docsDerivados(x){const out=[];for(const g of x.docs)if(g.categoria==="Seguro")for(const a of g.archivos||[])if(!a.docId)out.push({tipo:"Póliza de seguro",archivo:a,fecha:g.fecha,gasto:g});return out}
+const docsTotales=x=>docsPropios(x).length+docsDerivados(x).length;
+const gastoConDoc=(d)=>[...S.gastos.values()].find(g=>(g.archivos||[]).some(a=>a.docId===d.id));
+function tarjetaDocs(x){
+  const own=docsPropios(x),der=docsDerivados(x),seg=gastosSeguro(x);
+  const btns=a=>`<button class="btn sm" data-ver-archivo="${esc(a.ruta)}" data-nombre="${esc(a.nombre)}">${esc(a.nombre.length>26?a.nombre.slice(0,24)+"…":a.nombre)}</button>`;
+  const filas=[...own.map(d=>{const g=gastoConDoc(d);
+      return`<tr><td>${fecha(d.fecha)}</td><td><span class="tag acc">${esc(d.tipo)}</span></td><td>${esc(d.nota||"")}</td>
+        <td class="muted">${g?`También en la factura de seguro de ${esc(g.proveedor||"—")} (${fecha(g.fecha)})`:"Subido aquí"}</td>
+        <td style="white-space:nowrap">${(d.archivos||[]).map(btns).join(" ")}</td>
+        <td style="white-space:nowrap">${esPoliza(d.tipo)&&!g&&seg.length?`<button class="btn sm" data-doc-adj="${esc(d.id)}" title="Copiar la póliza a una factura de seguro de este coche">Adjuntar a factura</button> `:""}<button class="btn sm" data-doc-del="${esc(d.id)}" title="Eliminar documento" aria-label="Eliminar documento">✕</button></td></tr>`}),
+    ...der.map(r=>`<tr><td>${fecha(r.fecha)}</td><td><span class="tag acc">${esc(r.tipo)}</span></td><td></td>
+        <td class="muted">De la factura de seguro de ${esc(r.gasto.proveedor||"—")}</td><td>${btns(r.archivo)}</td>
+        <td><button class="btn sm" data-gasto="${esc(r.gasto.id)}">Ver factura</button></td></tr>`)];
+  return`<div class="card"><div class="row sp"><h3 style="margin:0">Documentos del coche${filas.length?` (${filas.length})`:""}</h3><button class="btn sm primary" data-doc-add="${esc(x.matricula)}">+ Añadir documento</button></div>
+    ${filas.length?`<div class="tw"><table><tbody>${filas.join("")}</tbody></table></div>`:`<p class="muted" style="margin:6px 0 0">Aún no hay documentos. Sube la póliza, el permiso de circulación, la ficha técnica, la ITV… Las pólizas que subas en una factura de «Seguro» aparecen aquí automáticamente.</p>`}</div>`;
+}
+function formDocumento(x,seg){return new Promise(res=>{
+  const f=$("#f-confirm");
+  f.innerHTML=`<h2>Añadir documento</h2>
+    <label>Tipo<select name="tipo">${DOC_TIPOS.map(t=>`<option>${esc(t)}</option>`).join("")}</select></label>
+    <label>Nota <span class="muted">(opcional)</span><input name="nota" placeholder="Ej.: Mapfre, todo riesgo, hasta 12/2027"></label>
+    <label>Archivos<input type="file" name="files" multiple required accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx"></label>
+    ${seg.length?`<label id="adj-wrap">Adjuntar también a la factura de seguro<select name="gasto"><option value="">No adjuntar</option>${seg.map((g,i)=>`<option value="${esc(g.id)}" ${i===0?"selected":""}>${esc(fecha(g.fecha))} · ${esc(g.proveedor||"Seguro")} · ${esc(eur(g.total))}</option>`).join("")}</select></label>`:""}
+    <div class="row" style="justify-content:flex-end"><button class="btn" value="no" formnovalidate>Cancelar</button><button class="btn primary" value="si">Guardar</button></div>`;
+  const tipo=f.elements.tipo,w=$("#adj-wrap");const act=()=>{if(w)w.hidden=!esPoliza(tipo.value)};tipo.onchange=act;act();
+  const d=$("#dlg-confirm");d.returnValue="";d.showModal();
+  d.onclose=()=>{if(d.returnValue!=="si")return res(null);const fd=new FormData(f);res({tipo:String(fd.get("tipo")),nota:String(fd.get("nota")||"").trim(),files:[...f.elements.files.files],gastoId:esPoliza(String(fd.get("tipo")))?String(fd.get("gasto")||""):""})}})}
+async function copiarAGasto(d,g){
+  const nuevos=[];for(const a of d.archivos||[]){const b=await HUELSAN.bajar("documentos",a.ruta);const r=await HUELSAN.subir("documentos",new File([b],a.nombre,{type:a.tipo||b.type||""}));
+    nuevos.push({ruta:r.id,nombre:a.nombre,tipo:a.tipo||"",size:a.size||0,subido:new Date().toISOString(),docId:d.id})}
+  await S.db.doc("gastos/"+g.id).update({archivos:[...(g.archivos||[]),...nuevos],actualizado:new Date().toISOString()})}
+async function anadirDocumento(k){
+  const x=cocheDe(k);if(!x){toast("No encuentro ese coche");return}
+  const r=await formDocumento(x,gastosSeguro(x));if(!r)return;
+  try{const id=nid(),archivos=[];
+    for(const fi of r.files){toast("Subiendo "+fi.name+"…",20000);const u=await HUELSAN.subir("documentos",fi);archivos.push({ruta:u.id,nombre:fi.name,tipo:fi.type,size:fi.size,subido:new Date().toISOString()})}
+    const l=x.lote;const d={loteId:l?l.id:"",matricula:x.matricula.startsWith("lote:")?"":x.matricula,tipo:r.tipo,nota:r.nota,fecha:hoyISO(),archivos,creado:new Date().toISOString()};
+    await S.db.doc("docscoche/"+id).set(d);
+    const g=r.gastoId&&S.gastos.get(r.gastoId);if(g)await copiarAGasto({...d,id},g);
+    toast(g?"Documento guardado y adjuntado a la factura de seguro":"Documento guardado");pintar()}catch(e){toast("No se ha podido guardar: "+e.message,6000)}}
+async function adjuntarPolizaAGasto(docId){
+  const d=S.docsCoche.get(docId);if(!d)return;const x=[...porMatricula()].find(y=>docsPropios(y).some(z=>z.id===docId));if(!x)return;
+  const seg=gastosSeguro(x);if(!seg.length){toast("Este coche no tiene facturas de seguro");return}
+  const f=$("#f-confirm");f.innerHTML=`<h2>Adjuntar a factura de seguro</h2><label>Factura<select name="g">${seg.map(g=>`<option value="${esc(g.id)}">${esc(fecha(g.fecha))} · ${esc(g.proveedor||"Seguro")} · ${esc(eur(g.total))}</option>`).join("")}</select></label>
+    <div class="row" style="justify-content:flex-end"><button class="btn" value="no" formnovalidate>Cancelar</button><button class="btn primary" value="si">Adjuntar</button></div>`;
+  const dlg=$("#dlg-confirm");dlg.returnValue="";dlg.showModal();
+  const gid=await new Promise(ok=>{dlg.onclose=()=>ok(dlg.returnValue==="si"?String(new FormData(f).get("g")):"")});if(!gid)return;
+  try{toast("Adjuntando…",20000);await copiarAGasto({...d,id:docId},S.gastos.get(gid));toast("Póliza adjuntada a la factura");pintar()}catch(e){toast("No se ha podido adjuntar: "+e.message,6000)}}
+async function borrarDocumento(docId){
+  const d=S.docsCoche.get(docId);if(!d)return;const g=gastoConDoc(d);
+  if(!await confirmar("¿Eliminar este documento?",`${d.tipo}${d.nota?" · "+d.nota:""}. Se borran sus archivos.${g?` También se quitará la copia adjunta a la factura de ${g.proveedor||"seguro"}.`:""}`,"Sí, eliminar"))return;
+  try{for(const a of d.archivos||[])await HUELSAN.borrarArchivo("documentos",a.ruta).catch(()=>{});
+    if(g){const quitar=(g.archivos||[]).filter(a=>a.docId===d.id);for(const a of quitar)await HUELSAN.borrarArchivo("documentos",a.ruta).catch(()=>{});
+      await S.db.doc("gastos/"+g.id).update({archivos:(g.archivos||[]).filter(a=>a.docId!==d.id),actualizado:new Date().toISOString()})}
+    await S.db.doc("docscoche/"+docId).delete();toast("Documento eliminado");pintar()}catch(e){toast("No se ha podido eliminar: "+e.message,6000)}}
+
+/* ======================================================================
    POR MATRÍCULA: compra + gastos + ventas = margen
    ====================================================================== */
 function porMatricula(){
@@ -824,7 +892,7 @@ function vistaMatriculas(){
       <td>${x.lote?esc(({comprado:"Comprado",stock:"Stock",vendido:"Vendido"})[x.lote.estado]||x.lote.estado):x.facturas.length?"Vendido":"—"}</td>
       <td class="num">${eur(x.compra)}</td><td class="num">${eur(x.gastos)}</td><td class="num">${x.ventas?eur(x.ventas):"—"}</td>
       <td class="num" style="color:${x.ventas?(x.margen>=0?"var(--ok)":"var(--bad)"):"inherit"}">${x.ventas?eur(x.margen):"—"}</td><td class="num">${x.ivaRebu?eur(x.ivaRebu):"—"}</td><td class="num"><b>${x.ventas?eur(x.margenNeto):"—"}</b></td>
-      <td>${x.facturas.length?`<span class="tag ok">${x.facturas.length} venta</span> `:""}${x.docs.length?`<span class="tag acc">${x.docs.length} gasto${x.docs.length>1?"s":""}</span>`:""}${!x.docs.some(g=>g.categoria==="Compra del vehículo")&&x.compra?` <span class="tag warn">sin factura de compra</span>`:""}${x.appSinFactura.length?` <span class="tag bad">${x.appSinFactura.length} sin factura</span>`:""}</td></tr>`).join("")}
+      <td>${x.facturas.length?`<span class="tag ok">${x.facturas.length} venta</span> `:""}${x.docs.length?`<span class="tag acc">${x.docs.length} gasto${x.docs.length>1?"s":""}</span>`:""}${docsTotales(x)?` <span class="tag">${docsTotales(x)} doc${docsTotales(x)>1?"s":""}</span>`:""}${!x.docs.some(g=>g.categoria==="Compra del vehículo")&&x.compra?` <span class="tag warn">sin factura de compra</span>`:""}${x.appSinFactura.length?` <span class="tag bad">${x.appSinFactura.length} sin factura</span>`:""}</td></tr>`).join("")}
   </tbody></table></div>`:`<div class="vacio">Aún no hay coches comprados, gastos ni ventas.</div>`}`;
 }
 function detalleMatricula(x){
@@ -838,6 +906,7 @@ function detalleMatricula(x){
     <p class="muted" style="margin:0">Cada gasto necesita su factura. Súbela (se leen el IVA y la base) o márcalo como pago en efectivo sin factura.</p>
     <div class="tw"><table><tbody>${x.appSinFactura.map(gd=>`<tr><td>${gd.fecha?fecha(gd.fecha):"—"}</td><td>${esc(gd.categoria||"Otros")}</td><td>${esc(gd.concepto||"")}</td><td class="num">${eur(gd.importe)}</td>
       <td style="white-space:nowrap">${l&&gd.id!=="g0"?`<button class="btn sm primary" data-subir-detalle="${esc(l.id)}|${esc(gd.id)}">Subir factura</button> `:""}${l?`<button class="btn sm" data-sinf-detalle="${esc(l.id)}|${esc(gd.id)}" title="Pago en efectivo sin factura">Sin factura</button> <button class="btn sm" data-del-detalle="${esc(l.id)}|${esc(gd.id)}" title="Eliminar este gasto de la ficha" aria-label="Eliminar gasto">✕</button>`:""}</td></tr>`).join("")}</tbody></table></div></div>`:""}
+  ${tarjetaDocs(x)}
   <h3>Ventas</h3>${x.facturas.length?`<div class="tw"><table><tbody>${x.facturas.map(f=>`<tr data-ir-factura="${esc(f.id)}" style="cursor:pointer"><td><b>${esc(f.codigo)}</b></td><td>${fecha(f.fechaExpedicion)}</td><td>${esc(f.cliente&&f.cliente.nombre)}</td><td>${etiquetaEstado(f)}</td><td class="num">${eur(f.totales&&f.totales.total)}</td></tr>`).join("")}</tbody></table></div>`:`<p class="muted" style="margin:0">Sin facturas de venta.</p>`}
   <h3>Compras y gastos</h3>${x.docs.length?`<div class="tw"><table><thead><tr><th>Fecha</th><th>Categoría</th><th>Proveedor</th><th>Régimen</th><th class="num">Total pagado</th><th class="num">IVA deducible</th><th class="num">Coste al coche</th><th>Factura</th></tr></thead><tbody>${x.docs.sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha))).map(g=>`<tr data-gasto="${esc(g.id)}" style="cursor:pointer"><td>${fecha(g.fecha)}</td><td>${esc(g.categoria)}</td><td>${esc(g.proveedor||"")}<div class="muted">${esc(g.concepto||"")}</div></td><td>${esc(regimenTexto(g))}</td><td class="num">${eur(g.total)}</td><td class="num">${gastoCuota(g)?eur(gastoCuota(g)):"—"}</td><td class="num"><b>${eur(gastoCoste(g))}</b></td>
     <td>${g.sinFactura?`<span class="tag">Efectivo sin factura</span>`:(g.archivos||[]).map(a=>`<button class="btn sm" data-ver-archivo="${esc(a.ruta)}" data-nombre="${esc(a.nombre)}">${esc(a.nombre.length>24?a.nombre.slice(0,22)+"…":a.nombre)}</button>`).join(" ")||`<span class="tag bad">Falta factura</span>`}</td></tr>`).join("")}</tbody></table></div>`:`<p class="muted" style="margin:0">Aún no hay facturas de compra ni de gastos de este coche.</p>`}`;
@@ -972,6 +1041,9 @@ document.addEventListener("click",e=>{
   const gs=t.closest("[data-gasto]");if(gs){abrirGasto(gs.dataset.gasto);return}
   const mt=t.closest("[data-mat]");if(mt){S.mat=mt.dataset.mat;pintar();scrollTo(0,0);return}
   const pv=t.closest("[data-prov]");if(pv){abrirProveedor(pv.dataset.prov);return}
+  const da=t.closest("[data-doc-add]");if(da){e.stopPropagation();anadirDocumento(da.dataset.docAdd);return}
+  const dx=t.closest("[data-doc-del]");if(dx){e.stopPropagation();borrarDocumento(dx.dataset.docDel);return}
+  const dj=t.closest("[data-doc-adj]");if(dj){e.stopPropagation();adjuntarPolizaAGasto(dj.dataset.docAdj);return}
   const sf=t.closest("[data-sinf-detalle]");if(sf){e.stopPropagation();const[lid,did]=sf.dataset.sinfDetalle.split("|");marcarDetalleSinFactura(lid,did);return}
   const dd=t.closest("[data-del-detalle]");if(dd){e.stopPropagation();const[lid,did]=dd.dataset.delDetalle.split("|");eliminarDetalle(lid,did);return}
   const sd=t.closest("[data-subir-detalle]");if(sd){e.stopPropagation();const[lid,did]=sd.dataset.subirDetalle.split("|");subirFacturaDetalle(lid,did);return}
