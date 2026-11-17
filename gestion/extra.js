@@ -810,6 +810,13 @@ async function redactarIA(l){if(!S.sample||X.iaOcupada)return;X.iaOcupada=true;r
    (función de Supabase «calendario»; ver supabase/functions/calendario). Un coche = un evento: volver a pulsar lo actualiza.
    Se guarda en el lote: calendario {eventoId, enlace, inicio, creado, actualizado}. */
 X.calOcupado=new Set();
+// "enlace": abre Google Calendar con el evento ya rellenado y se pulsa «Guardar» (sin configurar nada).
+// "api": crea el evento solo, con aviso a los 30 min, a través de la función «calendario» (necesita la cuenta de Google conectada en Supabase).
+const CAL_MODO="enlace";
+const calFechaGoogle=iso=>new Date(iso).toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"");
+function calEnlace(ev){return"https://calendar.google.com/calendar/render?"+["action=TEMPLATE","text="+encodeURIComponent(ev.titulo),
+  "dates="+calFechaGoogle(ev.inicio)+"/"+calFechaGoogle(ev.fin),"details="+encodeURIComponent(ev.descripcion.slice(0,1500)),
+  ev.lugar?"location="+encodeURIComponent(ev.lugar):"","ctz=Europe%2FMadrid"].filter(Boolean).join("&")}
 const calPuede=l=>!isOwned(l)&&["interesante","pujar"].includes(l.estado)&&!isPast(l);
 // Cuándo hay que estar atento: en las presenciales, la hora de inicio; en las online, el cierre del lote (que es cuando se puja).
 // Para avisar siempre al abrirse una online, cambiar «cierreOf(l)» por «s.inicio||cierreOf(l)».
@@ -836,6 +843,12 @@ const errCal=e=>({sin_credenciales:"Falta conectar la cuenta de Google en Supaba
   session_expired:"La sesión ha caducado. Vuelve a entrar.",network:"Sin conexión."}[e&&e.code]||("No se ha podido usar el calendario: "+((e&&e.message)||e)));
 async function calEnviar(id,accion){
   const l=S.lots.get(id);if(!l||X.calOcupado.has(id))return;
+  if(CAL_MODO==="enlace"){
+    if(accion==="quitar"){saveLot(id,{calendario:null});toast("Olvidado. Si lo guardaste en Google Calendar, bórralo allí");return}
+    const ev=calEvento(l);if(ev.error){toast(ev.error);return}
+    window.open(calEnlace(ev),"_blank","noopener");   // antes de cualquier espera, para que el navegador no lo bloquee
+    saveLot(id,{calendario:{modo:"enlace",inicio:ev.inicio,creado:(l.calendario&&l.calendario.creado)||ahora(),actualizado:ahora()}});
+    toast("Se ha abierto Google Calendar: pulsa «Guardar» allí");return}
   if(!window.HUELSAN||!HUELSAN.funcion){toast("Esta versión de la app no puede usar el calendario");return}
   let cuerpo;
   if(accion==="quitar"){if(!l.calendario)return;cuerpo={accion:"quitar",eventoId:l.calendario.eventoId}}
@@ -852,16 +865,18 @@ const origLotRow=window.lotRow;
 window.lotRow=function(l){let h=origLotRow.apply(this,arguments);
   if(!calPuede(l))return h;
   const on=!!l.calendario,oc=X.calOcupado.has(l.id);
-  const btn=`<span class="qk"><button type="button" class="qbtn ${on?"on":""}" data-xcal="${esc(l.id)}" ${oc?"disabled":""} title="${on?"Ya está en el calendario: pulsa para actualizar el evento":"Crear evento en el calendario de Google con aviso 30 min antes"}">${oc?"…":on?"📅 En calendario ✓":"📅 Calendario"}</button></span>`;
+  const btn=`<span class="qk"><button type="button" class="qbtn ${on?"on":""}" data-xcal="${esc(l.id)}" ${oc?"disabled":""} title="${CAL_MODO==="enlace"?(on?"Ya abriste el evento en Google Calendar: pulsa para abrirlo otra vez":"Abrir Google Calendar con el evento ya rellenado"):(on?"Ya está en el calendario: pulsa para actualizar el evento":"Crear evento en el calendario de Google con aviso 30 min antes")}">${oc?"…":on?(CAL_MODO==="enlace"?"📅 Abierto ✓":"📅 En calendario ✓"):"📅 Calendario"}</button></span>`;
   return h.includes('<span class="price">')?h.replace('<span class="price">',btn+'<span class="price">'):h}
 function panelCalendario(l){
   if(isOwned(l)||!["interesante","pujar"].includes(l.estado))return null;
   const d=document.createElement("div");d.className="dsec";d.id="xcal";const c=l.calendario,oc=X.calOcupado.has(l.id);
   d.innerHTML=`<h3>Calendario de Google</h3>`+(isPast(l)&&!c?`<div class="muted" style="font-size:12.5px">La subasta ya ha terminado.</div>`:
-    c?`<div class="muted" style="font-size:12.5px">En el calendario: <b>${esc(fechaHora(c.inicio))}</b>, con aviso 30 min antes.${c.enlace?` <a href="${esc(c.enlace)}" target="_blank" rel="noopener">Abrir el evento ↗</a>`:""}</div>
+    c&&c.modo==="enlace"?`<div class="muted" style="font-size:12.5px">Abriste el evento en Google Calendar el <b>${esc(fechaHora(c.actualizado||c.creado))}</b> (subasta: ${esc(fechaHora(c.inicio))}). La app no sabe si pulsaste «Guardar».</div>
+      <div class="row"><button class="btn sm" data-xcal="${esc(l.id)}">Abrir de nuevo</button><button class="btn sm ghost" data-xcal="${esc(l.id)}" data-xaccion="quitar">Olvidar</button></div>`
+    :c?`<div class="muted" style="font-size:12.5px">En el calendario: <b>${esc(fechaHora(c.inicio))}</b>, con aviso 30 min antes.${c.enlace?` <a href="${esc(c.enlace)}" target="_blank" rel="noopener">Abrir el evento ↗</a>`:""}</div>
       <div class="row"><button class="btn sm" data-xcal="${esc(l.id)}" ${oc?"disabled":""}>${oc?"Un momento…":"Actualizar evento"}</button><button class="btn sm ghost" data-xcal="${esc(l.id)}" data-xaccion="quitar" ${oc?"disabled":""}>Quitar del calendario</button></div>`
-    :`<div class="muted" style="font-size:12.5px">Crea un evento con el enlace de la subasta, lote, modelo y matrícula, y aviso 30 min antes. La descripción recuerda proponérselo a un cliente si se adjudica.</div>
-      <div class="row"><button class="btn sm primary" data-xcal="${esc(l.id)}" ${oc?"disabled":""}>${oc?"Un momento…":"📅 Añadir al calendario"}</button></div>`);
+    :`<div class="muted" style="font-size:12.5px">${CAL_MODO==="enlace"?"Abre Google Calendar con el evento ya preparado (enlace a la subasta, lote, modelo, matrícula y recordatorio de proponérselo a un cliente si se adjudica). Solo hay que pulsar «Guardar». El aviso es el que tenga el calendario elegido.":"Crea un evento con el enlace de la subasta, lote, modelo y matrícula, y aviso 30 min antes. La descripción recuerda proponérselo a un cliente si se adjudica."}</div>
+      <div class="row"><button class="btn sm primary" data-xcal="${esc(l.id)}" ${oc?"disabled":""}>${oc?"Un momento…":CAL_MODO==="enlace"?"📅 Añadir a Google Calendar":"📅 Añadir al calendario"}</button></div>`);
   return d}
 // en fase de captura para que el clic no abra además la ficha del coche
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-xcal]");if(!b)return;
