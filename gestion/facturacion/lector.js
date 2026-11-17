@@ -81,6 +81,9 @@ function lineasTabla(lineas){
     const esVeh=/\bcar\b|veh[íi]culo|turismo|qualified|margin/i.test(concepto);
     if(/^IVA/.test(cod)){const t=+(cod.match(/\d+(?:[.,]\d+)?/)||[21])[0].replace(",",".");const base=pre&&pre<imp?pre:r2(imp/(1+t/100));
       out.push({concepto,regimen:"General",base:r2(base),ivaTipo:t,cuota:r2(imp-base),total:r2(imp),vehiculo:esVeh})}
+    else if(/^REBU\s\d/.test(cod)&&!esVeh&&+cod.replace(/\D/g,"")>0){ // «REBU 21» en comisión/honorarios: servicio con IVA 21 % incluido, se desglosa (base + cuota)
+      const t=+cod.replace(/\D/g,""),base=r2(imp/(1+t/100));
+      out.push({concepto,regimen:"General",base,ivaTipo:t,cuota:r2(imp-base),total:r2(imp),vehiculo:false})}
     else if(/^REBU/.test(cod))out.push({concepto,regimen:"REBU",base:r2(imp),ivaTipo:0,cuota:0,total:r2(imp),vehiculo:esVeh})
     else out.push({concepto,regimen:"Exento",base:r2(imp),ivaTipo:0,cuota:0,total:r2(imp),vehiculo:false})}
   return out;

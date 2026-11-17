@@ -694,6 +694,24 @@ function subirFacturaDetalle(loteId,detId){
   abrirGasto(null,{categoria:cat,concepto:gd.concepto||"",fecha:gd.fecha||hoyISO(),loteId:l.id,matricula:normMat(l.matricula),detalleOrigen:{loteId:l.id,id:gd.id},
     lineas:[{id:nid(),concepto:gd.concepto||cat,regimen:"General",base:r2(+gd.importe/1.21),ivaTipo:21,cuota:r2(+gd.importe-r2(+gd.importe/1.21)),total:r2(+gd.importe),vehiculo:false}]});
 }
+/* Gasto de la ficha sin factura: eliminarlo, o marcarlo como pago en efectivo sin factura (pasa a ser un gasto «sin factura» en contabilidad) */
+const detallesDe=l=>Array.isArray(l.gastosDetalle)?l.gastosDetalle:(+l.gastos>0?[{id:"g0",fecha:null,categoria:"Otros",concepto:"Gastos anotados antes del desglose",importe:+l.gastos}]:[]);
+async function eliminarDetalle(loteId,detId){
+  const l=S.lotes.find(x=>x.id===loteId);const gd=l&&detallesDe(l).find(x=>x.id===detId);
+  if(!gd){toast("No encuentro ese gasto en la ficha del coche");return}
+  if(!await confirmar("¿Eliminar este gasto?",`Se quitará de la ficha del coche: ${gd.categoria||"Otros"}${gd.concepto?" · "+gd.concepto:""} (${eur(gd.importe)}). Dejará de contar en el coste del coche.`,"Sí, eliminar"))return;
+  try{const det=detallesDe(l).filter(x=>x.id!==detId);const patch={gastosDetalle:det,gastos:r2(det.reduce((s,x)=>s+(+x.importe||0),0))};
+    await S.db.doc("lotes/"+loteId).update(patch);Object.assign(l,patch);toast("Gasto eliminado");pintar()}catch(err){toast("No se ha podido eliminar: "+err.message,6000)}
+}
+async function marcarDetalleSinFactura(loteId,detId){
+  const l=S.lotes.find(x=>x.id===loteId);const gd=l&&detallesDe(l).find(x=>x.id===detId);
+  if(!gd){toast("No encuentro ese gasto en la ficha del coche");return}
+  if(!await confirmar("¿Marcar como pago en efectivo sin factura?",`${gd.categoria||"Otros"}${gd.concepto?" · "+gd.concepto:""} (${eur(gd.importe)}). Quedará fuera de los libros de IVA y contará por el total en el coste del coche.`,"Sí, sin factura"))return;
+  try{const cat=CATS_GASTO.includes(gd.categoria)?gd.categoria:"Otros",tot=r2(+gd.importe||0),id=nid();
+    const dato={fecha:gd.fecha||hoyISO(),categoria:cat,proveedor:"",proveedorId:"",nifProveedor:"",numFactura:"",concepto:String(gd.concepto||"").trim(),loteId:l.id,matricula:normMat(l.matricula),pagado:true,formaPago:"Efectivo",sinFactura:true,
+      lineas:[{id:nid(),concepto:gd.concepto||cat,regimen:"Exento",base:tot,ivaTipo:0,cuota:0,total:tot,vehiculo:false}],total:tot,base:0,cuota:0,regimen:"SinFactura",ivaTipo:0,archivos:[],detalleOrigen:{loteId:l.id,id:gd.id},creado:new Date().toISOString(),actualizado:new Date().toISOString()};
+    await S.db.doc("gastos/"+id).set(dato);await sincronizarLote({...dato,id});toast("Marcado como pago en efectivo sin factura");pintar()}catch(err){toast("No se ha podido marcar: "+err.message,6000)}
+}
 // El gasto se refleja en la ficha del coche (gastos y precio de compra), sin duplicar
 async function sincronizarLote(g){
   if(!g.loteId)return;
@@ -819,7 +837,7 @@ function detalleMatricula(x){
   ${x.appSinFactura.length?`<div class="card" style="border-color:var(--bad)"><h3 style="color:var(--bad)">Gastos anotados en la ficha sin factura (${eur(x.gastosApp)})</h3>
     <p class="muted" style="margin:0">Cada gasto necesita su factura. Súbela (se leen el IVA y la base) o márcalo como pago en efectivo sin factura.</p>
     <div class="tw"><table><tbody>${x.appSinFactura.map(gd=>`<tr><td>${gd.fecha?fecha(gd.fecha):"—"}</td><td>${esc(gd.categoria||"Otros")}</td><td>${esc(gd.concepto||"")}</td><td class="num">${eur(gd.importe)}</td>
-      <td>${l&&gd.id!=="g0"?`<button class="btn sm primary" data-subir-detalle="${esc(l.id)}|${esc(gd.id)}">Subir factura</button>`:""}</td></tr>`).join("")}</tbody></table></div></div>`:""}
+      <td style="white-space:nowrap">${l&&gd.id!=="g0"?`<button class="btn sm primary" data-subir-detalle="${esc(l.id)}|${esc(gd.id)}">Subir factura</button> `:""}${l?`<button class="btn sm" data-sinf-detalle="${esc(l.id)}|${esc(gd.id)}" title="Pago en efectivo sin factura">Sin factura</button> <button class="btn sm" data-del-detalle="${esc(l.id)}|${esc(gd.id)}" title="Eliminar este gasto de la ficha" aria-label="Eliminar gasto">✕</button>`:""}</td></tr>`).join("")}</tbody></table></div></div>`:""}
   <h3>Ventas</h3>${x.facturas.length?`<div class="tw"><table><tbody>${x.facturas.map(f=>`<tr data-ir-factura="${esc(f.id)}" style="cursor:pointer"><td><b>${esc(f.codigo)}</b></td><td>${fecha(f.fechaExpedicion)}</td><td>${esc(f.cliente&&f.cliente.nombre)}</td><td>${etiquetaEstado(f)}</td><td class="num">${eur(f.totales&&f.totales.total)}</td></tr>`).join("")}</tbody></table></div>`:`<p class="muted" style="margin:0">Sin facturas de venta.</p>`}
   <h3>Compras y gastos</h3>${x.docs.length?`<div class="tw"><table><thead><tr><th>Fecha</th><th>Categoría</th><th>Proveedor</th><th>Régimen</th><th class="num">Total pagado</th><th class="num">IVA deducible</th><th class="num">Coste al coche</th><th>Factura</th></tr></thead><tbody>${x.docs.sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha))).map(g=>`<tr data-gasto="${esc(g.id)}" style="cursor:pointer"><td>${fecha(g.fecha)}</td><td>${esc(g.categoria)}</td><td>${esc(g.proveedor||"")}<div class="muted">${esc(g.concepto||"")}</div></td><td>${esc(regimenTexto(g))}</td><td class="num">${eur(g.total)}</td><td class="num">${gastoCuota(g)?eur(gastoCuota(g)):"—"}</td><td class="num"><b>${eur(gastoCoste(g))}</b></td>
     <td>${g.sinFactura?`<span class="tag">Efectivo sin factura</span>`:(g.archivos||[]).map(a=>`<button class="btn sm" data-ver-archivo="${esc(a.ruta)}" data-nombre="${esc(a.nombre)}">${esc(a.nombre.length>24?a.nombre.slice(0,22)+"…":a.nombre)}</button>`).join(" ")||`<span class="tag bad">Falta factura</span>`}</td></tr>`).join("")}</tbody></table></div>`:`<p class="muted" style="margin:0">Aún no hay facturas de compra ni de gastos de este coche.</p>`}`;
@@ -954,6 +972,8 @@ document.addEventListener("click",e=>{
   const gs=t.closest("[data-gasto]");if(gs){abrirGasto(gs.dataset.gasto);return}
   const mt=t.closest("[data-mat]");if(mt){S.mat=mt.dataset.mat;pintar();scrollTo(0,0);return}
   const pv=t.closest("[data-prov]");if(pv){abrirProveedor(pv.dataset.prov);return}
+  const sf=t.closest("[data-sinf-detalle]");if(sf){e.stopPropagation();const[lid,did]=sf.dataset.sinfDetalle.split("|");marcarDetalleSinFactura(lid,did);return}
+  const dd=t.closest("[data-del-detalle]");if(dd){e.stopPropagation();const[lid,did]=dd.dataset.delDetalle.split("|");eliminarDetalle(lid,did);return}
   const sd=t.closest("[data-subir-detalle]");if(sd){e.stopPropagation();const[lid,did]=sd.dataset.subirDetalle.split("|");subirFacturaDetalle(lid,did);return}
   const it=t.closest("[data-ir-tab]");if(it){e.preventDefault();S.tab=it.dataset.irTab;S.ed=null;history.replaceState(null,"","?tab="+S.tab);pintarTabs();pintar();return}
   const tb=t.closest("[data-tq-bajar]");if(tb){S.res.tq=tb.dataset.tqBajar;pintar();const c=$("[data-rt]");if(c)c.closest(".card").scrollIntoView({behavior:"smooth",block:"center"});toast("Descargas del "+S.res.tq+"º trimestre");return}
