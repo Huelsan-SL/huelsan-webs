@@ -194,6 +194,12 @@ nav.menu a:hover{border-color:var(--green)}
 @media (max-width:760px){.btn-filtros{display:inline-flex}.filtros{display:none}.filtros.abierto{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.filtros.abierto label{max-width:none}.orden{flex:1 1 140px}}
 .filtros{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
 .filtros label{display:grid;gap:4px;font-size:12.5px;font-weight:700;color:var(--muted);flex:1 1 150px;max-width:200px;min-width:0}
+.mm-lista{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:6px;max-height:132px;overflow:auto;padding:2px 0 6px}
+.mm-lista button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;color:inherit}
+.mm-lista button small{color:var(--muted);font-weight:500;margin-left:4px}
+.mm-lista button:hover{border-color:var(--accent,#1e9e52)}
+.mm-lista button.on{background:#111;color:#fff;border-color:#111}.mm-lista button.on small{color:#ccc}
+.mm-lista .mm-volver{background:transparent;border-style:dashed}
 .filtros select:disabled{opacity:.55}
 .filtros select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);min-width:0}
 .cars{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(270px,100%),1fr));gap:18px}
@@ -574,6 +580,7 @@ dl.kv dd{margin:0;font-weight:700;overflow-wrap:anywhere}
             <option value="" data-t="filtros.orden.relevancia">Destacados</option><option value="precio-asc" data-t="filtros.orden.precio.asc">Precio: más barato</option><option value="precio-desc" data-t="filtros.orden.precio.desc">Precio: más caro</option><option value="km-asc" data-t="filtros.orden.km">Menos kilómetros</option><option value="anio-desc" data-t="filtros.orden.anio">Más nuevo</option><option value="nuevo" data-t="filtros.orden.recientes">Últimos publicados</option></select></label>
         </div>
         <div class="filtros" id="filtros" role="group" aria-label="Filtrar vehículos">
+          <div class="mm-lista" id="mm-lista" aria-label="Marcas y modelos"></div>
           <label><span data-t="filtros.marca">Marca</span><select id="f-marca"><option value="" data-t="filtros.todas">Todas</option></select></label>
           <label><span data-t="filtros.modelo">Modelo</span><select id="f-modelo" disabled><option value="" data-t="filtros.todos">Todos</option></select></label>
           <label><span data-t="filtros.ubicacion">Ubicación</span><select id="f-ubic"><option value="" data-t="filtros.todas">Todas</option></select></label>
@@ -733,7 +740,8 @@ const precioHtml=c=>c.disponibilidad==="vendido"?`<span class="vendido-txt">${es
   :esc(T("coches.consultar","Consultar precio"));
 /* Marca, modelo, combustible y color «de catálogo» para los filtros (catalogo.js): agrupan las distintas formas en que BCA escribe lo mismo.
    Nunca se descarta un coche por no estar en el catálogo: lo que no se reconoce se limpia y se usa como viene. El título que se ve no cambia. */
-function normalizarCoche(c){const K=window.HUELSAN_CAT;if(!K)return c;try{c.fmarca=K.marca(c.marca)||c.marca||"";c.fmodelo=K.modelo(c.fmarca,c.modelo)||c.modelo||"";c.fcomb=K.combustible(c.combustible)||c.combustible||"";c.fcolor=K.color(c.color)||""}catch(e){c.fmarca=c.marca||"";c.fmodelo=c.modelo||"";c.fcomb=c.combustible||"";c.fcolor=""}return c}
+function localidadDe(u){let t=String(u||"").split(/[,(\-–\/]/)[0].trim().toLowerCase();return t.replace(/(^|\s)(\S)/g,(m,a,b)=>a+b.toUpperCase())}
+function normalizarCoche(c){c.localidad=localidadDe(c.ubicacion);const K=window.HUELSAN_CAT;if(!K)return c;try{c.fmarca=K.marca(c.marca)||c.marca||"";c.fmodelo=K.modelo(c.fmarca,c.modelo)||c.modelo||"";c.fcomb=K.combustible(c.combustible)||c.combustible||"";c.fcolor=K.color(c.color)||""}catch(e){c.fmarca=c.marca||"";c.fmodelo=c.modelo||"";c.fcomb=c.combustible||"";c.fcolor=""}return c}
 async function cargarCoches(){
   const r=await fetch(SB_URL+"/rest/v1/coches_web_v2?select=*",{headers:H});
   if(!r.ok)throw new Error("HTTP "+r.status);
@@ -812,18 +820,22 @@ const FIL=["f-marca","f-modelo","f-ubic","f-precio","f-km","f-anio","f-comb","f-
 const v=id=>$("#"+id).value;
 /* Los filtros solo se aplican al pulsar «Aplicar filtros» (o Intro en el buscador); quitar un filtro o «Quitar filtros» sí es inmediato. */
 let AP={};const va=id=>AP[id]||"";
-function aplicar(){AP={"f-q":v("f-q").trim(),"f-orden":v("f-orden")};FIL.forEach(id=>AP[id]=v(id));$("#f-aplicar").classList.remove("pendiente");
+function aplicar(){AP={"f-q":v("f-q").trim(),"f-orden":v("f-orden")};FIL.forEach(id=>AP[id]=v(id));$("#f-aplicar").classList.remove("pendiente");if(typeof pintarMM==="function")pintarMM();
   const f=$("#filtros");if(f.classList.contains("abierto")){f.classList.remove("abierto");$("#f-abrir").setAttribute("aria-expanded","false")}pintarCoches()}
 const pendiente=()=>{const cambia=v("f-q").trim()!==va("f-q")||v("f-orden")!==va("f-orden")||FIL.some(id=>v(id)!==va(id));$("#f-aplicar").classList.toggle("pendiente",cambia)};
 function llenar(id,vals,fmt=x=>x){const s=$("#"+id),cur=s.value,first=s.options[0].outerHTML;s.innerHTML=first+vals.map(x=>`<option value="${esc(x)}">${esc(fmt(x))}</option>`).join("");if(vals.map(String).includes(cur))s.value=cur}
 function escalones(vals,pasos){if(!vals.length)return[];const max=Math.max(...vals),r=pasos.filter(p=>vals.some(x=>x<=p));const i=r.findIndex(p=>p>=max);return i<0?r:r.slice(0,i+1)}
+function pintarMM(){const el=$("#mm-lista");if(!el)return;const m=v("f-marca"),mo=v("f-modelo"),cuenta=(arr,k)=>{const r={};arr.forEach(c=>{if(c[k])r[c[k]]=(r[c[k]]||0)+1});return Object.entries(r).sort((a,b)=>a[0].localeCompare(b[0],"es"))};
+  if(!m){el.innerHTML=cuenta(COCHES,"fmarca").map(([k,n])=>`<button type="button" data-m="${esc(k)}">${esc(k)}<small>${n}</small></button>`).join("")}
+  else{el.innerHTML=`<button type="button" class="mm-volver" data-m="">← ${T("filtros.todasmarcas","Todas las marcas")}</button><button type="button" class="on" data-m="${esc(m)}" data-mo="">${esc(m)}</button>`+cuenta(COCHES.filter(c=>c.fmarca===m),"fmodelo").map(([k,n])=>`<button type="button" class="${k===mo?"on":""}" data-m="${esc(m)}" data-mo="${esc(k)}">${esc(k)}<small>${n}</small></button>`).join("")}}
+document.addEventListener("click",e=>{const b=e.target.closest("#mm-lista button");if(!b)return;$("#f-marca").value=b.dataset.m||"";opcionesModelo();$("#f-modelo").value=b.dataset.mo||"";pintarMM();pendiente();aplicar()});
 function opcionesFiltros(){
   const C=COCHES;
   llenar("f-marca",[...new Set(C.map(c=>c.fmarca).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")));
-  opcionesModelo();
+  opcionesModelo();pintarMM();
   const pr=C.map(c=>+c.precio).filter(x=>x>0);llenar("f-precio",escalones(pr,[3000,5000,8000,10000,12000,15000,20000,25000,30000,40000,50000,75000,100000]),x=>num(x)+" €");
   const km=C.filter(c=>c.km!=null).map(c=>+c.km);llenar("f-km",escalones(km,[10000,25000,50000,75000,100000,125000,150000,200000,250000]),x=>num(x)+" km");
-  llenar("f-ubic",[...new Set(C.map(c=>c.ubicacion).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")));
+  llenar("f-ubic",[...new Set(C.map(c=>c.localidad).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")));
   llenar("f-anio",[...new Set(C.map(c=>c.anio).filter(Boolean))].sort((a,b)=>b-a).map(String));
   llenar("f-comb",[...new Set(C.map(c=>c.fcomb).filter(Boolean))].sort());
   llenar("f-color",[...new Set(C.map(c=>c.fcolor).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")));
@@ -842,7 +854,7 @@ function filtrar(ignorar){
     if(q.length){const t=norm([c.marca,c.modelo,c.fmarca,c.fmodelo,c.version,c.combustible,c.tipo,c.anio,c.color,cambioDe(c),c.ubicacion].join(" ")),tc=t.replace(/ /g,"");if(!q.every(w=>t.includes(w)||tc.includes(w)))return false}
     if(f["f-marca"]&&c.fmarca!==f["f-marca"])return false;
     if(f["f-modelo"]&&c.fmodelo!==f["f-modelo"])return false;
-    if(f["f-ubic"]&&c.ubicacion!==f["f-ubic"])return false;
+    if(f["f-ubic"]&&c.localidad!==f["f-ubic"])return false;
     if(f["f-precio"]&&!(c.precio>0&&c.precio<=+f["f-precio"]))return false;
     if(f["f-km"]&&!(c.km!=null&&c.km<=+f["f-km"]))return false;
     if(f["f-anio"]&&!((c.anio||0)>=+f["f-anio"]))return false;
@@ -880,7 +892,7 @@ function pintarCoches(){
       ${c.ubicacion?`<div class="ubic"><svg aria-hidden="true"><use href="#i-pin"/></svg><span>${esc(c.ubicacion)}</span></div>`:""}
       <div class="p tnum">${precioHtml(c)}</div></div></button>`).join("")
     :`<div class="empty"><strong>${esc(COCHES.length?T("coches.sinresultados.titulo","Ningún vehículo con estos filtros"):T("coches.vacio.titulo","Próximamente publicaremos nuevos vehículos"))}</strong>${esc(COCHES.length?T("coches.sinresultados.texto","Prueba con otros filtros o deja que lo busquemos por ti."):T("coches.vacio.texto","Si buscas un vehículo concreto, puedes solicitar una búsqueda personalizada."))}<div style="margin-top:14px"><button type="button" class="btn verde" id="f-encargo">${esc(T("coches.sinresultados.boton","Búscamelo"))}</button></div></div>`}
-FIL.forEach(id=>$("#"+id).addEventListener("change",()=>{if(id==="f-marca")opcionesModelo();pendiente()}));
+FIL.forEach(id=>$("#"+id).addEventListener("change",()=>{if(id==="f-marca")opcionesModelo();if(id==="f-marca"||id==="f-modelo")pintarMM();pendiente()}));
 $("#f-orden").addEventListener("change",pendiente);
 $("#f-q").addEventListener("input",pendiente);
 $("#f-q").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();aplicar()}});

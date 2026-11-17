@@ -59,7 +59,8 @@ nav.tabs button{background:none;border:0;color:inherit;opacity:.7;padding:12px 1
 nav.tabs button[aria-selected="true"]{opacity:1;border-color:var(--champ)}
 nav.tabs .count{font-size:11px;opacity:.7;margin-left:4px}
 .status{margin-left:auto;font-size:12px;opacity:.7}
-main{padding-block:20px 48px;padding-inline:16px;max-width:1440px;margin:0 auto}
+main{padding-block:20px 48px;padding-inline:16px;max-width:none;margin:0 auto}
+@media (min-width:1100px){main{padding-inline:28px}}
 .btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);padding:7px 12px;border-radius:6px;cursor:pointer;font-weight:500}
 .btn:hover{border-color:var(--muted)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -138,7 +139,7 @@ h3{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted
 .car .pubact{display:flex;gap:6px;flex-wrap:wrap}
 
 /* layout subastas */
-.split{display:grid;grid-template-columns:290px minmax(0,1fr);gap:20px;align-items:start}
+.split{display:grid;grid-template-columns:clamp(300px,24vw,440px) minmax(0,1fr);gap:20px;align-items:start}
 @media (max-width:900px){.split{grid-template-columns:minmax(0,1fr)}}
 aside.filters{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;position:sticky;top:120px;max-height:calc(100vh - 140px);overflow:auto}
 @media (max-width:900px){aside.filters{position:static;max-height:none}aside.filters:not(.open) .fbody{display:none}}
@@ -167,6 +168,21 @@ textarea{resize:vertical;min-height:70px}
 .listbar .sum{font-size:13px}
 .listbar .sum b{font-family:var(--f-display);font-size:18px}
 .lots{display:grid;gap:8px}
+.lots.grid{grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px;align-items:stretch}
+.lots.grid .lot{grid-template-columns:96px minmax(0,1fr);align-items:start}
+.lots.grid .lot .right{grid-column:1/-1;justify-items:start;text-align:left}
+.lots.grid .more{grid-column:1/-1}
+.vistabtn{display:inline-flex;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.vistabtn button{border:0;background:var(--surface);padding:5px 10px;font-size:12.5px;font-weight:600;cursor:pointer;color:inherit}
+.vistabtn button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.aucdet{margin-bottom:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.aucdet>summary{cursor:pointer;padding:8px 12px;font-size:13px;font-weight:600;list-style:none}
+.aucdet>summary::-webkit-details-marker{display:none}
+.aucdet>summary::before{content:"▸ ";color:var(--muted)}
+.aucdet[open]>summary::before{content:"▾ "}
+.aucdet .auctions{max-height:170px;overflow:auto;padding:4px 12px 12px;margin:0!important}
+.aucdet .auc{max-width:300px;padding:5px 9px}
+@media (max-width:900px){.rec,#drop{display:none!important}}
 .lot{display:grid;grid-template-columns:112px minmax(0,1fr) auto;gap:6px 16px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;text-align:left;width:100%}
 .lot:hover{border-color:var(--muted)}
 .lot.off{opacity:.55}
@@ -323,7 +339,9 @@ const fdate=iso=>{if(!iso)return"—";const d=new Date(iso);return d.toLocaleDat
 const fdt=iso=>{if(!iso)return"—";const d=new Date(iso);return d.toLocaleDateString("es-ES",{day:"2-digit",month:"short"})+" "+d.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})};
 const toNum=v=>{if(v==null||v==="")return null;if(typeof v==="number")return v;const s=String(v).trim().replace(/\s/g,"");if(!s)return null;const n=Number(s.replace(/\./g,"").replace(",","."));return isNaN(n)?null:n};
 const toDec=v=>{if(v==null||v==="")return null;if(typeof v==="number")return v;const n=Number(String(v).trim().replace(",","."));return isNaN(n)?null:n};
-let toastT;function toast(m){let t=$("#toast");if(!t){t=document.createElement("div");t.id="toast";t.className="toast";t.setAttribute("role","status");document.body.appendChild(t)}t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,3200)}
+document.addEventListener("toggle",e=>{if(e.target&&e.target.id==="aucdet")S.aucOpen=e.target.open},true);
+let toastT;function urlPortal(l){const m=String(l.matricula||"").replace(/[^0-9A-Za-z]/g,"").toUpperCase();return(/bca/i.test(l.fuente||l.url||"")&&m)?"https://es.bca-europe.com/search?q="+m:(l.url||"")}
+function toast(m){let t=$("#toast");if(!t){t=document.createElement("div");t.id="toast";t.className="toast";t.setAttribute("role","status");document.body.appendChild(t)}t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,3200)}
 
 const TIPOS=["Utilitario","Compacto","Berlina","Familiar","Monovolumen","SUV","4x4","Deportivo","Descapotable","Furgoneta","Comercial"];
 /* Furgonetas (furgón y combi) por modelo; chasis cabina y pick-ups siguen como Comercial */
@@ -411,7 +429,7 @@ function parseBCA(rows,fileName){
 }
 
 /* ---------- estado ---------- */
-const S={limit:60,thumbs:new Map(),thumbReq:new Set(),tab:"subastas",lots:new Map(),subastas:new Map(),demandas:new Map(),db:null,assets:null,dbReady:false,open:null,
+const S={vista:(()=>{try{return localStorage.getItem("hs-vista")||(innerWidth>=1100?"grid":"list")}catch(e){return"list"}})(),limit:60,thumbs:new Map(),thumbReq:new Set(),tab:"subastas",lots:new Map(),subastas:new Map(),demandas:new Map(),db:null,assets:null,dbReady:false,open:null,
   aucSel:null,filtersOpen:false,pub:{tipo:"",precioMax:"",anioMin:""},
   f:{q:"",anioMin:"",anioMax:"",precioMin:"",precioMax:"",kmMax:"",duenosMax:"",libro:"any",sinAverias:false,sinAccidentes:false,sinManip:false,
      margenMin:"",margenMax:"",margenPctMin:"",bajoPujaMax:false,mecMax:"",comb:[],cvMin:"",cvMax:"",motorMin:"",motorMax:"",tipos:[],plazasMin:"",ubic:"",iva:"any",proced:[],sinImportados:false,
@@ -618,7 +636,7 @@ function lotRow(l){
       ${m!=null?`<span class="tag ${m>=1500?"good":m>=0?"":"bad"}">Margen est. ${eur(m)}${margenSalPct(l)!=null?" · "+Math.round(margenSalPct(l))+" %":""}</span>`:(l.mercado?`<span class="d">Venta est. ${eur(ventaEst(l))}</span>`:"")}
       ${m!=null&&dedEstado(l).total>0?`<span class="d" title="Precio de mercado ${eur(l.mercado)} menos daños y mecánica">Venta est. ${eur(ventaEst(l))} (−${eur(dedEstado(l).total)} estado)</span>`:""}
       ${!isOwned(l)&&pujaMaxEst(l)!=null?`<span class="tag ${rp!=null&&rp>pujaMaxEst(l)?"warn":"acc"}" title="Puja + tasas BCA + transporte = 70 % de la venta estimada según estado">Puja máx. sug. ${eur(pujaMaxEst(l))}</span>`:""}
-      ${l.url?`<a class="bcalink" href="${esc(l.url)}" target="_blank" rel="noopener">Ver en ${esc(l.fuente||"portal")} ↗</a>`:""}
+      ${urlPortal(l)?`<a class="bcalink" href="${esc(urlPortal(l))}" target="_blank" rel="noopener">Ver en ${esc(l.fuente||"portal")} ↗</a>`:""}
     </div></div>`}
 
 /* ---------- vista: subastas ---------- */
@@ -708,7 +726,7 @@ function renderSubastas(){
     <div class="seg" aria-label="Tipo de subasta">${[["todas","Online y presencial"],["online","Solo online"]].map(([k,v])=>`<button data-seg="modo" data-v="${k}" aria-pressed="${f.modo===k}">${v}</button>`).join("")}</div>
     <label class="subsel">Ubicación de la subasta<select id="f-subUbic" data-f="subUbic"><option value="">Todas</option>${subUbics.map(u=>`<option ${f.subUbic===u?"selected":""}>${esc(u)}</option>`).join("")}</select></label>
     <label class="subsel">Subasta<select id="f-auc" data-aucsel="1"><option value="">Todas (${subs.length})</option>${subs.map(s=>`<option value="${esc(s.id)}" ${S.aucSel===s.id?"selected":""}>${esc(s.nombre)} · ${esc(subOnline(s)?"cierra "+fdate(s.fin):fdate(s.inicio||s.fin))}</option>`).join("")}</select></label></div>`:""}
-  ${subs.length?`<div class="auctions" style="margin-bottom:16px"><button class="auc" data-auc="" aria-pressed="${!S.aucSel}"><b>Todas las subastas</b><span class="aucmeta">${subs.length} subasta${subs.length>1?"s":""} · ${base.length} lotes</span></button>${subs.map(s=>{const ls=[...S.lots.values()].filter(l=>l.subastaId===s.id);const on=subOnline(s);const ub=s.ubicacion||"";return`<div class="auc" role="button" tabindex="0" data-auc="${esc(s.id)}" aria-pressed="${S.aucSel===s.id}"><span class="mode ${on?"on":""}">${on?"Online":"Presencial"}</span><b>${esc(ub?ub+" · ":"")}${esc(s.nombre)}</b><span class="aucdesc">${esc(describeSubasta(s,ls))}</span><span class="aucmeta">${on?(s.inicio?"Abierta desde "+fdt(s.inicio)+" · ":""):(s.inicio?"Empieza "+fdt(s.inicio)+" · ":"")}cierra ${fdt(s.fin)} · ${ls.length} lotes${s.canal&&/sobre/i.test(s.canal)?" · oferta en sobre cerrado":""}</span><span class="aucfoot"><button type="button" class="aucarch" data-archivar="${esc(s.id)}" data-n="${ls.filter(l=>!isOwned(l)).length}" title="Pasa la subasta y todos sus lotes al Histórico">Archivar subasta</button></span></div>`}).join("")}</div>`:(liveSubs().length?`<div class="empty" style="margin-bottom:16px"><strong>No hay subastas con ese tipo y ubicación</strong>Cambia a «Online y presencial» o elige otra ubicación.</div>`:"")}
+  ${subs.length?`<details class="aucdet" id="aucdet" ${S.aucOpen?"open":""}><summary>Subastas existentes (${subs.length})${S.aucSel?" · filtrando una":""}</summary><div class="auctions"><button class="auc" data-auc="" aria-pressed="${!S.aucSel}"><b>Todas las subastas</b><span class="aucmeta">${subs.length} subasta${subs.length>1?"s":""} · ${base.length} lotes</span></button>${subs.map(s=>{const ls=[...S.lots.values()].filter(l=>l.subastaId===s.id);const on=subOnline(s);const ub=s.ubicacion||"";return`<div class="auc" role="button" tabindex="0" data-auc="${esc(s.id)}" aria-pressed="${S.aucSel===s.id}"><span class="mode ${on?"on":""}">${on?"Online":"Presencial"}</span><b>${esc(ub?ub+" · ":"")}${esc(s.nombre)}</b><span class="aucdesc">${esc(describeSubasta(s,ls))}</span><span class="aucmeta">${on?(s.inicio?"Abierta desde "+fdt(s.inicio)+" · ":""):(s.inicio?"Empieza "+fdt(s.inicio)+" · ":"")}cierra ${fdt(s.fin)} · ${ls.length} lotes${s.canal&&/sobre/i.test(s.canal)?" · oferta en sobre cerrado":""}</span><span class="aucfoot"><button type="button" class="aucarch" data-archivar="${esc(s.id)}" data-n="${ls.filter(l=>!isOwned(l)).length}" title="Pasa la subasta y todos sus lotes al Histórico">Archivar subasta</button></span></div>`}).join("")}</div></details>`:(liveSubs().length?`<div class="empty" style="margin-bottom:16px"><strong>No hay subastas con ese tipo y ubicación</strong>Cambia a «Online y presencial» o elige otra ubicación.</div>`:"")}
   <div class="split">
     <aside class="filters ${S.filtersOpen?"open":""}" aria-label="Filtros">
       <div class="fhead"><h2>Filtros</h2><div class="row"><button class="btn sm ${fPend()?"primary":""}" data-faplicar>Aplicar filtros</button><button class="btn sm ghost" id="freset">Limpiar</button><button class="btn sm" id="ftoggle">${S.filtersOpen?"Ocultar":"Mostrar"}</button></div></div>
@@ -744,12 +762,12 @@ function renderSubastas(){
       </div>
     </aside>
     <section style="min-width:0">
-      <div class="listbar"><span class="sum"><b class="tnum">${shown.length}</b> de ${est.length} lotes pasan los filtros</span><span id="fpend" class="estprog" role="status">${fPend()?"Hay cambios en los filtros sin aplicar":""}</span>
+      <div class="listbar"><span class="vistabtn" role="group" aria-label="Vista"><button data-vista="list" aria-pressed="${S.vista!=="grid"}">☰ Lista</button><button data-vista="grid" aria-pressed="${S.vista==="grid"}">▦ Cuadrícula</button></span><span class="sum"><b class="tnum">${shown.length}</b> de ${est.length} lotes pasan los filtros</span><span id="fpend" class="estprog" role="status">${fPend()?"Hay cambios en los filtros sin aplicar":""}</span>
         ${S.sample?(EST.running?`<span class="estprog tnum">${EST.auto?"Estimando automáticamente todos los lotes…":"Estimando precios…"} ${EST.done} de ${EST.total}</span><button class="btn sm" id="est-stop">Detener</button>`:(()=>{const n=shown.filter(l=>l.mercado==null).length;return n?`<button class="btn sm primary" id="est-run" title="Estimación orientativa (IA) según modelo, año, km, combustible y potencia">Estimar precio de mercado (${n})</button>`:""})()):""}
         ${shown.length?`<button class="btn sm" id="bulk-int">Marcar visibles como interesantes</button>`:""}
         ${(()=>{const n=shown.filter(l=>l.estado==="interesante").length;return n?`<button class="btn sm" id="bulk-noint">Desmarcar visibles como interesantes (${n})</button>`:""})()}
         ${est.length-shown.length>0?`<button class="btn sm" id="bulk-desc">Descartar los ${est.length-shown.length} filtrados</button>`:""}</div>
-      <div class="lots">${shown.length?shown.slice(0,S.limit).map(lotRow).join("")+(shown.length>S.limit?`<div class="more"><button class="btn" id="more">Mostrar ${Math.min(60,shown.length-S.limit)} más (quedan ${shown.length-S.limit})</button></div>`:""):(all.length?`<div class="empty"><strong>Ningún lote pasa estos filtros</strong>Relaja algún filtro o marca «Incluir lotes con el dato sin rellenar».</div>`:`<div class="empty"><strong>Todavía no hay lotes</strong>Importa el Excel de una subasta de BCA para empezar.</div>`)}</div>
+      <div class="lots ${S.vista==="grid"?"grid":""}">${shown.length?shown.slice(0,S.limit).map(lotRow).join("")+(shown.length>S.limit?`<div class="more"><button class="btn" id="more">Mostrar ${Math.min(60,shown.length-S.limit)} más (quedan ${shown.length-S.limit})</button></div>`:""):(all.length?`<div class="empty"><strong>Ningún lote pasa estos filtros</strong>Relaja algún filtro o marca «Incluir lotes con el dato sin rellenar».</div>`:`<div class="empty"><strong>Todavía no hay lotes</strong>Importa el Excel de una subasta de BCA para empezar.</div>`)}</div>
     </section>
   </div>`;
   wireDrop();
@@ -1039,7 +1057,7 @@ function renderDrawer(){
     ${l.equipamiento?`<div class="equip">${esc(l.equipamiento)}</div>`:""}
     ${l.autoDetectado?`<div class="note">Avería, accidente o km dudosos marcados automáticamente a partir de los comentarios del vendedor. Revísalo y corrígelo abajo.</div>`:""}
     ${l.danos||l.danosAccidente||l.notasVendedor?`<div class="equip"><b>Comentarios del vendedor:</b> ${esc([l.danosAccidente,l.danos,l.notasVendedor].filter(Boolean).join(" · "))}</div>`:""}
-    <div class="links">${l.url?`<a href="${esc(l.url)}" target="_blank" rel="noopener">Ficha en ${esc(l.fuente||"portal")} ↗</a>`:""}</div>
+    <div class="links">${urlPortal(l)?`<a href="${esc(urlPortal(l))}" target="_blank" rel="noopener">Ficha en ${esc(l.fuente||"portal")} ↗</a>`:""}</div>
     ${(l.fotoIds||[]).length?`<div class="links"><span class="muted" style="font-size:12.5px;align-self:center">Fotos en BCA (${l.fotoIds.length}):</span>${l.fotoIds.map((d,i)=>`<a href="https://www1.bcaimage.com/Document?DocType=VehicleImage&docId=${esc(d)}&width=1280" target="_blank" rel="noopener">${i+1}</a>`).join("")}</div>`:""}</div>
   <div class="dsec"><h3>Comprobaciones</h3><div class="form">
     <label>Nº de dueños<input type="number" id="e-duenos" data-e="duenos" min="0" value="${esc(l.duenos??"")}"></label>
@@ -1391,6 +1409,7 @@ document.addEventListener("click",async e=>{const t=e.target;
   const da=t.closest("[data-desarchivar]");if(da){await setArchivada(da.dataset.desarchivar,false);return}
   if(t.closest("#rec-login")){recLogin();return}
   if(t.closest("#rec-run")){recRun();return}
+  const vb=t.closest("[data-vista]");if(vb){S.vista=vb.dataset.vista;try{localStorage.setItem("hs-vista",S.vista)}catch(e){}render();return}
   const au=t.closest("[data-auc]");if(au){S.aucSel=au.dataset.auc||null;render();return}
   if(t.closest("[data-faplicar]")){aplicarYa();return}
   const sg=t.closest("[data-seg]");if(sg){draftF()[sg.dataset.seg]=sg.dataset.v;sg.parentElement.querySelectorAll("[data-seg]").forEach(b=>b.setAttribute("aria-pressed",b===sg));aplicarFiltros(sg);return}

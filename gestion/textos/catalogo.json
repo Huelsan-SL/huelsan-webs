@@ -762,6 +762,12 @@
     "largo": false
    },
    {
+    "clave": "filtros.todasmarcas",
+    "etiqueta": "Filtro «Todas las marcas»",
+    "defecto": "Todas las marcas",
+    "largo": false
+   },
+   {
     "clave": "filtros.chip.precio",
     "etiqueta": "Filtro «Hasta {v}»",
     "defecto": "Hasta {v}",
