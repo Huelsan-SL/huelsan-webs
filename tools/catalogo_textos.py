@@ -22,6 +22,8 @@ SECCIONES = [
     ("dif", "Nuestra diferencia"),
     ("stock", "Vehículos en stock"),
     ("estado", "Etiquetas de disponibilidad"),
+    ("oferta", "Ofertas: nombres de campaña y etiquetas"),
+    ("ofertas", "Ofertas: banner sobre el listado"),
     ("filtros", "Filtros del listado"),
     ("coches", "Listado de coches"),
     ("ficha", "Ficha de cada coche"),
@@ -78,6 +80,15 @@ ETIQ = {
     "ficha.boton.vendido": "Botón de la ficha de un vendido", "filtros.vendidos": "Opción «Vendidos» del filtro",
     "ficha.ubicacion": "Ubicación en la ficha ({v} = lugar)", "filtros.ubicacion": "Filtro «Ubicación»",
     "ficha.compartir": "Botón «Compartir este coche»", "ficha.copiado": "Aviso «enlace copiado»",
+    # ofertas (15/11/2026)
+    "oferta.oferta-especial": "Campaña «Oferta especial»", "oferta.black-friday": "Campaña «Black Friday»", "oferta.cyber-monday": "Campaña «Cyber Monday»",
+    "oferta.navidad": "Campaña «Oferta de Navidad»", "oferta.fin-de-ano": "Campaña «Oferta de Fin de Año»", "oferta.reyes": "Campaña «Oferta de Reyes»",
+    "oferta.rebajas-invierno": "Campaña «Rebajas de invierno»", "oferta.semana-santa": "Campaña «Oferta de Semana Santa»", "oferta.rebajas-verano": "Campaña «Rebajas de verano»",
+    "oferta.vuelta-vacaciones": "Campaña «Vuelta de vacaciones»", "oferta.oferta-flash": "Campaña «Oferta flash»", "oferta.liquidacion": "Campaña «Liquidación»",
+    "oferta.etiqueta": "Etiqueta de la oferta ({c} = nombre de la campaña)", "oferta.hasta": "Validez en la ficha ({v} = fecha)",
+    "ofertas.ver": "Botón del banner", "ofertas.banner.campana": "Banner con una campaña ({c} = campaña, {n} = número de coches)",
+    "ofertas.banner.varias": "Banner con varias campañas ({n} = número de coches)", "ofertas.un.vehiculo": "«1 vehículo» del banner", "ofertas.n.vehiculos": "«{n} vehículos» del banner",
+    "filtros.ofertas": "Filtro «Ofertas»", "filtros.solo.ofertas": "Opción «Solo ofertas»", "filtros.chip.oferta": "Chip «Solo ofertas»",
 }
 PREG_FORM = {"tipo": "1 (tipo)", "pres": "4 (presupuesto)", "km": "5 (kilometraje)", "antig": "6 (antigüedad)", "comb": "7 (combustible)", "cambio": "8 (cambio)", "pot": "9 (potencia)", "cil": "10 (cilindrada)", "plazo": "11 (plazo)"}
 PALABRA = {"antetitulo": "Antetítulo", "titulo": "Título", "intro": "Introducción", "texto": "Texto", "boton": "Botón",

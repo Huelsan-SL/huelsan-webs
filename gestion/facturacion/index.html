@@ -72,8 +72,11 @@ dialog form{padding:16px;display:grid;gap:12px}
 <header class="top"><a href="../">← Volver a la app</a><b>HUELSAN · FACTURACIÓN</b><span class="muted" id="estado-con">Conectando…</span></header>
 <nav class="tabs" role="tablist" aria-label="Secciones de facturación">
   <button role="tab" data-tab="facturas" aria-selected="true">Facturas</button>
+  <button role="tab" data-tab="contratos" aria-selected="false">Contratos</button>
   <button role="tab" data-tab="clientes" aria-selected="false">Clientes</button>
   <button role="tab" data-tab="gastos" aria-selected="false">Compras y gastos</button>
+  <button role="tab" data-tab="proveedores" aria-selected="false">Proveedores</button>
+  <button role="tab" data-tab="banco" aria-selected="false">Banco</button>
   <button role="tab" data-tab="matriculas" aria-selected="false">Por matrícula</button>
   <button role="tab" data-tab="resumen" aria-selected="false">IVA y libros</button>
   <button role="tab" data-tab="emisor" aria-selected="false">Datos fiscales</button>
@@ -81,9 +84,12 @@ dialog form{padding:16px;display:grid;gap:12px}
 <main><div class="hoja" id="vista"><p class="muted">Cargando…</p></div></main>
 
 <dialog id="dlg-cliente"><form method="dialog" id="f-cliente" autocomplete="off"></form></dialog>
-<dialog id="dlg-gasto"><form method="dialog" id="f-gasto" autocomplete="off"></form></dialog>
+<dialog id="dlg-gasto" style="max-width:980px"><form method="dialog" id="f-gasto" autocomplete="off"></form></dialog>
 <dialog id="dlg-cobro"><form method="dialog" id="f-cobro" autocomplete="off"></form></dialog>
 <dialog id="dlg-confirm"><form method="dialog" id="f-confirm"></form></dialog>
 <div id="toast" role="status" hidden></div>
+<script src="lector.js"></script>
 <script src="facturacion.js"></script>
+<script src="banco.js"></script>
+<script src="contrato.js"></script>
 </body></html>

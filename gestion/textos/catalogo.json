@@ -434,6 +434,132 @@
   ]
  },
  {
+  "seccion": "Ofertas: nombres de campaña y etiquetas",
+  "ancla": "oferta",
+  "campos": [
+   {
+    "clave": "oferta.oferta-especial",
+    "etiqueta": "Campaña «Oferta especial»",
+    "defecto": "Oferta especial",
+    "largo": false
+   },
+   {
+    "clave": "oferta.black-friday",
+    "etiqueta": "Campaña «Black Friday»",
+    "defecto": "Black Friday",
+    "largo": false
+   },
+   {
+    "clave": "oferta.cyber-monday",
+    "etiqueta": "Campaña «Cyber Monday»",
+    "defecto": "Cyber Monday",
+    "largo": false
+   },
+   {
+    "clave": "oferta.navidad",
+    "etiqueta": "Campaña «Oferta de Navidad»",
+    "defecto": "Oferta de Navidad",
+    "largo": false
+   },
+   {
+    "clave": "oferta.fin-de-ano",
+    "etiqueta": "Campaña «Oferta de Fin de Año»",
+    "defecto": "Oferta de Fin de Año",
+    "largo": false
+   },
+   {
+    "clave": "oferta.reyes",
+    "etiqueta": "Campaña «Oferta de Reyes»",
+    "defecto": "Oferta de Reyes",
+    "largo": false
+   },
+   {
+    "clave": "oferta.rebajas-invierno",
+    "etiqueta": "Campaña «Rebajas de invierno»",
+    "defecto": "Rebajas de invierno",
+    "largo": false
+   },
+   {
+    "clave": "oferta.semana-santa",
+    "etiqueta": "Campaña «Oferta de Semana Santa»",
+    "defecto": "Oferta de Semana Santa",
+    "largo": false
+   },
+   {
+    "clave": "oferta.rebajas-verano",
+    "etiqueta": "Campaña «Rebajas de verano»",
+    "defecto": "Rebajas de verano",
+    "largo": false
+   },
+   {
+    "clave": "oferta.vuelta-vacaciones",
+    "etiqueta": "Campaña «Vuelta de vacaciones»",
+    "defecto": "Vuelta de vacaciones",
+    "largo": false
+   },
+   {
+    "clave": "oferta.oferta-flash",
+    "etiqueta": "Campaña «Oferta flash»",
+    "defecto": "Oferta flash",
+    "largo": false
+   },
+   {
+    "clave": "oferta.liquidacion",
+    "etiqueta": "Campaña «Liquidación»",
+    "defecto": "Liquidación",
+    "largo": false
+   },
+   {
+    "clave": "oferta.etiqueta",
+    "etiqueta": "Etiqueta de la oferta ({c} = nombre de la campaña)",
+    "defecto": "Oferta · {c}",
+    "largo": false
+   },
+   {
+    "clave": "oferta.hasta",
+    "etiqueta": "Validez en la ficha ({v} = fecha)",
+    "defecto": "Oferta válida hasta el {v}",
+    "largo": false
+   }
+  ]
+ },
+ {
+  "seccion": "Ofertas: banner sobre el listado",
+  "ancla": "ofertas",
+  "campos": [
+   {
+    "clave": "ofertas.ver",
+    "etiqueta": "Botón del banner",
+    "defecto": "Ver ofertas",
+    "largo": false
+   },
+   {
+    "clave": "ofertas.banner.campana",
+    "etiqueta": "Banner con una campaña ({c} = campaña, {n} = número de coches)",
+    "defecto": "{c}: {n} en oferta",
+    "largo": false
+   },
+   {
+    "clave": "ofertas.un.vehiculo",
+    "etiqueta": "«1 vehículo» del banner",
+    "defecto": "1 vehículo",
+    "largo": false
+   },
+   {
+    "clave": "ofertas.n.vehiculos",
+    "etiqueta": "«{n} vehículos» del banner",
+    "defecto": "{n} vehículos",
+    "largo": false
+   },
+   {
+    "clave": "ofertas.banner.varias",
+    "etiqueta": "Banner con varias campañas ({n} = número de coches)",
+    "defecto": "{n} vehículos en oferta",
+    "largo": false
+   }
+  ]
+ },
+ {
   "seccion": "Filtros del listado",
   "ancla": "filtros",
   "campos": [
@@ -588,6 +714,24 @@
     "largo": false
    },
    {
+    "clave": "filtros.color",
+    "etiqueta": "Filtro «Color»",
+    "defecto": "Color",
+    "largo": false
+   },
+   {
+    "clave": "filtros.ofertas",
+    "etiqueta": "Filtro «Ofertas»",
+    "defecto": "Ofertas",
+    "largo": false
+   },
+   {
+    "clave": "filtros.solo.ofertas",
+    "etiqueta": "Opción «Solo ofertas»",
+    "defecto": "Solo ofertas",
+    "largo": false
+   },
+   {
     "clave": "filtros.disponibilidad",
     "etiqueta": "Filtro «Disponibilidad»",
     "defecto": "Disponibilidad",
@@ -618,6 +762,12 @@
     "largo": false
    },
    {
+    "clave": "filtros.todasmarcas",
+    "etiqueta": "Filtro «Todas las marcas»",
+    "defecto": "Todas las marcas",
+    "largo": false
+   },
+   {
     "clave": "filtros.chip.precio",
     "etiqueta": "Filtro «Hasta {v}»",
     "defecto": "Hasta {v}",
@@ -639,6 +789,12 @@
     "clave": "filtros.chip.cv",
     "etiqueta": "Filtro «Desde {v}»",
     "defecto": "Desde {v}",
+    "largo": false
+   },
+   {
+    "clave": "filtros.chip.oferta",
+    "etiqueta": "Chip «Solo ofertas»",
+    "defecto": "Solo ofertas",
     "largo": false
    },
    {

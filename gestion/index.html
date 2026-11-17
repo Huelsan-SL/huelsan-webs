@@ -59,7 +59,8 @@ nav.tabs button{background:none;border:0;color:inherit;opacity:.7;padding:12px 1
 nav.tabs button[aria-selected="true"]{opacity:1;border-color:var(--champ)}
 nav.tabs .count{font-size:11px;opacity:.7;margin-left:4px}
 .status{margin-left:auto;font-size:12px;opacity:.7}
-main{padding-block:20px 48px;padding-inline:16px;max-width:1440px;margin:0 auto}
+main{padding-block:20px 48px;padding-inline:16px;max-width:none;margin:0 auto}
+@media (min-width:1100px){main{padding-inline:28px}}
 .btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);padding:7px 12px;border-radius:6px;cursor:pointer;font-weight:500}
 .btn:hover{border-color:var(--muted)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -138,7 +139,7 @@ h3{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted
 .car .pubact{display:flex;gap:6px;flex-wrap:wrap}
 
 /* layout subastas */
-.split{display:grid;grid-template-columns:290px minmax(0,1fr);gap:20px;align-items:start}
+.split{display:grid;grid-template-columns:clamp(300px,24vw,440px) minmax(0,1fr);gap:20px;align-items:start}
 @media (max-width:900px){.split{grid-template-columns:minmax(0,1fr)}}
 aside.filters{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;position:sticky;top:120px;max-height:calc(100vh - 140px);overflow:auto}
 @media (max-width:900px){aside.filters{position:static;max-height:none}aside.filters:not(.open) .fbody{display:none}}
@@ -147,6 +148,7 @@ aside.filters{background:var(--surface);border:1px solid var(--line);border-radi
 .fgroup{display:grid;gap:6px}
 .faplicar-pie{position:sticky;bottom:-14px;background:var(--surface);padding:10px 0 2px;margin-top:4px;border-top:1px solid var(--line)}
 .fgroup>label,.fgroup>.lbl{font-size:12px;font-weight:600;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.mmbox{max-height:210px;overflow:auto;padding-right:4px}
 .fgroup .n{font-weight:400;font-size:11px;color:var(--muted)}
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 input[type=number],input[type=text],input[type=search],input[type=email],input[type=tel],select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;min-width:0}
@@ -167,6 +169,21 @@ textarea{resize:vertical;min-height:70px}
 .listbar .sum{font-size:13px}
 .listbar .sum b{font-family:var(--f-display);font-size:18px}
 .lots{display:grid;gap:8px}
+.lots.grid{grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px;align-items:stretch}
+.lots.grid .lot{grid-template-columns:96px minmax(0,1fr);align-items:start}
+.lots.grid .lot .right{grid-column:1/-1;justify-items:start;text-align:left}
+.lots.grid .more{grid-column:1/-1}
+.vistabtn{display:inline-flex;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.vistabtn button{border:0;background:var(--surface);padding:5px 10px;font-size:12.5px;font-weight:600;cursor:pointer;color:inherit}
+.vistabtn button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.aucdet{margin-bottom:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.aucdet>summary{cursor:pointer;padding:8px 12px;font-size:13px;font-weight:600;list-style:none}
+.aucdet>summary::-webkit-details-marker{display:none}
+.aucdet>summary::before{content:"▸ ";color:var(--muted)}
+.aucdet[open]>summary::before{content:"▾ "}
+.aucdet .auctions{max-height:170px;overflow:auto;padding:4px 12px 12px;margin:0!important}
+.aucdet .auc{max-width:300px;padding:5px 9px}
+@media (max-width:900px){.rec,#drop{display:none!important}}
 .lot{display:grid;grid-template-columns:112px minmax(0,1fr) auto;gap:6px 16px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;text-align:left;width:100%}
 .lot:hover{border-color:var(--muted)}
 .lot.off{opacity:.55}
@@ -323,7 +340,9 @@ const fdate=iso=>{if(!iso)return"—";const d=new Date(iso);return d.toLocaleDat
 const fdt=iso=>{if(!iso)return"—";const d=new Date(iso);return d.toLocaleDateString("es-ES",{day:"2-digit",month:"short"})+" "+d.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})};
 const toNum=v=>{if(v==null||v==="")return null;if(typeof v==="number")return v;const s=String(v).trim().replace(/\s/g,"");if(!s)return null;const n=Number(s.replace(/\./g,"").replace(",","."));return isNaN(n)?null:n};
 const toDec=v=>{if(v==null||v==="")return null;if(typeof v==="number")return v;const n=Number(String(v).trim().replace(",","."));return isNaN(n)?null:n};
-let toastT;function toast(m){let t=$("#toast");if(!t){t=document.createElement("div");t.id="toast";t.className="toast";t.setAttribute("role","status");document.body.appendChild(t)}t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,3200)}
+document.addEventListener("toggle",e=>{if(e.target&&e.target.id==="aucdet")S.aucOpen=e.target.open},true);
+let toastT;function urlPortal(l){const m=String(l.matricula||"").replace(/[^0-9A-Za-z]/g,"").toUpperCase();return(/bca/i.test(l.fuente||l.url||"")&&m)?"https://es.bca-europe.com/search?q="+m:(l.url||"")}
+function toast(m){let t=$("#toast");if(!t){t=document.createElement("div");t.id="toast";t.className="toast";t.setAttribute("role","status");document.body.appendChild(t)}t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,3200)}
 
 const TIPOS=["Utilitario","Compacto","Berlina","Familiar","Monovolumen","SUV","4x4","Deportivo","Descapotable","Furgoneta","Comercial"];
 /* Furgonetas (furgón y combi) por modelo; chasis cabina y pick-ups siguen como Comercial */
@@ -411,11 +430,11 @@ function parseBCA(rows,fileName){
 }
 
 /* ---------- estado ---------- */
-const S={limit:60,thumbs:new Map(),thumbReq:new Set(),tab:"subastas",lots:new Map(),subastas:new Map(),demandas:new Map(),db:null,assets:null,dbReady:false,open:null,
+const S={vista:(()=>{try{return localStorage.getItem("hs-vista")||(innerWidth>=1100?"grid":"list")}catch(e){return"list"}})(),limit:60,thumbs:new Map(),thumbReq:new Set(),tab:"subastas",lots:new Map(),subastas:new Map(),demandas:new Map(),db:null,assets:null,dbReady:false,open:null,
   aucSel:null,filtersOpen:false,pub:{tipo:"",precioMax:"",anioMin:""},
   f:{q:"",anioMin:"",anioMax:"",precioMin:"",precioMax:"",kmMax:"",duenosMax:"",libro:"any",sinAverias:false,sinAccidentes:false,sinManip:false,
      margenMin:"",margenMax:"",margenPctMin:"",bajoPujaMax:false,mecMax:"",comb:[],cvMin:"",cvMax:"",motorMin:"",motorMax:"",tipos:[],plazasMin:"",ubic:"",iva:"any",proced:[],sinImportados:false,
-     danosMax:"",estados:["nuevo","interesante","pujar"],incluirDesconocidos:true,modo:"todas",subUbic:"",zonas:[]}};
+     danosMax:"",estados:["nuevo","interesante","pujar"],incluirDesconocidos:true,modo:"todas",subUbic:"",zonas:[],marcasNo:[]}};
 try{const saved=JSON.parse(localStorage.getItem("huelsan-f")||"null");if(saved)Object.assign(S.f,saved)}catch(e){}
 const saveF=()=>{try{localStorage.setItem("huelsan-f",JSON.stringify(S.f))}catch(e){}};
 /* Filtros: los cambios van a un borrador (S.fd) y solo se aplican con «Aplicar filtros» (arriba y abajo del panel) o Intro en el buscador */
@@ -485,10 +504,14 @@ const costeTotal=l=>(l.precioCompra||0)+gastosTotal(l);
 const publicPrice=l=>l.precioVenta??null;
 
 /* ---------- filtros ---------- */
+function cMarca(l){const K=window.HUELSAN_CAT;try{return(K&&K.marca(l.marca))||l.marca||""}catch(e){return l.marca||""}}
+function cModelo(l){const K=window.HUELSAN_CAT;try{return(K&&K.modelo(cMarca(l),l.modelo))||l.modelo||""}catch(e){return l.modelo||""}}
 function passes(l,f){
   const U=f.incluirDesconocidos;
   const rng=(v,min,max)=>{if(v==null)return U||(min===""&&max==="");if(min!==""&&v<+min)return false;if(max!==""&&v>+max)return false;return true};
   if(f.q){const q=f.q.toLowerCase();if(![l.marca,l.modelo,l.derivado,l.matricula,l.color].join(" ").toLowerCase().includes(q))return false}
+  if((f.marcas||[]).length){const m=cMarca(l);if(!f.marcas.includes(m))return false;if((f.modelos||[]).some(x=>x.split("|")[0]===m)&&!f.modelos.includes(m+"|"+cModelo(l)))return false}
+  if((f.marcasNo||[]).length&&f.marcasNo.includes(cMarca(l)))return false;
   if(!rng(l.anio,f.anioMin,f.anioMax))return false;
   if(!rng(refPrice(l),f.precioMin??"",f.precioMax))return false;
   if(!rng(l.km,"",f.kmMax))return false;
@@ -618,7 +641,7 @@ function lotRow(l){
       ${m!=null?`<span class="tag ${m>=1500?"good":m>=0?"":"bad"}">Margen est. ${eur(m)}${margenSalPct(l)!=null?" · "+Math.round(margenSalPct(l))+" %":""}</span>`:(l.mercado?`<span class="d">Venta est. ${eur(ventaEst(l))}</span>`:"")}
       ${m!=null&&dedEstado(l).total>0?`<span class="d" title="Precio de mercado ${eur(l.mercado)} menos daños y mecánica">Venta est. ${eur(ventaEst(l))} (−${eur(dedEstado(l).total)} estado)</span>`:""}
       ${!isOwned(l)&&pujaMaxEst(l)!=null?`<span class="tag ${rp!=null&&rp>pujaMaxEst(l)?"warn":"acc"}" title="Puja + tasas BCA + transporte = 70 % de la venta estimada según estado">Puja máx. sug. ${eur(pujaMaxEst(l))}</span>`:""}
-      ${l.url?`<a class="bcalink" href="${esc(l.url)}" target="_blank" rel="noopener">Ver en ${esc(l.fuente||"portal")} ↗</a>`:""}
+      ${urlPortal(l)?`<a class="bcalink" href="${esc(urlPortal(l))}" target="_blank" rel="noopener">Ver en ${esc(l.fuente||"portal")} ↗</a>`:""}
     </div></div>`}
 
 /* ---------- vista: subastas ---------- */
@@ -687,16 +710,25 @@ function subsShown(){const f=S.f;return liveSubs().filter(s=>(f.modo!=="online"|
 function baseLots(){const f=S.f;const all=[...S.lots.values()].filter(l=>!isPast(l)&&!isOwned(l));
   const ids=new Set(subsShown().map(s=>s.id));
   return all.filter(l=>(f.modo!=="online"||lotOnline(l))&&(!f.subUbic||(l.subasta?.ubicacion===f.subUbic))&&(!l.subastaId||!S.subastas.has(l.subastaId)||ids.has(l.subastaId))&&(!S.aucSel||l.subastaId===S.aucSel))}
+let MARCAS_VISTAS=[];
+/* Excluir marcas: desplegable solo con marcas; cada elegida sale como chip con × */
+function excHTML(fd){const no=fd.marcasNo||[],op=MARCAS_VISTAS.filter(([m])=>!no.includes(m));
+  return`<div class="lbl">Excluir marcas <span class="n">${no.length?no.length+" excluida"+(no.length>1?"s":""):"ninguna"}</span></div>
+  <select id="f-marcasNo" aria-label="Excluir marca"><option value="">Elegir marca a excluir…</option>${op.map(([m,n])=>`<option value="${esc(m)}">${esc(m)} (${n})</option>`).join("")}</select>
+  ${no.length?`<div class="chips">${no.map(m=>`<button type="button" class="chk" data-excdel="${esc(m)}" aria-label="Dejar de excluir ${esc(m)}" style="background:var(--ink);color:var(--bg);border-color:var(--ink)">${esc(m)} ✕</button>`).join("")}</div><button class="btn sm ghost" id="exc-clear" type="button">Quitar exclusiones</button>`:""}`}
+function pintaExc(){const b=$("#exc-box");if(b)b.innerHTML=excHTML(draftF())}
 function renderSubastas(){
-  const f=S.f,fd=draftF();if(!Array.isArray(fd.zonas))fd.zonas=[];
+  const f=S.f,fd=draftF();if(!Array.isArray(fd.zonas))fd.zonas=[];if(!Array.isArray(fd.marcas))fd.marcas=[];if(!Array.isArray(fd.modelos))fd.modelos=[];if(!Array.isArray(fd.marcasNo))fd.marcasNo=[];
   const all=[...S.lots.values()].filter(l=>!isPast(l)&&!isOwned(l));
   if(S.aucSel&&!subsShown().some(s=>s.id===S.aucSel))S.aucSel=null;
   const subs=subsShown();
   const subUbics=[...new Set(liveSubs().filter(s=>f.modo!=="online"||subOnline(s)).map(s=>s.ubicacion).filter(Boolean))].sort((a,b)=>/online|multicentro/i.test(a)-/online|multicentro/i.test(b)||a.localeCompare(b));
   const base=baseLots();
   const zcount={};base.forEach(l=>{const z=zonaOf(l);if(z)zcount[z]=(zcount[z]||0)+1});
-  if(!Array.isArray(f.zonas))f.zonas=[];
+  if(!Array.isArray(f.zonas))f.zonas=[];if(!Array.isArray(f.marcas))f.marcas=[];if(!Array.isArray(f.modelos))f.modelos=[];if(!Array.isArray(f.marcasNo))f.marcasNo=[];
   const zonas=[...new Set([...Object.keys(zcount),...f.zonas,...fd.zonas])].sort((a,b)=>a.localeCompare(b));
+  const mc={},mo={};base.forEach(l=>{const m=cMarca(l);if(!m)return;mc[m]=(mc[m]||0)+1;const o=cModelo(l);if(o){(mo[m]=mo[m]||{})[o]=(mo[m][o]||0)+1}});
+  const marcasL=Object.entries(mc).sort((a,b)=>a[0].localeCompare(b[0],"es")),modelosL={};MARCAS_VISTAS=marcasL;Object.keys(mo).forEach(m=>modelosL[m]=Object.entries(mo[m]).sort((a,b)=>a[0].localeCompare(b[0],"es")));
   const est=f.estados.length?base.filter(l=>f.estados.includes(l.estado||"nuevo")):base;
   const shown=est.filter(l=>passes(l,f)).sort((a,b)=>(margen(b)??-1e9)-(margen(a)??-1e9)||(a.km??0)-(b.km??0));
   $("#main").innerHTML=`
@@ -708,12 +740,15 @@ function renderSubastas(){
     <div class="seg" aria-label="Tipo de subasta">${[["todas","Online y presencial"],["online","Solo online"]].map(([k,v])=>`<button data-seg="modo" data-v="${k}" aria-pressed="${f.modo===k}">${v}</button>`).join("")}</div>
     <label class="subsel">Ubicación de la subasta<select id="f-subUbic" data-f="subUbic"><option value="">Todas</option>${subUbics.map(u=>`<option ${f.subUbic===u?"selected":""}>${esc(u)}</option>`).join("")}</select></label>
     <label class="subsel">Subasta<select id="f-auc" data-aucsel="1"><option value="">Todas (${subs.length})</option>${subs.map(s=>`<option value="${esc(s.id)}" ${S.aucSel===s.id?"selected":""}>${esc(s.nombre)} · ${esc(subOnline(s)?"cierra "+fdate(s.fin):fdate(s.inicio||s.fin))}</option>`).join("")}</select></label></div>`:""}
-  ${subs.length?`<div class="auctions" style="margin-bottom:16px"><button class="auc" data-auc="" aria-pressed="${!S.aucSel}"><b>Todas las subastas</b><span class="aucmeta">${subs.length} subasta${subs.length>1?"s":""} · ${base.length} lotes</span></button>${subs.map(s=>{const ls=[...S.lots.values()].filter(l=>l.subastaId===s.id);const on=subOnline(s);const ub=s.ubicacion||"";return`<div class="auc" role="button" tabindex="0" data-auc="${esc(s.id)}" aria-pressed="${S.aucSel===s.id}"><span class="mode ${on?"on":""}">${on?"Online":"Presencial"}</span><b>${esc(ub?ub+" · ":"")}${esc(s.nombre)}</b><span class="aucdesc">${esc(describeSubasta(s,ls))}</span><span class="aucmeta">${on?(s.inicio?"Abierta desde "+fdt(s.inicio)+" · ":""):(s.inicio?"Empieza "+fdt(s.inicio)+" · ":"")}cierra ${fdt(s.fin)} · ${ls.length} lotes${s.canal&&/sobre/i.test(s.canal)?" · oferta en sobre cerrado":""}</span><span class="aucfoot"><button type="button" class="aucarch" data-archivar="${esc(s.id)}" data-n="${ls.filter(l=>!isOwned(l)).length}" title="Pasa la subasta y todos sus lotes al Histórico">Archivar subasta</button></span></div>`}).join("")}</div>`:(liveSubs().length?`<div class="empty" style="margin-bottom:16px"><strong>No hay subastas con ese tipo y ubicación</strong>Cambia a «Online y presencial» o elige otra ubicación.</div>`:"")}
+  ${subs.length?`<details class="aucdet" id="aucdet" ${S.aucOpen?"open":""}><summary>Subastas existentes (${subs.length})${S.aucSel?" · filtrando una":""}</summary><div class="auctions"><button class="auc" data-auc="" aria-pressed="${!S.aucSel}"><b>Todas las subastas</b><span class="aucmeta">${subs.length} subasta${subs.length>1?"s":""} · ${base.length} lotes</span></button>${subs.map(s=>{const ls=[...S.lots.values()].filter(l=>l.subastaId===s.id);const on=subOnline(s);const ub=s.ubicacion||"";return`<div class="auc" role="button" tabindex="0" data-auc="${esc(s.id)}" aria-pressed="${S.aucSel===s.id}"><span class="mode ${on?"on":""}">${on?"Online":"Presencial"}</span><b>${esc(ub?ub+" · ":"")}${esc(s.nombre)}</b><span class="aucdesc">${esc(describeSubasta(s,ls))}</span><span class="aucmeta">${on?(s.inicio?"Abierta desde "+fdt(s.inicio)+" · ":""):(s.inicio?"Empieza "+fdt(s.inicio)+" · ":"")}cierra ${fdt(s.fin)} · ${ls.length} lotes${s.canal&&/sobre/i.test(s.canal)?" · oferta en sobre cerrado":""}</span><span class="aucfoot"><button type="button" class="aucarch" data-archivar="${esc(s.id)}" data-n="${ls.filter(l=>!isOwned(l)).length}" title="Pasa la subasta y todos sus lotes al Histórico">Archivar subasta</button></span></div>`}).join("")}</div></details>`:(liveSubs().length?`<div class="empty" style="margin-bottom:16px"><strong>No hay subastas con ese tipo y ubicación</strong>Cambia a «Online y presencial» o elige otra ubicación.</div>`:"")}
   <div class="split">
     <aside class="filters ${S.filtersOpen?"open":""}" aria-label="Filtros">
       <div class="fhead"><h2>Filtros</h2><div class="row"><button class="btn sm ${fPend()?"primary":""}" data-faplicar>Aplicar filtros</button><button class="btn sm ghost" id="freset">Limpiar</button><button class="btn sm" id="ftoggle">${S.filtersOpen?"Ocultar":"Mostrar"}</button></div></div>
       <div class="fbody">
         <div class="fgroup"><input type="search" id="f-q" data-f="q" placeholder="Marca, modelo, matrícula…" value="${esc(fd.q)}"></div>
+        <div class="fgroup"><div class="lbl">Marca <span class="n">${fd.marcas.length?fd.marcas.length+" elegida"+(fd.marcas.length>1?"s":"")+" · ":""}varias a la vez</span></div><div class="chips mmbox">${marcasL.map(([m,n])=>`<label class="chk"><input type="checkbox" data-fgroup="marcas" value="${esc(m)}" ${fd.marcas.includes(m)?"checked":""}>${esc(m)} <span class="n tnum">${n}</span></label>`).join("")}</div>${fd.marcas.length?`<button class="btn sm ghost" id="mm-clear">Quitar marcas</button>`:""}</div>
+        <div class="fgroup" id="exc-box">${excHTML(fd)}</div>
+        ${fd.marcas.map(m=>`<div class="fgroup"><div class="lbl">Modelos ${esc(m)}</div><div class="chips mmbox">${(modelosL[m]||[]).map(([mo,n])=>`<label class="chk"><input type="checkbox" data-fgroup="modelos" value="${esc(m+"|"+mo)}" ${fd.modelos.includes(m+"|"+mo)?"checked":""}>${esc(mo)} <span class="n tnum">${n}</span></label>`).join("")}</div></div>`).join("")}
         <div class="fgroup"><div class="lbl">Estado</div><div class="chips">${ESTADOS.filter(e=>!["comprado","stock","vendido"].includes(e[0])).map(([k,v])=>`<label class="chk"><input type="checkbox" data-fgroup="estados" value="${k}" ${fd.estados.includes(k)?"checked":""}>${v}</label>`).join("")}</div></div>
         <label class="toggle"><input type="checkbox" id="f-unk" data-fb="incluirDesconocidos" ${fd.incluirDesconocidos?"checked":""}><span>Incluir lotes con el dato sin rellenar<br><span class="muted">Desmárcalo para ver solo lotes con el dato comprobado.</span></span></label>
         <div class="sep"></div>
@@ -744,12 +779,12 @@ function renderSubastas(){
       </div>
     </aside>
     <section style="min-width:0">
-      <div class="listbar"><span class="sum"><b class="tnum">${shown.length}</b> de ${est.length} lotes pasan los filtros</span><span id="fpend" class="estprog" role="status">${fPend()?"Hay cambios en los filtros sin aplicar":""}</span>
+      <div class="listbar"><span class="vistabtn" role="group" aria-label="Vista"><button data-vista="list" aria-pressed="${S.vista!=="grid"}">☰ Lista</button><button data-vista="grid" aria-pressed="${S.vista==="grid"}">▦ Cuadrícula</button></span><span class="sum"><b class="tnum">${shown.length}</b> de ${est.length} lotes pasan los filtros</span><span id="fpend" class="estprog" role="status">${fPend()?"Hay cambios en los filtros sin aplicar":""}</span>
         ${S.sample?(EST.running?`<span class="estprog tnum">${EST.auto?"Estimando automáticamente todos los lotes…":"Estimando precios…"} ${EST.done} de ${EST.total}</span><button class="btn sm" id="est-stop">Detener</button>`:(()=>{const n=shown.filter(l=>l.mercado==null).length;return n?`<button class="btn sm primary" id="est-run" title="Estimación orientativa (IA) según modelo, año, km, combustible y potencia">Estimar precio de mercado (${n})</button>`:""})()):""}
         ${shown.length?`<button class="btn sm" id="bulk-int">Marcar visibles como interesantes</button>`:""}
         ${(()=>{const n=shown.filter(l=>l.estado==="interesante").length;return n?`<button class="btn sm" id="bulk-noint">Desmarcar visibles como interesantes (${n})</button>`:""})()}
         ${est.length-shown.length>0?`<button class="btn sm" id="bulk-desc">Descartar los ${est.length-shown.length} filtrados</button>`:""}</div>
-      <div class="lots">${shown.length?shown.slice(0,S.limit).map(lotRow).join("")+(shown.length>S.limit?`<div class="more"><button class="btn" id="more">Mostrar ${Math.min(60,shown.length-S.limit)} más (quedan ${shown.length-S.limit})</button></div>`:""):(all.length?`<div class="empty"><strong>Ningún lote pasa estos filtros</strong>Relaja algún filtro o marca «Incluir lotes con el dato sin rellenar».</div>`:`<div class="empty"><strong>Todavía no hay lotes</strong>Importa el Excel de una subasta de BCA para empezar.</div>`)}</div>
+      <div class="lots ${S.vista==="grid"?"grid":""}">${shown.length?shown.slice(0,S.limit).map(lotRow).join("")+(shown.length>S.limit?`<div class="more"><button class="btn" id="more">Mostrar ${Math.min(60,shown.length-S.limit)} más (quedan ${shown.length-S.limit})</button></div>`:""):(all.length?`<div class="empty"><strong>Ningún lote pasa estos filtros</strong>Relaja algún filtro o marca «Incluir lotes con el dato sin rellenar».</div>`:`<div class="empty"><strong>Todavía no hay lotes</strong>Importa el Excel de una subasta de BCA para empezar.</div>`)}</div>
     </section>
   </div>`;
   wireDrop();
@@ -999,6 +1034,22 @@ function calculoHtml(l){if(!(l.mercado>0))return"";const d=dedEstado(l),v=ventaE
     ${fila("Venta estimada según estado",eur(v),1)}
     ${r!=null?fila(priceLbl(l),"− "+eur(r))+fila(`Comisión de compra BCA${l.combustible==="Eléctrico"?" (eléctrico, fija)":""}`,"− "+eur(t.comision))+fila("Gestión de documentación BCA","− "+eur(t.honorarios))+fila("Tasa de tráfico (DGT, sin IVA)","− "+eur(t.transferencia))+(t.iva?fila("IVA 21 % de comisión y honorarios","− "+eur(t.iva)):"")+(transporte(l)?fila(`Transporte ${transporte(l).ruta} (${eur(transporte(l).base)} + IVA)`,"− "+eur(transporte(l).total)):"")+fila("Margen estimado",`${eur(m)}${margenSalPct(l)!=null?" ("+Math.round(margenSalPct(l))+" % sobre el coste)":""}`,1):fila("Margen estimado","sin precio de subasta",1)}
   </tbody></table><div style="margin-top:6px">${transporte(l)?"Antes de preparación y venta.":"Sin transporte (no hay tarifa para esta ubicación); antes de preparación y venta."} El precio del coche va sin IVA; tarifas de BCA en vigor desde el 21/03/2023. Descuentos por daños y mecánica orientativos. Si la puja final es más alta, el margen baja.</div></div>`}
+/* Calculadora de gastos previstos (solo para estudiar si un coche merece la pena; NO es contabilidad ni pasa a Facturación). Se guarda en «calc» del lote. */
+const CALC_PRESETS=[["Transporte",0],["Limpieza y estética",0],["Mecánica y mantenimiento",0],["Chapa y pintura",0],["Neumáticos",0],["ITV",0],["Gestoría y transferencia",0],["Garantía",0],["Publicidad",0],["Otros",0]];
+function calcPrevistosHtml(l){
+  const c=l.calc||{};const gs=Array.isArray(c.gastos)?c.gastos:[];
+  const r=refPrice(l),t=r!=null&&!isOwned(l)?tasasBCA(r,l):null;
+  const compraDef=isOwned(l)?(l.precioCompra||0):(r!=null?r+(t?t.total:0):0);
+  const ventaDef=l.precioVenta||(l.mercado>0?ventaEst(l):0);
+  const compra=c.compra!=null&&c.compra!==""?+c.compra:compraDef,venta=c.venta!=null&&c.venta!==""?+c.venta:ventaDef;
+  const reales=isOwned(l)?gastosTotal(l):0,prev=gs.reduce((s,g)=>s+(+g.importe||0),0);
+  const coste=compra+reales+prev,mg=venta-coste;
+  return`<div class="note tnum" style="display:grid;gap:6px"><b>Calculadora: ¿merece la pena? <span class="muted" style="font-weight:400">(solo para calcular; no cuenta en la contabilidad)</span></b>
+    <div class="form" style="grid-template-columns:repeat(2,minmax(0,1fr))"><label>Compra (€)${isOwned(l)?"":" <small>puja + tasas BCA</small>"}<input type="number" step="50" data-calc="compra" value="${esc(c.compra??"")}" placeholder="${Math.round(compraDef)||""}"></label>
+      <label>Venta (€)<input type="number" step="50" data-calc="venta" value="${esc(c.venta??"")}" placeholder="${Math.round(ventaDef)||""}"></label></div>
+    ${gs.length?`<table class="gtab"><tbody>${gs.map(g=>`<tr><td>${esc(g.concepto||"Gasto")}</td><td class="num">${eur(g.importe)}</td><td><button type="button" class="btn sm ghost" data-calc-del="${esc(g.id)}">Quitar</button></td></tr>`).join("")}</tbody></table>`:""}
+    <div class="gadd"><label>Gasto previsto<select id="calc-con">${CALC_PRESETS.map(([n])=>`<option>${n}</option>`).join("")}</select></label><label>Importe (€)<input type="number" id="calc-imp" step="10" min="0"></label><button class="btn" type="button" id="calc-add">Añadir</button></div>
+    <div>Compra ${eur(compra)}${reales?` + gastos con factura ${eur(reales)}`:""} + previstos ${eur(prev)} = coste <b>${eur(coste)}</b> · Venta ${eur(venta)} → margen <b style="color:${mg>=0?"#067647":"#B42318"}">${eur(mg)}</b>${venta?` (${Math.round(mg/venta*100)} %)`:""}</div></div>`}
 function tri(field,val){return`<span class="tri">${[["true","Sí"],["null","Sin dato"],["false","No"]].map(([k,v])=>`<button type="button" data-tri="${field}" data-v="${k}" aria-pressed="${String(val??null)===k}">${v}</button>`).join("")}</span>`}
 function renderDrawer(){
   let sc=$("#scrim"),dr=$("#drawer");
@@ -1012,7 +1063,7 @@ function renderDrawer(){
   const sim=[...S.lots.values()].filter(x=>x.id!==l.id&&x.marca===l.marca&&x.modelo===l.modelo&&(x.precioRemate||x.precioVenta));
   const st=dr.scrollTop;
   dr.innerHTML=`${(l.fotos||[]).length?`<img class="hero-photo" src="${BLOB}${esc(l.fotos[0])}" alt="" style="margin-bottom:12px">`:l.miniatura?`<img class="hero-photo" src="${esc(l.miniatura)}" alt="" style="margin-bottom:12px">`:(l.miniPack?`<img class="hero-photo" data-thumb="${esc(l.id)}" alt="" style="margin-bottom:12px" ${S.thumbs.get(l.id)?`src="${S.thumbs.get(l.id)}"`:""}>`:"")}<div class="dhead"><div style="display:grid;gap:6px;min-width:0">${plate(l.matricula)}<h2 style="font-size:21px">${esc(titleOf(l))}</h2><div class="muted" style="font-size:12.5px">${esc(l.fuente||"")} · ${esc(l.subasta?.nombre||"Compra directa")}${l.subasta?.fin?" · cierra "+fdt(l.subasta.fin):""}</div></div><div class="row" style="justify-content:flex-end">${l.url?`<a class="btn primary" href="${esc(l.url)}" target="_blank" rel="noopener">Ver anuncio en ${esc(l.fuente||"portal")} ↗</a>`:""}<button class="btn" id="dclose">Cerrar</button></div></div>
-  <div class="dsec"><h3>Decisión</h3><div class="states">${ESTADOS.map(([k,v])=>`<button data-state="${k}" aria-pressed="${(l.estado||"nuevo")===k}">${v}</button>`).join("")}</div><div style="margin-top:10px"><a class="btn sm" href="folleto/?id=${encodeURIComponent(l.id)}" style="text-decoration:none">Crear folleto y fotos de estudio</a>${["comprado","stock","vendido"].includes(l.estado)?` <a class="btn sm" href="facturacion/?${l.facturaVenta&&l.facturaVenta.id?"factura="+encodeURIComponent(l.facturaVenta.id):"lote="+encodeURIComponent(l.id)}" style="text-decoration:none">${l.facturaVenta?"Ver factura "+esc(l.facturaVenta.codigo||""):"Crear factura de venta"}</a>`:""}</div>
+  <div class="dsec"><h3>Decisión</h3><div class="states">${ESTADOS.map(([k,v])=>`<button data-state="${k}" aria-pressed="${(l.estado||"nuevo")===k}">${v}</button>`).join("")}</div><div style="margin-top:10px"><a class="btn sm" href="folleto/?id=${encodeURIComponent(l.id)}" style="text-decoration:none">Crear folleto y fotos de estudio</a>${["comprado","stock","vendido"].includes(l.estado)?` <a class="btn sm" href="facturacion/?${l.facturaVenta&&l.facturaVenta.id?"factura="+encodeURIComponent(l.facturaVenta.id):"lote="+encodeURIComponent(l.id)}" style="text-decoration:none">${l.facturaVenta?"Ver factura "+esc(l.facturaVenta.codigo||""):"Crear factura de venta"}</a> <a class="btn sm" href="facturacion/?tab=contratos&contratoLote=${encodeURIComponent(l.id)}" style="text-decoration:none">Contrato de compraventa</a>`:""}</div>
     ${!isOwned(l)&&l.publico?`<div class="row"><span class="muted" style="font-size:12.5px">Fotos para la web: ${(l.fotos||[]).length||"solo la miniatura"}${(l.fotoIds||[]).length&&!(l.fotos||[]).length?` · el cliente ve las ${l.fotoIds.length} de BCA como enlaces numerados`:""}</span>${S.assets?`<label class="btn sm">Añadir fotos<input type="file" id="e-fotos" accept="image/*" multiple hidden></label>`:""}</div>`:""}
     <label class="toggle"><input type="checkbox" id="d-publico" ${l.publico?"checked":""}><span>Mostrar en la web de clientes<br><span class="muted">${isOwned(l)?"Sale como «En stock».":"Sale como «Por encargo», sin ningún dato de la subasta. El cliente ve «Consultar precio»."}</span></span></label>
     ${ds.length?`<div><span class="tag acc">${ds.length} cliente${ds.length>1?"s":""} busca${ds.length>1?"n":""} algo así</span> <span class="muted" style="font-size:12.5px">${ds.map(d=>esc(d.nombre)).join(", ")}</span></div>`:""}</div>
@@ -1023,7 +1074,7 @@ function renderDrawer(){
     ${l.equipamiento?`<div class="equip">${esc(l.equipamiento)}</div>`:""}
     ${l.autoDetectado?`<div class="note">Avería, accidente o km dudosos marcados automáticamente a partir de los comentarios del vendedor. Revísalo y corrígelo abajo.</div>`:""}
     ${l.danos||l.danosAccidente||l.notasVendedor?`<div class="equip"><b>Comentarios del vendedor:</b> ${esc([l.danosAccidente,l.danos,l.notasVendedor].filter(Boolean).join(" · "))}</div>`:""}
-    <div class="links">${l.url?`<a href="${esc(l.url)}" target="_blank" rel="noopener">Ficha en ${esc(l.fuente||"portal")} ↗</a>`:""}</div>
+    <div class="links">${urlPortal(l)?`<a href="${esc(urlPortal(l))}" target="_blank" rel="noopener">Ficha en ${esc(l.fuente||"portal")} ↗</a>`:""}</div>
     ${(l.fotoIds||[]).length?`<div class="links"><span class="muted" style="font-size:12.5px;align-self:center">Fotos en BCA (${l.fotoIds.length}):</span>${l.fotoIds.map((d,i)=>`<a href="https://www1.bcaimage.com/Document?DocType=VehicleImage&docId=${esc(d)}&width=1280" target="_blank" rel="noopener">${i+1}</a>`).join("")}</div>`:""}</div>
   <div class="dsec"><h3>Comprobaciones</h3><div class="form">
     <label>Nº de dueños<input type="number" id="e-duenos" data-e="duenos" min="0" value="${esc(l.duenos??"")}"></label>
@@ -1054,6 +1105,7 @@ function renderDrawer(){
       <a href="${compUrl(l,"as24")}" target="_blank" rel="noopener">AutoScout24 ↗</a></div>
     <div class="muted" style="font-size:12px">Los enlaces de Wallapop y AutoScout24 ya van filtrados: año ±1, km ±30 %${l.combustible?", mismo combustible":""}${l.cv?", potencia ±15 CV (AutoScout24)":""}, ordenados de más barato a más caro.</div>
     ${calculoHtml(l)}
+    ${calcPrevistosHtml(l)}
     ${pujaMaxEst(l)!=null?`<div class="note tnum">Puja máxima sugerida: <b>${eur(pujaMaxEst(l))}</b> (con sus tasas BCA de ${eur(tasasBCA(pujaMaxEst(l),l).total)}${transporte(l)?` y ${eur(transporte(l).total)} de transporte`:""}, el coste queda en el 70 % de la venta estimada de ${eur(ventaEst(l))})${refPrice(l)!=null&&refPrice(l)>pujaMaxEst(l)?` · <span style="color:var(--warn)">el ${priceLbl(l).toLowerCase()} ya la supera</span>`:""}.${l.pujaMax==null&&!isOwned(l)?` <button class="btn sm" type="button" id="usar-pujamax">Usarla como puja máxima</button>`:""}</div>`:""}
     ${sim.length?`<div class="equip">Referencias propias del mismo modelo: ${sim.map(x=>`${x.anio} · ${num(x.km)} km → ${x.precioRemate?"remate "+eur(x.precioRemate):"vendido "+eur(x.precioVenta)}`).join(" | ")}</div>`:""}</div>
   ${isOwned(l)?`<div class="dsec"><h3>Stock y venta</h3><div class="form">
@@ -1212,15 +1264,14 @@ async function guardarImport(){
     document.querySelectorAll("#tabs [data-tab]").forEach(x=>x.setAttribute("aria-selected",x.dataset.tab==="stock"));render()}
   catch(e){IMP.busy="";IMP.msg="No se ha podido guardar: "+(e.message||e.code||e);renderImp()}}
 
-function gastosHtml(l){const gs=gastosDe(l);const pc=gastosPorCat(l);const hoy=new Date().toISOString().slice(0,10);
+function gastosHtml(l){const gs=gastosDe(l);const pc=gastosPorCat(l);const sinF=gs.filter(g=>!g.gastoId&&g.id!=="ant");
   return`<div style="display:grid;gap:8px"><h3>Gastos del coche · total <span class="tnum">${eur(gastosTotal(l))}</span></h3>
     ${gs.length?`<div class="gsum tnum">${Object.entries(pc).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<span class="tag">${esc(c)}: ${eur(v)}</span>`).join("")}</div>
-    <table class="gtab tnum"><thead><tr><th>Fecha</th><th>Categoría</th><th>Concepto</th><th class="num">Importe</th><th></th></tr></thead><tbody>${gs.map(g=>`<tr><td>${g.fecha?fdate(g.fecha):"—"}</td><td>${esc(g.categoria||"Otros")}</td><td>${esc(g.concepto||"")}</td><td class="num">${eur(g.importe)}</td><td>${g.id==="ant"?"":`<button class="btn sm ghost" data-gdel="${esc(g.id)}">Quitar</button>`}</td></tr>`).join("")}</tbody></table>`:`<div class="muted" style="font-size:12.5px">Aún no hay gastos. Añade cada factura o pago por separado para poder comparar coches.</div>`}
-    <div class="gadd"><label>Fecha<input type="date" id="g-fecha" value="${hoy}"></label>
-      <label>Categoría<select id="g-cat">${GASTO_CATS.map(c=>`<option>${c}</option>`).join("")}</select></label>
-      <label>Concepto<input type="text" id="g-concepto" placeholder="Ej.: lavado integral, cambio de aceite…"></label>
-      <label>Importe (€)<input type="number" id="g-importe" step="1" min="0"></label>
-      <button class="btn primary" id="g-add" type="button">Añadir gasto</button></div></div>`}
+    ${sinF.length?`<div class="muted" style="font-size:12.5px;color:#B42318">${sinF.length} ${sinF.length===1?"gasto no tiene":"gastos no tienen"} factura: súbela para desglosar el IVA.</div>`:""}
+    <table class="gtab tnum"><thead><tr><th>Fecha</th><th>Categoría</th><th>Concepto</th><th class="num">Importe</th><th>Factura</th><th></th></tr></thead><tbody>${gs.map(g=>`<tr><td>${g.fecha?fdate(g.fecha):"—"}</td><td>${esc(g.categoria||"Otros")}</td><td>${esc(g.concepto||"")}</td><td class="num">${eur(g.importe)}</td>
+      <td>${g.gastoId?`<a class="btn sm ghost" href="facturacion/?gasto=${encodeURIComponent(g.gastoId)}" style="text-decoration:none">${g.sinFactura?"Efectivo":"Ver"}</a>`:g.id==="ant"?"":`<a class="btn sm" href="facturacion/?subirFactura=${encodeURIComponent(l.id+":"+g.id)}" style="text-decoration:none;color:#B42318">Subir factura</a>`}</td>
+      <td>${g.id==="ant"||g.gastoId?"":`<button class="btn sm ghost" data-gdel="${esc(g.id)}">Quitar</button>`}</td></tr>`).join("")}</tbody></table>`:`<div class="muted" style="font-size:12.5px">Aún no hay gastos. Cada gasto se añade con su factura (o como pago en efectivo sin factura) para poder desglosar el IVA y comparar coches.</div>`}
+    <div><a class="btn primary" href="facturacion/?nuevoGasto=${encodeURIComponent(l.id)}" style="text-decoration:none">＋ Añadir gasto con su factura</a></div></div>`}
 async function addGasto(){const l=S.lots.get(S.open);if(!l)return;
   const imp=+($("#g-importe").value||0);if(!(imp>0)){toast("Pon el importe del gasto");$("#g-importe").focus();return}
   const base=Array.isArray(l.gastosDetalle)?[...l.gastosDetalle]:(+l.gastos>0?[{id:"g0",fecha:null,categoria:"Otros",concepto:"Gastos anotados antes del desglose",importe:+l.gastos}]:[]);
@@ -1338,9 +1389,11 @@ document.addEventListener("input",e=>{const t=e.target;
   if(t.dataset.imporigen!=null){IMP.items[+t.dataset.imporigen].origen=t.value;return}
   if(t.dataset.p){S.pub[t.dataset.p]=t.value;clearTimeout(inT);inT=setTimeout(render,300)}});
 document.addEventListener("change",async e=>{const t=e.target;
-  if(t.dataset.fgroup){const g=t.dataset.fgroup,d=draftF();const set=new Set(d[g]);t.checked?set.add(t.value):set.delete(t.value);d[g]=[...set];aplicarFiltros(t)}
+  if(t.dataset.fgroup){const g=t.dataset.fgroup,d=draftF();const set=new Set(d[g]);t.checked?set.add(t.value):set.delete(t.value);d[g]=[...set];if(g==="marcas"){d.modelos=(d.modelos||[]).filter(x=>d.marcas.includes(x.split("|")[0]));if(t.checked&&(d.marcasNo||[]).includes(t.value)){d.marcasNo=d.marcasNo.filter(m=>m!==t.value);pintaExc()}}aplicarFiltros(t)}
+  if(t.id==="f-marcasNo"){if(t.value){const d=draftF();d.marcasNo=[...new Set([...(d.marcasNo||[]),t.value])];d.marcas=(d.marcas||[]).filter(m=>m!==t.value);d.modelos=(d.modelos||[]).filter(x=>x.split("|")[0]!==t.value);pintaExc();aplicarFiltros(t)}return}
   if(t.dataset.fb){draftF()[t.dataset.fb]=t.checked;aplicarFiltros(t)}
   if(t.dataset.aucsel){S.aucSel=t.value||null;S.limit=60;render()}
+  if(t.dataset.calc&&S.open){const l=S.lots.get(S.open);const c={...(l.calc||{})};c[t.dataset.calc]=t.value===""?null:+t.value;await saveLot(l.id,{calc:c});return}
   if(t.dataset.e&&S.open){let v=t.value;if(t.dataset.kind==="text")v=v.trim()||null;else v=v===""?null:+v;
     const patch={[t.dataset.e]:v,manual:{...(S.lots.get(S.open).manual||{}),[t.dataset.e]:true}};if(t.dataset.e==="tipo")patch.tipoManual=true;await saveLot(S.open,patch)}
   if(t.id==="d-publico"&&S.open)await saveLot(S.open,{publico:t.checked});
@@ -1365,7 +1418,7 @@ document.addEventListener("click",async e=>{const t=e.target;
     const st=(cl.estado||"nuevo")===qk.dataset.quick?"nuevo":qk.dataset.quick;S.lots.set(id,{...cl,estado:st});render();
     toast(st==="nuevo"?"Vuelve a «Sin revisar»":"Marcado como "+ESTADO_LBL[st].toLowerCase());
     if(S.db){try{await S.db.doc("lotes/"+id).update({estado:st})}catch(err){toast("No se ha podido guardar: "+(err.message||err.code))}}return}
-  const op=t.closest("[data-open]");if(op&&!t.closest("#drawer")){S.open=op.dataset.open;renderDrawer();return}
+  const op=t.closest("[data-open]");if(op&&!t.closest("#drawer")&&!t.closest("a[href]")){S.open=op.dataset.open;renderDrawer();return}
   if(t.closest("#pick")){$("#file").click();return}
   if(t.closest("#more")){S.limit+=60;render();return}
   if(t.closest("#h-more")){S.histLimit=(S.histLimit||300)+300;render();return}
@@ -1374,6 +1427,7 @@ document.addEventListener("click",async e=>{const t=e.target;
   const da=t.closest("[data-desarchivar]");if(da){await setArchivada(da.dataset.desarchivar,false);return}
   if(t.closest("#rec-login")){recLogin();return}
   if(t.closest("#rec-run")){recRun();return}
+  const vb=t.closest("[data-vista]");if(vb){S.vista=vb.dataset.vista;try{localStorage.setItem("hs-vista",S.vista)}catch(e){}render();return}
   const au=t.closest("[data-auc]");if(au){S.aucSel=au.dataset.auc||null;render();return}
   if(t.closest("[data-faplicar]")){aplicarYa();return}
   const sg=t.closest("[data-seg]");if(sg){draftF()[sg.dataset.seg]=sg.dataset.v;sg.parentElement.querySelectorAll("[data-seg]").forEach(b=>b.setAttribute("aria-pressed",b===sg));aplicarFiltros(sg);return}
@@ -1382,9 +1436,12 @@ document.addEventListener("click",async e=>{const t=e.target;
   if(t.closest("#est-one")&&S.open){const l=S.lots.get(S.open);if(l){const m={...(l.manual||{})};delete m.mercado;S.lots.set(l.id,{...l,manual:m,mercado:null});if(S.db)S.db.doc("lotes/"+l.id).update({manual:m}).catch(()=>{});estimarVarios([S.lots.get(l.id)])}return}
   if(t.closest("#usar-pujamax")&&S.open){const l=S.lots.get(S.open);const pm=l&&pujaMaxEst(l);if(pm)await saveLot(l.id,{pujaMax:pm,manual:{...(l.manual||{}),pujaMax:true}});return}
   if(t.closest("#h-est-clear")){S.histEstados=[];render();return}
+  if(t.closest("[data-excdel]")){const m=t.closest("[data-excdel]").dataset.excdel,d=draftF();d.marcasNo=(d.marcasNo||[]).filter(x=>x!==m);pintaExc();aplicarFiltros(t);return}
+  if(t.closest("#exc-clear")){draftF().marcasNo=[];pintaExc();aplicarFiltros(t);return}
+  if(t.closest("#mm-clear")){draftF().marcas=[];draftF().modelos=[];aplicarYa();return}
   if(t.closest("#zonas-clear")){draftF().zonas=[];aplicarYa();return}
   if(t.closest("#ftoggle")){S.filtersOpen=!S.filtersOpen;render();return}
-  if(t.closest("#freset")){clearTimeout(filT);filT=null;Object.assign(S.f,{q:"",anioMin:"",anioMax:"",precioMin:"",precioMax:"",kmMax:"",duenosMax:"",libro:"any",sinAverias:false,sinAccidentes:false,sinManip:false,margenMin:"",margenMax:"",margenPctMin:"",bajoPujaMax:false,mecMax:"",comb:[],cvMin:"",cvMax:"",motorMin:"",motorMax:"",tipos:[],plazasMin:"",ubic:"",iva:"any",proced:[],sinImportados:false,danosMax:"",estados:["nuevo","interesante","pujar"],incluirDesconocidos:true,modo:"todas",subUbic:"",zonas:[]});S.fd=null;S.aucSel=null;saveF();render();return}
+  if(t.closest("#freset")){clearTimeout(filT);filT=null;Object.assign(S.f,{q:"",anioMin:"",anioMax:"",precioMin:"",precioMax:"",kmMax:"",duenosMax:"",libro:"any",sinAverias:false,sinAccidentes:false,sinManip:false,margenMin:"",margenMax:"",margenPctMin:"",bajoPujaMax:false,mecMax:"",comb:[],cvMin:"",cvMax:"",motorMin:"",motorMax:"",tipos:[],plazasMin:"",ubic:"",iva:"any",proced:[],sinImportados:false,danosMax:"",estados:["nuevo","interesante","pujar"],incluirDesconocidos:true,modo:"todas",subUbic:"",zonas:[],marcas:[],modelos:[],marcasNo:[]});S.fd=null;S.aucSel=null;saveF();render();return}
   const stb=t.closest("[data-state]");if(stb&&S.open){const patch={estado:stb.dataset.state};const cl=S.lots.get(S.open);
     if(["comprado","stock"].includes(patch.estado)&&!cl.compradoEn)patch.compradoEn=new Date().toISOString();if(patch.estado==="vendido"&&!cl.vendidoEn)patch.vendidoEn=new Date().toISOString();if(["comprado","stock"].includes(patch.estado)&&!S.lots.get(S.open).precioCompra&&S.lots.get(S.open).pujaMax)patch.precioCompra=S.lots.get(S.open).pujaMax;await saveLot(S.open,patch);return}
   const tr=t.closest("[data-tri]");if(tr&&S.open){const v={"true":true,"false":false,"null":null}[tr.dataset.v];await saveLot(S.open,{[tr.dataset.tri]:v,manual:{...(S.lots.get(S.open).manual||{}),[tr.dataset.tri]:true}});return}
@@ -1399,6 +1456,9 @@ document.addEventListener("click",async e=>{const t=e.target;
     for(const l of target){S.lots.set(l.id,{...l,estado:st});if(S.db){try{await S.db.doc("lotes/"+l.id).update({estado:st})}catch(err){}}}
     toast(`${target.length} lotes marcados como ${ESTADO_LBL[st].toLowerCase()}`);render();return}
   if(t.closest("#g-add")){addGasto();return}
+  if(t.closest("#calc-add")&&S.open){const l=S.lots.get(S.open);const imp=+($("#calc-imp").value||0);if(!(imp>0)){toast("Pon el importe");$("#calc-imp").focus();return}
+    const c={...(l.calc||{})};c.gastos=[...(Array.isArray(c.gastos)?c.gastos:[]),{id:"c"+Date.now().toString(36),concepto:$("#calc-con").value,importe:Math.round(imp*100)/100}];await saveLot(l.id,{calc:c});return}
+  const cd=t.closest("[data-calc-del]");if(cd&&S.open){const l=S.lots.get(S.open);const c={...(l.calc||{})};c.gastos=(c.gastos||[]).filter(g=>g.id!==cd.dataset.calcDel);await saveLot(l.id,{calc:c});return}
   const gd=t.closest("[data-gdel]");if(gd){delGasto(gd.dataset.gdel,gd);return}
   if(t.closest("#imp-stock")){$("#file-stock").click();return}
   const dlu=t.closest("[data-dlfotos]");if(dlu){const l=S.lots.get(dlu.dataset.dlfotos);if(l)descargarFotos(dlu,[l]);return}
@@ -1490,5 +1550,6 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-hp]");if(b
 document.addEventListener("change",e=>{if(e.target.matches("[data-hp-arch]"))HP.archivo=e.target.checked});
 </script>
 
+<script src="catalogo.js"></script>
 <script src="extra.js"></script>
 </body></html>

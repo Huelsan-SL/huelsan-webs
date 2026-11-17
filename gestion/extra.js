@@ -437,7 +437,12 @@ document.addEventListener("click",async e=>{const t=e.target;
 /* ---------- publicar en la web con paso previo ----------
    La web pública lee la copia publicada del coche (l.web), no los datos que se están editando (supabase/09-publicar-web.sql).
    «Revisar y publicar» / «Revisar y actualizar» enseñan qué va a salir y avisan de lo que falta antes de confirmar. */
-const CAMPOS_WEB=["marca","modelo","derivado","anio","km","combustible","cv","motor","cambio","tipo","plazas","color","equipamiento","etiquetaDGT","ubicacionVenta","precioVenta","textoVenta","fotosWeb"];
+const CAMPOS_WEB=["marca","modelo","derivado","anio","km","combustible","cv","motor","cambio","tipo","plazas","color","equipamiento","etiquetaDGT","ubicacionVenta","precioVenta","textoVenta","fotosWeb","ofertaCampana","ofertaEtiqueta","ofertaHasta","ofertaPrecioNormal"];
+/* Campañas de oferta (las mismas claves que publica/index.html, CAMPANAS; la vista coches_web_v2 las da en `oferta`).
+   El «Precio de venta en la web» pasa a ser el precio de oferta y «Precio normal» sale tachado; con fecha de fin, la oferta se quita sola (supabase/11-ofertas.sql). */
+const CAMPANAS=[["oferta-especial","Oferta especial"],["black-friday","Black Friday"],["cyber-monday","Cyber Monday"],["navidad","Oferta de Navidad"],["fin-de-ano","Oferta de Fin de Año"],["reyes","Oferta de Reyes"],["rebajas-invierno","Rebajas de invierno"],["semana-santa","Oferta de Semana Santa"],["rebajas-verano","Rebajas de verano"],["vuelta-vacaciones","Vuelta de vacaciones"],["oferta-flash","Oferta flash"],["liquidacion","Liquidación"],["otra","Otra (escribir el nombre)…"]];
+const nombreOferta=o=>o&&o.ofertaCampana==="otra"?(String(o.ofertaEtiqueta||"").trim()||"Oferta especial"):((CAMPANAS.find(c=>c[0]===(o&&o.ofertaCampana))||[])[1]||"Oferta especial");
+const fechaCorta=d=>{const x=new Date(String(d).slice(0,10)+"T12:00:00");return isNaN(x)?String(d):x.toLocaleDateString("es-ES",{day:"numeric",month:"long"})};
 const fichaWeb=l=>{const o={};for(const k of CAMPOS_WEB){const v=k==="fotosWeb"?(l.fotosWeb||[]):l[k];if(v!=null&&v!==""&&!(k==="fotosWeb"&&!v.length))o[k]=v}return o};
 // precioAnterior: al publicar una bajada de precio se guarda el precio que había en la web y sale tachado
 function precioAnteriorNuevo(l,mostrar){const w=l.web||{},nuevo=l.precioVenta,viejo=w.precioVenta,ant=w.precioAnterior;
@@ -449,13 +454,20 @@ const copiaWeb=(l,mostrarRebaja=true)=>{const o={};for(const k of CAMPOS_WEB)o[k
 const publicada=l=>!!(l&&l.publico&&l.web&&typeof l.web==="object");
 function cambiosWeb(l){if(!publicada(l))return[];const a=fichaWeb(l),b=fichaWeb(l.web),out=[];
   for(const k of CAMPOS_WEB){if(JSON.stringify(a[k]??null)===JSON.stringify(b[k]??null))continue;
-    const n=k==="precioVenta"?"precio":k==="textoVenta"?"texto de venta":k==="fotosWeb"?"fotos":k==="equipamiento"?"equipamiento":k==="ubicacionVenta"?"ubicación":"datos del coche";if(!out.includes(n))out.push(n)}return out}
+    const n=k.startsWith("oferta")?"oferta":k==="precioVenta"?"precio":k==="textoVenta"?"texto de venta":k==="fotosWeb"?"fotos":k==="equipamiento"?"equipamiento":k==="ubicacionVenta"?"ubicación":"datos del coche";if(!out.includes(n))out.push(n)}return out}
 window.cambiosWeb=cambiosWeb;window.publicadaWeb=publicada;
 function revisionWeb(l,actualizar){const owned=isOwned(l),w=l.fotosWeb||[],mat=l.fotosWebMat||{};
   const avisos=[],ok=[];const t=titleOf(l);
   if(!l.marca||/^nuevo coche$/i.test(String(l.marca).trim())||!l.modelo)avisos.push("Revisa la marca y el modelo: ahora sale «"+(t||"sin nombre")+"».");else ok.push("Nombre: "+t);
   if(!owned&&cerrado(l))avisos.push("La subasta ya ha cerrado: no saldrá en la web hasta que el coche esté en stock.");
   if(owned){if(l.precioVenta==null)avisos.push("Sin precio de venta: saldrá «Consultar precio».");else ok.push("Precio: "+eur(l.precioVenta))}
+  if(owned&&l.ofertaCampana){const nm=nombreOferta(l),pn=l.ofertaPrecioNormal,hoy=new Date().toLocaleDateString("sv-SE");
+    if(l.precioVenta==null)avisos.push("La oferta necesita el precio de oferta (arriba, «Precio de oferta»).");
+    else if(pn==null||!(pn>l.precioVenta))avisos.push("Oferta «"+nm+"»: pon un «Precio normal» mayor que el de oferta para que salga el precio tachado y lo que se ahorra.");
+    else ok.push("Oferta «"+nm+"»: "+eur(pn)+" → "+eur(l.precioVenta)+" (ahorro "+eur(pn-l.precioVenta)+")"+(l.ofertaHasta?" · hasta el "+fechaCorta(l.ofertaHasta):" · sin fecha de fin"));
+    if(l.ofertaCampana==="otra"&&!String(l.ofertaEtiqueta||"").trim())avisos.push("Escribe el nombre de la oferta: si no, sale como «Oferta especial».");
+    if(l.ofertaHasta&&String(l.ofertaHasta).slice(0,10)<hoy)avisos.push("La fecha de fin ya ha pasado: la oferta no saldrá en la web.")}
+  else if(owned&&actualizar&&(l.web||{}).ofertaCampana)avisos.push("Quitas la oferta «"+nombreOferta(l.web)+"»: el precio en la web pasa a ser "+(l.precioVenta!=null?eur(l.precioVenta):"«Consultar precio»")+". Si debe volver al precio normal, cámbialo antes.");
   if(!w.length)avisos.push("Sin fotos: saldrá «Fotos disponibles bajo petición».");else{ok.push(w.length+" foto"+(w.length>1?"s":""));
     const sinRev=w.filter(n=>mat[n]===false).length;if(sinRev)avisos.push(sinRev+" foto"+(sinRev>1?"s":"")+" con la matrícula sin tapar automáticamente: compruébala"+(sinRev>1?"s":"")+" antes.")}
   if(!String(l.textoVenta||"").trim())avisos.push("Sin texto de venta (es opcional).");else ok.push("Texto de venta");
@@ -467,11 +479,80 @@ function revisionWeb(l,actualizar){const owned=isOwned(l),w=l.fotosWeb||[],mat=l
   return`<div class="xrev" role="region" aria-label="Revisión antes de publicar"><b>${actualizar?"Revisa los cambios antes de actualizar la web":"Revisa cómo va a salir en la web"}</b>
     <div class="xrev-car">${f0?`<img src="${esc(/^https?:/.test(f0)?f0:FOTOS_WEB()+f0)}" alt="">`:`<div class="xrev-nof">Sin fotos</div>`}<div><div style="font-weight:700">${esc(t)}</div><div class="muted" style="font-size:12.5px">${[l.anio,l.km!=null?num(l.km)+" km":null,l.combustible,l.cv?l.cv+" CV":null].filter(Boolean).map(esc).join(" · ")}</div><div style="font-weight:700;margin-top:2px">${owned?(l.precioVenta!=null?eur(l.precioVenta):"Consultar precio"):"Por encargo"}</div></div></div>
     ${actualizar?`<div style="font-size:13px">Se va a cambiar en la web: <b>${esc(det.join(", ")||"nada")}</b>.</div>`:""}
-    ${actualizar&&precioAnteriorNuevo(l,true)!=null?`<label class="toggle"><input type="checkbox" id="xw-rebaja" checked><span>Mostrarlo como rebaja: <s>${eur(precioAnteriorNuevo(l,true))}</s> <b>${eur(l.precioVenta)}</b><br><span class="muted">El precio anterior sale tachado en la web.</span></span></label>`:""}
+    ${actualizar&&!(l.ofertaCampana&&l.ofertaPrecioNormal>l.precioVenta)&&precioAnteriorNuevo(l,true)!=null?`<label class="toggle"><input type="checkbox" id="xw-rebaja" checked><span>Mostrarlo como rebaja: <s>${eur(precioAnteriorNuevo(l,true))}</s> <b>${eur(l.precioVenta)}</b><br><span class="muted">El precio anterior sale tachado en la web.</span></span></label>`:""}
     ${l.estado==="vendido"?`<div style="font-size:13px">Está vendido: en la web sale con la etiqueta <b>VENDIDO</b> y sin precio.</div>`:""}
     ${ok.length?`<ul class="xrev-ok">${ok.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
     ${avisos.length?`<ul class="xrev-av">${avisos.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
     <div class="row"><button class="btn primary sm" id="xw-confirmar">${actualizar?"Actualizar en la web":"Publicar en la web"}</button><button class="btn sm" id="xw-cancelar">Cancelar</button></div></div>`}
+
+/* ---------- collages para enviar al cliente (antes de pujar) ----------
+   Junta las fotos de 4 en 4 en imágenes cuadradas (2×2) y añade una última en negro con los datos básicos del coche.
+   Las imágenes se descargan o se comparten directamente (WhatsApp desde el móvil); no hace falta enviar ningún enlace.
+   Las fotos de BCA se leen con la extensión de Huelsan; se generan en el navegador y no se guarda nada. */
+const COL_N=1080;
+const fotosParaCollage=l=>(l.fotoIds||[]).length?l.fotoIds.map(i=>"bca:"+i):(l.fotos||[]).map(i=>"int:"+i);
+function collageHtml(l){const n=fotosParaCollage(l).length,c=X.collage&&X.collage.lote===l.id?X.collage:null;
+  if(!n)return`<h3>Collages para enviar al cliente</h3><div class="muted" style="font-size:12.5px">Este coche no tiene fotos.</div>`;
+  const nCol=Math.ceil(n/4);
+  return`<h3>Collages para enviar al cliente</h3>
+    <div class="muted" style="font-size:12.5px">${n} foto${n>1?"s":""} → ${nCol} collage${nCol>1?"s":""} de 4 fotos + 1 imagen final en negro con los datos del coche. Se descargan o se comparten directamente, sin enlaces.</div>
+    <div class="row"><button class="btn primary sm" id="xc-hacer" ${X.colBusy?"disabled":""}>${X.colBusy?"Preparando…":c?"Volver a generar":"Crear collages"}</button>
+      ${c&&c.items.length?`<button class="btn sm" id="xc-zip">Descargar todo</button>${navigator.canShare&&c.items[0]&&navigator.canShare({files:[c.items[0].file]})?`<button class="btn sm" id="xc-compartir">Compartir…</button>`:""}`:""}</div>
+    ${X.colMsg&&X.colMsg.lote===l.id?`<div class="note" role="status">${esc(X.colMsg.t)}</div>`:""}
+    ${c?`<div class="xfotos">${c.items.map((it,i)=>`<a class="xfoto on" href="${esc(it.url)}" download="${esc(it.nombre)}" title="Descargar ${esc(it.nombre)}"><img src="${esc(it.url)}" alt="Collage ${i+1}"><span class="src">${it.final?"Datos":"Collage "+(i+1)}</span></a>`).join("")}</div>`:""}`}
+function cubrir(x,bm,dx,dy,w,h){const k=Math.max(w/bm.width,h/bm.height),sw=w/k,sh=h/k;x.save();x.beginPath();x.rect(dx,dy,w,h);x.clip();x.drawImage(bm,(bm.width-sw)/2,(bm.height-sh)/2,sw,sh,dx,dy,w,h);x.restore()}
+async function dibujarCollage(bms){const c=document.createElement("canvas");c.width=c.height=COL_N;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,COL_N,COL_N);x.imageSmoothingQuality="high";
+  const g=6,N=COL_N,h=(N-g)/2;const celdas=bms.length===1?[[0,0,N,N]]:bms.length===2?[[0,0,N,h],[0,h+g,N,h]]:bms.length===3?[[0,0,N,h],[0,h+g,h,h],[h+g,h+g,h,h]]:[[0,0,h,h],[h+g,0,h,h],[0,h+g,h,h],[h+g,h+g,h,h]];
+  bms.forEach((bm,i)=>cubrir(x,bm,...celdas[i]));
+  return await new Promise(r=>c.toBlob(r,"image/jpeg",.9))}
+function datosBasicos(l){const K=window.HUELSAN_CAT;let marca=l.marca||"",modelo=l.derivado||l.modelo||"";
+  if(K){try{const m=K.marca(l.marca);if(m){marca=m;modelo=K.modelo(m,l.modelo)||l.modelo||""}}catch(e){}}
+  else if(marca)marca=marca[0].toUpperCase()+marca.slice(1).toLowerCase();
+  const comb=l.combustibleOrig||l.combustible||"",hib=/h[ií]brid|hybrid|phev|enchuf/i.test([comb,l.modelo,l.derivado].join(" "));
+  const mot=[l.motor?String(l.motor).replace(".",",")+" l":null,l.cv?l.cv+" CV":null].filter(Boolean).join(" · ");
+  const fm=l.fechaMatric?new Date(l.fechaMatric):null,mat=fm&&!isNaN(fm)?fm.toLocaleDateString("es-ES",{month:"long",year:"numeric"}):(l.anio?String(l.anio):"");
+  const filas=[["Marca",marca],["Modelo",modelo],["Kilómetros",l.km!=null?num(l.km)+" km":""],["Motor y potencia",mot],["Color",l.color?String(l.color).replace(/metalizad[oa]/i,"").trim().toLowerCase().replace(/^./,m=>m.toUpperCase()):""],["Matriculación",mat],["Plazas",l.plazas||""],["Combustible",comb.replace(/^./,m=>m.toUpperCase())],["Híbrido",hib?"Sí"+(/enchuf|phev/i.test(comb+l.modelo)?" (enchufable)":""):""]].filter(f=>f[1]!==""&&f[1]!=null);
+  const extra=[];if(l.duenos===1)extra.push("Único propietario");if(l.libro===true)extra.push("Libro de mantenimiento");
+  return{titulo:[marca,modelo].filter(Boolean).join(" "),filas:filas.filter(f=>f[0]!=="Marca"&&f[0]!=="Modelo"),extra}}
+async function dibujarDatos(l){const d=datosBasicos(l),N=COL_N,c=document.createElement("canvas");c.width=c.height=N;const x=c.getContext("2d");
+  x.fillStyle="#000";x.fillRect(0,0,N,N);x.textBaseline="alphabetic";
+  const oro="#B8976A",blanco="#F0EFED";
+  x.fillStyle=oro;x.font="700 26px Syncopate, Arial, sans-serif";x.fillText("HUELSAN",70,92);x.fillStyle=blanco;x.font="500 20px Arial, sans-serif";x.fillText("AUTOMOCIÓN",70,120);
+  x.fillStyle=oro;x.fillRect(70,150,N-140,3);
+  // título ajustado al ancho
+  let fs=64;const tt=d.titulo.toUpperCase();x.font=`700 ${fs}px Arial, sans-serif`;while(x.measureText(tt).width>N-140&&fs>30){fs-=2;x.font=`700 ${fs}px Arial, sans-serif`}
+  x.fillStyle=blanco;x.fillText(tt,70,235);
+  const filas=d.filas,hf=Math.min(84,Math.floor((N-330-(d.extra.length?150:60))/Math.max(filas.length,1)));let y=300;
+  filas.forEach(([k,v])=>{x.fillStyle="#9A9A9A";x.font="400 24px Arial, sans-serif";x.fillText(k.toUpperCase(),70,y);
+    x.fillStyle=blanco;x.font="600 34px Arial, sans-serif";let t=String(v);while(x.measureText(t).width>N-140-330&&t.length>3)t=t.slice(0,-2);if(t!==String(v))t=t.trim()+"…";x.fillText(t,70+330,y+2);
+    x.fillStyle="#2A2A2A";x.fillRect(70,y+hf*0.38,N-140,1);y+=hf});
+  let ex=Math.min(y+30,N-150);d.extra.forEach(t=>{x.fillStyle=oro;x.beginPath();x.arc(84,ex-9,9,0,7);x.fill();x.fillStyle=blanco;x.font="600 32px Arial, sans-serif";x.fillText(t,112,ex);ex+=52});
+  return await new Promise(r=>c.toBlob(r,"image/jpeg",.92))}
+async function crearCollages(l){
+  if(X.colBusy)return;const claves=fotosParaCollage(l);if(!claves.length)return;X.colBusy=true;X.colMsg={lote:l.id,t:"Leyendo las fotos…"};renderDrawer();
+  try{const bms=new Array(claves.length);let hechas=0,i0=0;
+    const obrero=async()=>{while(i0<claves.length){const i=i0++;try{const b=await blobDe(l,claves[i]);bms[i]=await createImageBitmap(b)}catch(e){bms[i]=null}hechas++;
+      if(hechas%4===0){X.colMsg={lote:l.id,t:`Leyendo las fotos… ${hechas} de ${claves.length}`};const m=$("#xcollage .note");m&&(m.textContent=X.colMsg.t)}}};
+    await Promise.all([obrero(),obrero(),obrero(),obrero()]);
+    const ok=bms.filter(Boolean),fallos=claves.length-ok.length;
+    if(!ok.length)throw new Error(document.documentElement.dataset.huelsanExt?"BCA no ha dado ninguna foto (¿hay sesión iniciada en BCA en este navegador?).":"Para leer las fotos de BCA instala la extensión de Huelsan en este navegador (Chrome o Edge).");
+    X.colMsg={lote:l.id,t:"Montando los collages…"};renderDrawer();
+    const base=(titleOf(l)+(l.matricula?" "+l.matricula:"")).replace(/[^\wÁÉÍÓÚÜÑáéíóúüñ]+/g,"-").replace(/^-|-$/g,"")||"coche";
+    const items=[];
+    for(let i=0;i<ok.length;i+=4){const blob=await dibujarCollage(ok.slice(i,i+4)),n=items.length+1,nombre=`${base}-${String(n).padStart(2,"0")}.jpg`;
+      items.push({blob,nombre,file:new File([blob],nombre,{type:"image/jpeg"}),url:URL.createObjectURL(blob)})}
+    const bd=await dibujarDatos(l),nd=`${base}-${String(items.length+1).padStart(2,"0")}-datos.jpg`;items.push({blob:bd,nombre:nd,final:true,file:new File([bd],nd,{type:"image/jpeg"}),url:URL.createObjectURL(bd)});
+    if(X.collage)X.collage.items.forEach(it=>URL.revokeObjectURL(it.url));
+    X.collage={lote:l.id,items};X.colMsg={lote:l.id,t:`Listo: ${items.length-1} collage${items.length>2?"s":""} + imagen de datos.${fallos?` ${fallos} foto${fallos>1?"s":""} no se ha${fallos>1?"n":""} podido leer.`:""}`}}
+  catch(err){X.colMsg={lote:l.id,t:"No se han podido crear: "+(err.message||err)}}
+  finally{X.colBusy=false;renderDrawer()}}
+document.addEventListener("click",async e=>{const t=e.target;if(!t.closest("#xcollage"))return;const l=S.open&&S.lots.get(S.open);if(!l)return;
+  if(t.closest("#xc-hacer")){e.stopPropagation();crearCollages(l);return}
+  const c=X.collage&&X.collage.lote===l.id?X.collage:null;if(!c)return;
+  if(t.closest("#xc-zip")){let Z=null;try{Z=await cargarJSZip()}catch(err){}if(!Z){c.items.forEach((it,i)=>setTimeout(()=>{const a=document.createElement("a");a.href=it.url;a.download=it.nombre;a.click()},i*400));return}
+    const z=new Z();c.items.forEach(it=>z.file(it.nombre,it.blob));const b=await z.generateAsync({type:"blob"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=c.items[0].nombre.replace(/-01\.jpg$/,"")+"-collages.zip";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);return}
+  if(t.closest("#xc-compartir")){try{await navigator.share({files:c.items.map(it=>it.file),title:titleOf(l)})}catch(err){if(err&&err.name!=="AbortError")toast("No se ha podido compartir: "+(err.message||err))}}
+});
 
 /* ---------- ficha del coche: panel «En la web», clientes y reseña ---------- */
 const origDrawer=window.renderDrawer;
@@ -523,7 +604,12 @@ function ampliarFicha(){
   web.innerHTML=`<h3>En la web <a href="https://huelsanautomocion.com/#stock" target="_blank" rel="noopener" style="font-weight:400;font-size:12.5px;margin-left:6px">Ver la web ↗</a></h3>
     ${estadoWeb(l)}
     <div class="muted" style="font-size:12px">Lo que cambies aquí (precio, texto, fotos) no sale en la web hasta que pulses ${publicada(l)?"«Revisar y actualizar cambios»":"«Revisar y publicar»"}, abajo.</div>
-    ${owned?`<div class="form"><label>Precio de venta en la web (€)<input type="number" id="xw-precio" data-e="precioVenta" step="100" value="${esc(l.precioVenta??"")}" placeholder="Sin precio: «Consultar precio»"></label></div>`:""}
+    ${owned?`<div class="form"><label>${l.ofertaCampana?"Precio de oferta en la web (€)":"Precio de venta en la web (€)"}<input type="number" id="xw-precio" data-e="precioVenta" step="100" value="${esc(l.precioVenta??"")}" placeholder="Sin precio: «Consultar precio»"></label>
+      <label>Oferta<select id="xw-oferta" data-e="ofertaCampana" data-kind="text"><option value="">Sin oferta</option>${CAMPANAS.map(([k,n])=>`<option value="${k}" ${l.ofertaCampana===k?"selected":""}>${esc(n)}</option>`).join("")}</select></label>
+      ${l.ofertaCampana?`${l.ofertaCampana==="otra"?`<label class="wide">Nombre de la oferta<input data-e="ofertaEtiqueta" data-kind="text" maxlength="40" value="${esc(l.ofertaEtiqueta??"")}" placeholder="Ej.: Oferta de aniversario"></label>`:""}
+      <label>Precio normal, sin oferta (€)<input type="number" data-e="ofertaPrecioNormal" step="100" value="${esc(l.ofertaPrecioNormal??"")}" placeholder="Sale tachado"></label>
+      <label>Válida hasta (opcional)<input type="date" data-e="ofertaHasta" data-kind="text" value="${esc(String(l.ofertaHasta||"").slice(0,10))}"></label>
+      <div class="muted wide" style="font-size:12px">En la web sale la etiqueta «${esc(nombreOferta(l))}», el precio normal tachado y lo que se ahorra. Con fecha de fin, la oferta se quita sola y el precio vuelve al normal; sin fecha, sigue hasta que la quites.</div>`:""}</div>`:""}
     <label style="display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--muted)">Texto de venta <span style="font-weight:400">(sale en la ficha del coche, debajo de las fotos)</span>
       <textarea id="xw-texto" data-e="textoVenta" data-kind="text" rows="4" maxlength="1500" placeholder="Ej.: Único propietario, libro de revisiones al día y neumáticos nuevos. Garantía de 12 meses.">${esc(l.textoVenta??"")}</textarea></label>
     <div class="row">${anun?`<button class="btn sm" id="xw-anuncio">Usar el texto del anuncio</button>`:""}${S.sample?`<button class="btn sm" id="xw-ia" ${X.iaOcupada?"disabled":""}>${X.iaOcupada?"Redactando…":"Redactar con IA"}</button>`:""}</div>
@@ -537,6 +623,8 @@ function ampliarFicha(){
   bar.innerHTML=X.revisar===l.id?revisionWeb(l,publicada(l)):`<div class="xpubbar">${publicada(l)?(cambiosWeb(l).length?`<button class="btn primary sm" id="xw-revisar">Revisar y actualizar cambios</button>`:`<span class="muted" style="font-size:12.5px">La web está al día.</span>`)+(l.web.precioAnterior!=null&&l.estado!=="vendido"?`<button class="btn sm" id="xw-sinrebaja" title="Deja de mostrar el precio anterior tachado">Quitar precio tachado (${eur(l.web.precioAnterior)})</button>`:"")+`<button class="btn sm ghost" id="xw-retirar">Retirar de la web</button>`:`<button class="btn primary sm" id="xw-revisar">Revisar y publicar</button>`}</div>`;
   web.appendChild(bar);
   dec.after(web);
+  const pcal=panelCalendario(l);if(pcal)dec.after(pcal);
+  const col=document.createElement("div");col.className="dsec";col.id="xcollage";col.innerHTML=collageHtml(l);web.before(col);
   // datos del coche: en los añadidos a mano sustituye a «Datos del vendedor» (vacío); en los nuestros de BCA va antes
   if(!l.subasta&&!l.url||isOwned(l)){const vend=secs.find(s=>{const h=s.querySelector("h3");return h&&h.textContent.trim()==="Datos del vendedor"});
     const dat=document.createElement("div");dat.className="dsec";dat.id="xdatos";dat.innerHTML=seccionDatos(l);
@@ -715,4 +803,82 @@ async function redactarIA(l){if(!S.sample||X.iaOcupada)return;X.iaOcupada=true;r
     await saveLot(l.id,{textoVenta:String(tx).trim().slice(0,1500)});toast("Texto redactado: revísalo antes de publicarlo")}
   catch(err){toast("No se ha podido redactar: "+(err.message||err))}
   finally{X.iaOcupada=false;renderDrawer()}}
+
+/* ---------- calendario de Google (17/11/2026) ----------
+   Paso intermedio tras «★ Interesante»: solo los coches interesantes (o «Pujar») de una subasta abierta tienen el botón
+   «📅 Calendario», en la lista y en la ficha. Crea un evento en el calendario de la cuenta de Huelsan con aviso 30 min antes
+   (función de Supabase «calendario»; ver supabase/functions/calendario). Un coche = un evento: volver a pulsar lo actualiza.
+   Se guarda en el lote: calendario {eventoId, enlace, inicio, creado, actualizado}. */
+X.calOcupado=new Set();
+// "enlace": abre Google Calendar con el evento ya rellenado y se pulsa «Guardar» (sin configurar nada).
+// "api": crea el evento solo, con aviso a los 30 min, a través de la función «calendario» (necesita la cuenta de Google conectada en Supabase).
+const CAL_MODO="enlace";
+const calFechaGoogle=iso=>new Date(iso).toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"");
+function calEnlace(ev){return"https://calendar.google.com/calendar/render?"+["action=TEMPLATE","text="+encodeURIComponent(ev.titulo),
+  "dates="+calFechaGoogle(ev.inicio)+"/"+calFechaGoogle(ev.fin),"details="+encodeURIComponent(ev.descripcion.slice(0,1500)),
+  ev.lugar?"location="+encodeURIComponent(ev.lugar):"","ctz=Europe%2FMadrid"].filter(Boolean).join("&")}
+const calPuede=l=>!isOwned(l)&&["interesante","pujar"].includes(l.estado)&&!isPast(l);
+// Cuándo hay que estar atento: en las presenciales, la hora de inicio; en las online, el cierre del lote (que es cuando se puja).
+// Para avisar siempre al abrirse una online, cambiar «cierreOf(l)» por «s.inicio||cierreOf(l)».
+function calFecha(l){const s=l.subasta||{};const iso=lotOnline(l)?cierreOf(l):(s.inicio||cierreOf(l));const d=iso?new Date(iso):null;return d&&!isNaN(d)?d:null}
+function calEvento(l){
+  const ini=calFecha(l);if(!ini)return{error:"Este lote no tiene fecha de subasta"};
+  if(+ini<=Date.now())return{error:"La subasta ya ha empezado o terminado"};
+  const s=l.subasta||{},on=lotOnline(l),url=l.url||urlPortal(l)||"";
+  const coche=titleOf(l)+(l.anio?" "+l.anio:""),pm=typeof pujaMaxEst==="function"?pujaMaxEst(l):null;
+  const cli=demandsFor(l).map(d=>d.nombre).filter(Boolean);
+  const desc=[
+    url?"Enlace a la subasta: "+url:"",
+    "Subasta: "+(s.nombre||"—")+" ("+(on?"online, cierra el lote":"presencial")+(s.ubicacion?" · "+s.ubicacion:"")+")",
+    l.lote?"Lote: "+l.lote:"",
+    "Coche: "+coche,
+    l.matricula?"Matrícula: "+l.matricula:"",
+    l.pujaMax?"Puja máxima fijada: "+eur(l.pujaMax):(pm?"Puja máx. sugerida: "+eur(pm):""),
+    cli.length?"Clientes que buscan algo así: "+cli.join(", "):"",
+    "",
+    "☐ Si se adjudica: proponérselo a algún cliente (ficha del coche → Proponer a clientes)."].filter((x,i,a)=>x!==""||(i>0&&a[i-1]!=="")).join("\n");
+  return{titulo:"Subasta"+(l.lote?" · lote "+l.lote:"")+" · "+titleOf(l)+(l.matricula?" · "+l.matricula:""),
+    descripcion:desc,lugar:on?"":(s.ubicacion||""),inicio:ini.toISOString(),fin:new Date(+ini+30*60000).toISOString()}}
+const errCal=e=>({sin_credenciales:"Falta conectar la cuenta de Google en Supabase (secretos GOOGLE_*).",google_auth:"Google ha rechazado el acceso: hay que volver a autorizar la cuenta de calendario.",
+  session_expired:"La sesión ha caducado. Vuelve a entrar.",network:"Sin conexión."}[e&&e.code]||("No se ha podido usar el calendario: "+((e&&e.message)||e)));
+async function calEnviar(id,accion){
+  const l=S.lots.get(id);if(!l||X.calOcupado.has(id))return;
+  if(CAL_MODO==="enlace"){
+    if(accion==="quitar"){saveLot(id,{calendario:null});toast("Olvidado. Si lo guardaste en Google Calendar, bórralo allí");return}
+    const ev=calEvento(l);if(ev.error){toast(ev.error);return}
+    window.open(calEnlace(ev),"_blank","noopener");   // antes de cualquier espera, para que el navegador no lo bloquee
+    saveLot(id,{calendario:{modo:"enlace",inicio:ev.inicio,creado:(l.calendario&&l.calendario.creado)||ahora(),actualizado:ahora()}});
+    toast("Se ha abierto Google Calendar: pulsa «Guardar» allí");return}
+  if(!window.HUELSAN||!HUELSAN.funcion){toast("Esta versión de la app no puede usar el calendario");return}
+  let cuerpo;
+  if(accion==="quitar"){if(!l.calendario)return;cuerpo={accion:"quitar",eventoId:l.calendario.eventoId}}
+  else{const ev=calEvento(l);if(ev.error){toast(ev.error);return}cuerpo={accion:"crear",loteId:l.id,...ev}}
+  X.calOcupado.add(id);render();renderDrawer();
+  try{const r=await HUELSAN.funcion("calendario",cuerpo);
+    if(accion==="quitar"){await saveLot(id,{calendario:null});toast("Quitado del calendario")}
+    else{const ya=!!l.calendario;await saveLot(id,{calendario:{eventoId:r.eventoId,enlace:r.enlace||"",inicio:cuerpo.inicio,creado:(l.calendario&&l.calendario.creado)||ahora(),actualizado:ahora()}});
+      toast(ya?"Evento actualizado en el calendario":"Añadido al calendario con aviso 30 min antes")}}
+  catch(err){toast(errCal(err))}
+  finally{X.calOcupado.delete(id);render();renderDrawer()}}
+// botón en cada fila de la lista (Subastas e Interesantes)
+const origLotRow=window.lotRow;
+window.lotRow=function(l){let h=origLotRow.apply(this,arguments);
+  if(!calPuede(l))return h;
+  const on=!!l.calendario,oc=X.calOcupado.has(l.id);
+  const btn=`<span class="qk"><button type="button" class="qbtn ${on?"on":""}" data-xcal="${esc(l.id)}" ${oc?"disabled":""} title="${CAL_MODO==="enlace"?(on?"Ya abriste el evento en Google Calendar: pulsa para abrirlo otra vez":"Abrir Google Calendar con el evento ya rellenado"):(on?"Ya está en el calendario: pulsa para actualizar el evento":"Crear evento en el calendario de Google con aviso 30 min antes")}">${oc?"…":on?(CAL_MODO==="enlace"?"📅 Abierto ✓":"📅 En calendario ✓"):"📅 Calendario"}</button></span>`;
+  return h.includes('<span class="price">')?h.replace('<span class="price">',btn+'<span class="price">'):h}
+function panelCalendario(l){
+  if(isOwned(l)||!["interesante","pujar"].includes(l.estado))return null;
+  const d=document.createElement("div");d.className="dsec";d.id="xcal";const c=l.calendario,oc=X.calOcupado.has(l.id);
+  d.innerHTML=`<h3>Calendario de Google</h3>`+(isPast(l)&&!c?`<div class="muted" style="font-size:12.5px">La subasta ya ha terminado.</div>`:
+    c&&c.modo==="enlace"?`<div class="muted" style="font-size:12.5px">Abriste el evento en Google Calendar el <b>${esc(fechaHora(c.actualizado||c.creado))}</b> (subasta: ${esc(fechaHora(c.inicio))}). La app no sabe si pulsaste «Guardar».</div>
+      <div class="row"><button class="btn sm" data-xcal="${esc(l.id)}">Abrir de nuevo</button><button class="btn sm ghost" data-xcal="${esc(l.id)}" data-xaccion="quitar">Olvidar</button></div>`
+    :c?`<div class="muted" style="font-size:12.5px">En el calendario: <b>${esc(fechaHora(c.inicio))}</b>, con aviso 30 min antes.${c.enlace?` <a href="${esc(c.enlace)}" target="_blank" rel="noopener">Abrir el evento ↗</a>`:""}</div>
+      <div class="row"><button class="btn sm" data-xcal="${esc(l.id)}" ${oc?"disabled":""}>${oc?"Un momento…":"Actualizar evento"}</button><button class="btn sm ghost" data-xcal="${esc(l.id)}" data-xaccion="quitar" ${oc?"disabled":""}>Quitar del calendario</button></div>`
+    :`<div class="muted" style="font-size:12.5px">${CAL_MODO==="enlace"?"Abre Google Calendar con el evento ya preparado (enlace a la subasta, lote, modelo, matrícula y recordatorio de proponérselo a un cliente si se adjudica). Solo hay que pulsar «Guardar». El aviso es el que tenga el calendario elegido.":"Crea un evento con el enlace de la subasta, lote, modelo y matrícula, y aviso 30 min antes. La descripción recuerda proponérselo a un cliente si se adjudica."}</div>
+      <div class="row"><button class="btn sm primary" data-xcal="${esc(l.id)}" ${oc?"disabled":""}>${oc?"Un momento…":CAL_MODO==="enlace"?"📅 Añadir a Google Calendar":"📅 Añadir al calendario"}</button></div>`);
+  return d}
+// en fase de captura para que el clic no abra además la ficha del coche
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-xcal]");if(!b)return;
+  e.stopPropagation();e.preventDefault();calEnviar(b.dataset.xcal,b.dataset.xaccion||"crear")},true);
 })();

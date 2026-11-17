@@ -28,7 +28,7 @@ const TXT_GARANTIA="Vehículo de ocasión con garantía legal de 1 año desde la
 const TXT_RGPD="Sus datos se tratan para gestionar la venta y cumplir obligaciones legales (fiscales y de Tráfico). Puede ejercer sus derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad escribiendo a nuestro correo.";
 
 /* ---------- estado ---------- */
-const S={db:null,tab:"facturas",emisor:{},facturas:new Map(),clientes:new Map(),gastos:new Map(),cont:new Map(),lotes:[],
+const S={db:null,tab:"facturas",emisor:{},facturas:new Map(),clientes:new Map(),gastos:new Map(),docsCoche:new Map(),proveedores:new Map(),cont:new Map(),lotes:[],
   ed:null,edSucio:false,filtro:{anio:String(new Date().getFullYear()),estado:"",q:""},gfiltro:{anio:String(new Date().getFullYear()),cat:"",q:""},mat:null,res:{anio:String(new Date().getFullYear())}};
 
 /* ---------- NIF / NIE / CIF ---------- */
@@ -85,21 +85,38 @@ function etiquetaEstado(f){
 const contador=(serie,anio)=>S.cont.get(`contador/${serie}${anio}`)||{};
 const refrescarCont=(serie,anio)=>S.db.doc(`facturacion/contador/${serie}${anio}`).refrescar().catch(()=>{});
 const esUltima=f=>{const c=contador(f.serie,f.anio);return c.ultimoId===f.id&&+c.ultimo===+f.numero};
-const gastoCoste=g=>g.regimen==="General"?r2(g.base):r2(g.total);
-const gastoCuota=g=>g.regimen==="General"?r2(g.cuota):0;
+/* Un gasto puede tener varias líneas: con IVA (General), REBU o sin IVA (exento, suplido, particular). Los gastos antiguos tienen una sola. */
+const REG_LINEA=[["General","Con IVA"],["REBU","REBU"],["Exento","Sin IVA (exento / suplido)"]];
+const FORMAS_PAGO_GASTO=["Transferencia","Tarjeta","Domiciliación","Efectivo","Bizum","Otro"];
+function lineasDe(g){
+  if(Array.isArray(g.lineas)&&g.lineas.length)return g.lineas;
+  const gen=g.regimen==="General";
+  return[{id:"l0",concepto:g.concepto||g.categoria||"",regimen:gen?"General":g.regimen==="REBU"?"REBU":"Exento",base:gen?r2(g.base):r2(g.total),ivaTipo:gen?(+g.ivaTipo||21):0,cuota:gen?r2(g.cuota):0,total:r2(g.total),vehiculo:g.categoria==="Compra del vehículo"}];
+}
+const costeLinea=(l,sinF)=>sinF||l.regimen!=="General"?r2(l.total):r2(l.base);
+const gastoCoste=g=>r2(lineasDe(g).reduce((s,l)=>s+costeLinea(l,g.sinFactura),0));
+const gastoCuota=g=>g.sinFactura?0:r2(lineasDe(g).filter(l=>l.regimen==="General").reduce((s,l)=>s+(+l.cuota||0),0));
+const gastoBase=g=>g.sinFactura?0:r2(lineasDe(g).filter(l=>l.regimen==="General").reduce((s,l)=>s+(+l.base||0),0));
+const lineaVehiculo=g=>lineasDe(g).find(l=>l.vehiculo)||null;
+const costeVehiculo=g=>{const ls=lineasDe(g).filter(l=>l.vehiculo);return ls.length?r2(ls.reduce((s,l)=>s+costeLinea(l,g.sinFactura),0)):gastoCoste(g)};
+const regimenVehiculo=g=>((lineaVehiculo(g)||lineasDe(g)[0]||{}).regimen)||"General";
+const regimenTexto=g=>{if(g.sinFactura)return"Efectivo sin factura";const r=[...new Set(lineasDe(g).map(l=>l.regimen))];const t=x=>x==="General"?"IVA":x==="REBU"?"REBU":"sin IVA";return r.length>1?"Mixto ("+r.map(t).join(" + ")+")":t(r[0])};
 
 /* ---------- carga ---------- */
 (async()=>{
   try{
     S.db=await window.claude.use("db");
     const vigilar=(col,mapa,cb)=>S.db.collection(col).onSnapshot(sn=>{mapa.clear();sn.docs.forEach(d=>mapa.set(d.id,{...d.data(),id:d.id}));cb&&cb();pintarSiProcede(col)},e=>console.error(e));
-    vigilar("facturas",S.facturas);vigilar("clientes",S.clientes);vigilar("gastos",S.gastos);
+    vigilar("facturas",S.facturas);vigilar("clientes",S.clientes);vigilar("gastos",S.gastos);vigilar("docscoche",S.docsCoche);vigilar("proveedores",S.proveedores);
     S.db.collection("facturacion").onSnapshot(sn=>{S.cont.clear();let em=null;sn.docs.forEach(d=>{if(d.id==="emisor")em=d.data();else S.cont.set(d.id,d.data())});
       if(em)S.emisor=em;else if(!S.emisorCargado)prellenarEmisor();S.emisorCargado=true;pintarSiProcede("facturacion")});
     await cargarLotes();
     $("#estado-con").textContent="Sincronizado";
     const qs=new URLSearchParams(location.search);
-    if(qs.get("lote")){S.tab="facturas";nuevaFactura({loteId:qs.get("lote")})}
+    if(qs.get("nuevoGasto")!=null){S.tab="gastos";const l=S.lotes.find(x=>x.id===qs.get("nuevoGasto"));setTimeout(()=>abrirGasto(null,l?{loteId:l.id,matricula:normMat(l.matricula)}:{}),300)}
+    else if(qs.get("subirFactura")){S.tab="matriculas";const[lid,did]=qs.get("subirFactura").split(":");setTimeout(()=>subirFacturaDetalle(lid,did),300)}
+    else if(qs.get("gasto")){S.tab="gastos";setTimeout(()=>{if(S.gastos.has(qs.get("gasto")))abrirGasto(qs.get("gasto"))},600)}
+    else if(qs.get("lote")){S.tab="facturas";nuevaFactura({loteId:qs.get("lote")})}
     else if(qs.get("factura")){S.tab="facturas";abrirFactura(qs.get("factura"))}
     else if(qs.get("tab"))S.tab=qs.get("tab");
     pintarTabs();pintar();
@@ -129,6 +146,7 @@ function pintar(){
   if(S.tab==="facturas")v.innerHTML=S.ed?vistaEditor():vistaFacturas();
   else if(S.tab==="clientes")v.innerHTML=vistaClientes();
   else if(S.tab==="gastos")v.innerHTML=vistaGastos();
+  else if(S.tab==="proveedores")v.innerHTML=vistaProveedores();
   else if(S.tab==="matriculas")v.innerHTML=vistaMatriculas();
   else if(S.tab==="resumen")v.innerHTML=vistaResumen();
   else if(S.tab==="emisor")v.innerHTML=vistaEmisor();
@@ -191,7 +209,7 @@ function vehiculoDe(l){return{loteId:l.id,marca:l.marca||"",modelo:(l.modelo||""
 function regimenCompra(l){
   if(!l)return null;const mat=normMat(l.matricula);
   const g=[...S.gastos.values()].find(x=>x.categoria==="Compra del vehículo"&&(x.loteId===l.id||(mat&&normMat(x.matricula)===mat)));
-  if(g)return{iva:g.regimen==="General"?"21":"REBU",fuente:"factura de compra de "+(g.proveedor||"proveedor")};
+  if(g)return{iva:regimenVehiculo(g)==="General"?"21":"REBU",fuente:"factura de compra de "+(g.proveedor||"proveedor")};
   if(l.iva)return{iva:l.iva==="General"?"21":"REBU",fuente:"ficha del coche (IVA "+l.iva+")"};
   return{iva:"REBU",fuente:"sin datos de la compra: se supone REBU"};
 }
@@ -257,6 +275,7 @@ function vistaEditor(){
       <td><select data-l="${i}" data-k="iva" ${dis}>${TIPOS_IVA.map(([k,v])=>`<option value="${k}" ${String(l.iva)===k?"selected":""}>${v}</option>`).join("")}</select></td>
       <td class="num" style="padding-top:12px">${eur(importeLinea(l))}</td>${bor?`<td><button class="btn sm" data-quitar-linea="${i}" title="Quitar línea" aria-label="Quitar línea">✕</button></td>`:""}</tr>`).join("")}
     </tbody></table></div>
+    ${bor&&(f.vehiculo||{}).loteId?`<p class="muted" style="margin:0">Puedes cambiar aquí el precio de venta real: el precio de la web no se toca.</p>`:""}
     ${(()=>{const lc=S.lotes.find(x=>x.id===(f.vehiculo||{}).loteId);const rc=lc&&regimenCompra(lc);if(!rc)return"";const mal=f.lineas.filter(l=>l.coche&&String(l.iva)!==rc.iva&&!(rc.iva==="21"&&String(l.iva)!=="REBU"));
       return mal.length?`<div class="aviso bad">La compra de este coche fue ${rc.iva==="REBU"?"en REBU":"con IVA general"} (${esc(rc.fuente)}): la venta del coche debe ir ${rc.iva==="REBU"?"en REBU":"con IVA 21 %"}.</div>`:`<p class="muted" style="margin:0">Régimen del coche: ${rc.iva==="REBU"?"REBU":"IVA general 21 %"}, igual que su compra (${esc(rc.fuente)}).</p>`})()}
     ${t.rebu?`<p class="muted" style="margin:0">En REBU el precio es el final: el IVA va incluido y no se desglosa en la factura (art. 138 Ley del IVA); en la factura constará «${TXT_REBU}».</p>`:""}
@@ -297,6 +316,7 @@ $("#vista").addEventListener("input",e=>{
   if(t.dataset.f!=null&&S.tab==="facturas"&&!S.ed){S.filtro[t.dataset.f]=t.value;if(t.dataset.f==="q"){const pos=t.selectionStart;pintar();const n=$("[data-f=q]");if(n){n.focus();n.setSelectionRange(pos,pos)}}else pintar();return}
   if(t.dataset.gf!=null){S.gfiltro[t.dataset.gf]=t.value;const pos=t.selectionStart;pintar();const n=$(`[data-gf=${t.dataset.gf}]`);if(n&&n.setSelectionRange&&t.type==="search"){n.focus();n.setSelectionRange(pos,pos)}return}
   if(t.dataset.cq!=null){S.cq=t.value;const pos=t.selectionStart;pintar();const n=$("[data-cq]");if(n){n.focus();n.setSelectionRange(pos,pos)}return}
+  if(t.dataset.pq!=null){S.pq=t.value;const pos=t.selectionStart;pintar();const n=$("[data-pq]");if(n){n.focus();n.setSelectionRange(pos,pos)}return}
   if(t.dataset.mq!=null){S.mq=t.value;const pos=t.selectionStart;pintar();const n=$("[data-mq]");if(n){n.focus();n.setSelectionRange(pos,pos)}return}
   if(!S.ed)return;
   if(t.dataset.e){const k=t.dataset.e;let v=t.type==="checkbox"?t.checked:t.value;
@@ -315,6 +335,7 @@ $("#vista").addEventListener("change",e=>{
   if(t.dataset.f!=null&&!S.ed&&t.tagName==="SELECT"){S.filtro[t.dataset.f]=t.value;pintar();return}
   if(t.dataset.gf!=null&&t.tagName==="SELECT"){S.gfiltro[t.dataset.gf]=t.value;pintar();return}
   if(t.dataset.ra!=null){S.res.anio=t.value;pintar();return}
+  if(t.dataset.rt!=null){S.res.tq=t.value;pintar();return}
   const a=t.dataset.accChange;
   if(a==="elegir-cliente"&&S.ed){const c=S.clientes.get(t.value);if(c){S.ed.clienteId=c.id;S.ed.cliente=snapCliente(c)}else S.ed.clienteId="";S.edSucio=true;pintar()}
   if(a==="elegir-lote"&&S.ed){const l=S.lotes.find(x=>x.id===t.value);if(!l)return;S.ed.vehiculo=vehiculoDe(l);
@@ -512,115 +533,345 @@ function vistaGastos(){
   const lista=todos.filter(g=>(!F.anio||String(g.fecha||"").startsWith(F.anio))&&(!F.cat||g.categoria===F.cat)&&(!q||[g.proveedor,g.concepto,g.numFactura,g.nifProveedor].join(" ").toLowerCase().includes(q)||(qm.length>=3&&normMat(g.matricula).includes(qm))))
     .sort((a,b)=>String(b.fecha||"").localeCompare(String(a.fecha||"")));
   const tot=lista.reduce((s,g)=>s+(+g.total||0),0),coste=lista.reduce((s,g)=>s+gastoCoste(g),0),iva=lista.reduce((s,g)=>s+gastoCuota(g),0);
-  return`<div class="row sp"><div><h1>Compras y gastos</h1><p class="muted" style="margin:4px 0 0">Facturas de compra de los coches (BCA, particulares…) y de gastos (transporte, taller, ITV, gestoría…). Sube el PDF o una foto de cada factura: se guarda en un almacén privado. Si eliges el coche, el gasto se suma a su ficha en la app.</p></div>
+  const sinArchivo=lista.filter(g=>!g.sinFactura&&!(g.archivos||[]).length).length;
+  const app=porMatricula().reduce((s,x)=>s+x.appSinFactura.length,0);
+  return`<div class="row sp"><div><h1>Compras y gastos</h1><p class="muted" style="margin:4px 0 0">Cada compra o gasto con su factura (PDF o foto). Al subirla se leen el proveedor, el nº de factura, la fecha y las líneas con IVA y sin IVA (o REBU): revísalas antes de guardar. Los pagos en efectivo sin factura no entran en los libros de IVA, pero sí en el balance del coche.</p></div>
     <button class="btn primary" data-acc="gasto-alta">+ Nueva compra o gasto</button></div>
+  ${app?`<div class="aviso">Hay <b>${app}</b> ${app===1?"gasto anotado":"gastos anotados"} en las fichas de los coches sin su factura. Súbelas desde <a href="#" data-ir-tab="matriculas">Por matrícula</a>.</div>`:""}
+  ${sinArchivo?`<div class="aviso bad">⚠ Falta subir la factura de ${sinArchivo} ${sinArchivo===1?"gasto":"gastos"} (marcados como «Falta factura»).</div>`:""}
   <div class="row"><label style="max-width:120px">Año<select data-gf="anio">${anios.map(a=>`<option ${a===F.anio?"selected":""}>${a}</option>`).join("")}<option value="" ${!F.anio?"selected":""}>Todos</option></select></label>
     <label style="max-width:260px">Categoría<select data-gf="cat"><option value="">Todas</option>${CATS_GASTO.map(c=>`<option ${c===F.cat?"selected":""}>${c}</option>`).join("")}</select></label>
     <label style="flex:1 1 240px">Buscar<input type="search" data-gf="q" value="${esc(F.q)}" placeholder="Proveedor, concepto, nº factura, matrícula…"></label></div>
-  <div class="kpis"><div class="kpi"><b>${eur(tot)}</b><span>total de facturas (${lista.length})</span></div><div class="kpi"><b>${eur(coste)}</b><span>coste para los márgenes</span></div><div class="kpi"><b>${eur(iva)}</b><span>IVA soportado deducible</span></div></div>
-  ${lista.length?`<div class="tw"><table><thead><tr><th>Fecha</th><th>Proveedor</th><th>Concepto</th><th>Coche</th><th>Régimen</th><th class="num">Base</th><th class="num">IVA</th><th class="num">Total</th><th>Archivos</th></tr></thead><tbody>
+  <div class="kpis"><div class="kpi"><b>${eur(tot)}</b><span>total pagado (${lista.length})</span></div><div class="kpi"><b>${eur(coste)}</b><span>coste para los márgenes (sin IVA deducible)</span></div><div class="kpi"><b>${eur(iva)}</b><span>IVA soportado deducible</span></div></div>
+  ${lista.length?`<div class="tw"><table><thead><tr><th>Fecha</th><th>Proveedor</th><th>Concepto</th><th>Coche</th><th>Régimen</th><th class="num">Base con IVA</th><th class="num">IVA</th><th class="num">Total</th><th>Factura</th></tr></thead><tbody>
     ${lista.map(g=>`<tr data-gasto="${esc(g.id)}" style="cursor:pointer"><td>${fecha(g.fecha)}</td><td>${esc(g.proveedor||"—")}<div class="muted">${esc(g.numFactura?"Fra. "+g.numFactura:"")}</div></td>
-      <td>${esc(g.categoria||"")}<div class="muted">${esc(g.concepto||"")}</div></td><td>${g.matricula?`<span class="mat">${esc(g.matricula)}</span>`:"—"}</td><td>${esc(g.regimen||"")}</td>
-      <td class="num">${g.regimen==="General"?eur(g.base):"—"}</td><td class="num">${g.regimen==="General"?eur(g.cuota):"—"}</td><td class="num">${eur(g.total)}</td>
-      <td>${(g.archivos||[]).length?`<span class="tag acc">${g.archivos.length} ${g.archivos.length===1?"archivo":"archivos"}</span>`:`<span class="tag warn">Sin factura</span>`}</td></tr>`).join("")}</tbody></table></div>`
+      <td>${esc(g.categoria||"")}<div class="muted">${esc(g.concepto||"")}</div></td><td>${g.matricula?`<span class="mat">${esc(g.matricula)}</span>`:"—"}</td><td>${esc(regimenTexto(g))}</td>
+      <td class="num">${gastoBase(g)?eur(gastoBase(g)):"—"}</td><td class="num">${gastoCuota(g)?eur(gastoCuota(g)):"—"}</td><td class="num">${eur(g.total)}</td>
+      <td>${g.sinFactura?`<span class="tag">Efectivo sin factura</span>`:(g.archivos||[]).length?`<span class="tag acc">${g.archivos.length} ${g.archivos.length===1?"archivo":"archivos"}</span>`:`<span class="tag bad">Falta factura</span>`}</td></tr>`).join("")}</tbody></table></div>`
   :`<div class="vacio">${S.gastos.size?"Nada con estos filtros.":"Aún no hay compras ni gastos apuntados."}</div>`}`;
 }
+
+/* número escrito en España o con punto decimal → número */
+function numES2(v){let s=String(v??"").trim().replace(/[\s€]/g,"");if(!s)return 0;
+  if(s.includes(",")&&s.includes("."))s=s.lastIndexOf(",")>s.lastIndexOf(".")?s.replace(/\./g,"").replace(",","."):s.replace(/,/g,"");
+  else if(s.includes(","))s=s.replace(",",".");
+  return +s||0}
+function lineaNueva(compra,reg){return{id:nid(),concepto:"",regimen:reg||"General",base:"",ivaTipo:21,cuota:"",total:"",vehiculo:!!compra}}
 function abrirGasto(id,pre={}){
-  const g=id?JSON.parse(JSON.stringify(S.gastos.get(id))):{fecha:hoyISO(),categoria:"Transporte y portes",regimen:"General",ivaTipo:21,base:"",cuota:"",total:"",archivos:[],...pre};
-  const nuevos=[];const borrados=[];
+  const g=id?JSON.parse(JSON.stringify(S.gastos.get(id))):{fecha:hoyISO(),categoria:"Transporte y portes",archivos:[],pagado:true,formaPago:"Transferencia",...pre};
+  if(!Array.isArray(g.lineas)||!g.lineas.length)g.lineas=id?lineasDe(g).map(l=>({...l})):(pre.lineas||[lineaNueva(g.categoria==="Compra del vehículo")]);
+  g.lineas.forEach(l=>{l.id=l.id||nid()});
+  const nuevos=[];const borrados=[];let lectura=null,leyendo=false;
   const f=$("#f-gasto");
-  const provs=[...new Set([...S.gastos.values()].map(x=>x.proveedor).filter(Boolean))];
+  const provs=()=>[...S.proveedores.values()].sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre),"es"));
+  const totales=()=>{let base=0,cuota=0,total=0,sinIva=0;for(const l of g.lineas){const t=numES2(l.total);total+=t;if(l.regimen==="General"){base+=numES2(l.base);cuota+=numES2(l.cuota)}else sinIva+=t}return{base:r2(base),cuota:r2(cuota),total:r2(total),sinIva:r2(sinIva)}};
+  const pintarTot=()=>{const t=totales(),n=f.querySelector("#g-tot");if(n)n.innerHTML=`<div><span>Base con IVA</span><span>${eur(t.base)}</span></div><div><span>Cuota IVA</span><span>${eur(t.cuota)}</span></div>${t.sinIva?`<div><span>Sin IVA / REBU</span><span>${eur(t.sinIva)}</span></div>`:""}<div class="t"><span>TOTAL</span><span>${eur(t.total)}</span></div>`};
   const pintarF=()=>{
-    const gen=g.regimen==="General";
+    const compra=g.categoria==="Compra del vehículo";
+    const archivos=[...(g.archivos||[]),...nuevos.map(n=>({nombre:n.name,nuevo:true,size:n.size}))];
     f.innerHTML=`<h2>${id?"Editar":"Nueva"} compra o gasto</h2>
-      <div class="g3"><label>Fecha de la factura<input type="date" name="fecha" value="${esc(g.fecha||"")}" required></label>
-        <label>Categoría<select name="categoria">${CATS_GASTO.map(c=>`<option ${c===g.categoria?"selected":""}>${c}</option>`).join("")}</select></label>
-        <label>Régimen<select name="regimen">${REGIMEN_GASTO.map(([k,v])=>`<option value="${k}" ${k===g.regimen?"selected":""}>${v}</option>`).join("")}</select></label></div>
-      <div class="g3"><label>Proveedor<input name="proveedor" list="provs" value="${esc(g.proveedor||"")}" required><datalist id="provs">${provs.map(p=>`<option value="${esc(p)}">`).join("")}</datalist></label>
-        <label>NIF del proveedor<input name="nifProveedor" value="${esc(g.nifProveedor||"")}"></label><label>Nº de factura<input name="numFactura" value="${esc(g.numFactura||"")}"></label></div>
-      <label>Concepto<input name="concepto" value="${esc(g.concepto||"")}" placeholder="Ej.: adjudicación subasta BCA, transporte Madrid–Murcia…"></label>
-      <div class="g2"><label>Coche<select name="loteId"><option value="">— Sin coche / gasto general —</option>${S.lotes.filter(l=>["comprado","stock","vendido"].includes(l.estado)||l.id===g.loteId).map(l=>`<option value="${esc(l.id)}" ${l.id===g.loteId?"selected":""}>${esc(l.matricula||"sin matrícula")} · ${esc([l.marca,l.modelo].filter(Boolean).join(" "))}</option>`).join("")}</select></label>
-        <label>Matrícula <small>si el coche no está en la app</small><input name="matricula" value="${esc(g.matricula||"")}" style="text-transform:uppercase"></label></div>
-      <div class="g4">${gen?`<label>Base (€)<input name="base" inputmode="decimal" value="${esc(g.base)}"></label><label>IVA %<input name="ivaTipo" inputmode="decimal" value="${esc(g.ivaTipo??21)}"></label><label>Cuota IVA (€)<input name="cuota" inputmode="decimal" value="${esc(g.cuota)}"></label>`:`<span></span><span></span><span></span>`}
-        <label>Total factura (€)<input name="total" inputmode="decimal" value="${esc(g.total)}" required></label></div>
-      ${g.categoria==="Compra del vehículo"?`<p class="aviso" style="margin:0">El régimen de la compra decide el de la venta: compra con IVA general → venta con IVA 21 %; compra en REBU o a un particular → venta en REBU.</p>`:""}
-      <p class="muted" style="margin:0">${gen?"Escribe la base o el total: lo demás se calcula. El coste que suma al coche es la base (el IVA se deduce).":g.regimen==="REBU"?"Compra en REBU: el IVA no se desglosa ni se deduce; el coste del coche es el total.":"Sin IVA: el coste es el total."}</p>
-      <label class="row" style="flex-direction:row;color:var(--ink);font-weight:500"><input type="checkbox" name="pagado" ${g.pagado?"checked":""} style="width:auto"> Pagada</label>
-      <div class="card"><div class="row sp"><b>Factura (PDF o foto)</b><label class="btn sm" style="display:inline-flex;color:var(--ink)">Subir archivos<input type="file" id="g-files" accept="application/pdf,image/*" multiple hidden></label></div>
-        <div class="files" id="g-lista">${[...(g.archivos||[]),...nuevos.map(n=>({nombre:n.name,nuevo:true,size:n.size}))].map((a,i)=>`<div><span>${esc(a.nombre)} <span class="muted">${a.size?Math.round(a.size/1024)+" KB":""}${a.nuevo?" · se subirá al guardar":""}</span></span><span class="row">${a.ruta?`<button class="btn sm" data-ver-archivo="${esc(a.ruta)}" data-nombre="${esc(a.nombre)}" value="nada" formnovalidate>Ver</button>`:""}<button class="btn sm" data-quitar-archivo="${i}" value="nada" formnovalidate>Quitar</button></span></div>`).join("")||`<span class="muted">Sin archivos.</span>`}</div></div>
+      <div class="card" style="background:var(--bg)"><div class="row sp"><b>Factura (PDF o foto)</b><label class="btn sm primary" style="display:inline-flex">${leyendo?"Leyendo la factura…":archivos.length?"Subir otro archivo":"Subir la factura y leerla"}<input type="file" id="g-files" accept="application/pdf,image/*" multiple hidden></label></div>
+        <div class="files">${archivos.map((a,i)=>`<div><span>${esc(a.nombre)} <span class="muted">${a.size?Math.round(a.size/1024)+" KB":""}${a.nuevo?" · se subirá al guardar":""}</span></span><span class="row">${a.ruta?`<button type="button" class="btn sm" data-g-ver="${esc(a.ruta)}" data-nombre="${esc(a.nombre)}">Ver</button><button type="button" class="btn sm" data-g-leerruta="${esc(a.ruta)}" data-nombre="${esc(a.nombre)}">Leer</button>`:""}${!a.ruta&&a.nuevo?`<button type="button" class="btn sm" data-g-leer="${i-(g.archivos||[]).length}">Leer otra vez</button>`:""}<button type="button" class="btn sm" data-g-quitar="${i}">Quitar</button></span></div>`).join("")||`<span class="muted">${g.sinFactura?"Pago en efectivo sin factura.":"⚠ Falta la factura. Puedes guardar el gasto y subirla después: quedará marcado como pendiente."}</span>`}</div>
+        ${lectura?`<div class="aviso ${lectura.ok?"ok":""}">${lectura.msg}</div>`:""}
+        <label class="row" style="flex-direction:row;color:var(--ink);font-weight:500"><input type="checkbox" id="g-sinf" ${g.sinFactura?"checked":""} style="width:auto"> Pago en efectivo sin factura <small class="muted">— no entra en los libros de IVA; sí en el balance del coche (por el total)</small></label></div>
+      <div class="g3"><label>Proveedor guardado<select id="g-prov"><option value="">— Elegir —</option>${provs().map(p=>`<option value="${esc(p.id)}" ${g.proveedorId===p.id?"selected":""}>${esc(p.nombre)}${p.nif?" · "+esc(p.nif):""}</option>`).join("")}</select></label>
+        <label>Proveedor (nombre)<input data-g="proveedor" value="${esc(g.proveedor||"")}"></label>
+        <label>NIF del proveedor<input data-g="nifProveedor" value="${esc(g.nifProveedor||"")}"></label></div>
+      <div class="g4"><label>Nº de factura<input data-g="numFactura" value="${esc(g.numFactura||"")}"></label>
+        <label>Fecha de la factura<input type="date" data-g="fecha" value="${esc(g.fecha||"")}"></label>
+        <label>Categoría<select data-g="categoria">${CATS_GASTO.map(c=>`<option ${c===g.categoria?"selected":""}>${c}</option>`).join("")}</select></label>
+        <label>Forma de pago<select data-g="formaPago">${FORMAS_PAGO_GASTO.map(c=>`<option ${c===(g.formaPago||"Transferencia")?"selected":""}>${c}</option>`).join("")}</select></label></div>
+      <div class="g3"><label>Coche<select data-g="loteId"><option value="">— Sin coche / gasto general —</option>${S.lotes.filter(l=>["comprado","stock","vendido"].includes(l.estado)||l.id===g.loteId).map(l=>`<option value="${esc(l.id)}" ${l.id===g.loteId?"selected":""}>${esc(l.matricula||"sin matrícula")} · ${esc([l.marca,l.modelo].filter(Boolean).join(" "))}</option>`).join("")}</select></label>
+        <label>Matrícula <small>si el coche no está en la app</small><input data-g="matricula" value="${esc(g.matricula||"")}" style="text-transform:uppercase"></label>
+        <label>Concepto general<input data-g="concepto" value="${esc(g.concepto||"")}" placeholder="Ej.: adjudicación BCA, transporte…"></label></div>
+      <div class="card"><div class="row sp"><b>Líneas de la factura</b><span class="row"><button type="button" class="btn sm" data-g-linea="General">+ Con IVA</button><button type="button" class="btn sm" data-g-linea="Exento">+ Sin IVA</button><button type="button" class="btn sm" data-g-linea="REBU">+ REBU</button></span></div>
+        <div class="tw"><table class="lineas" style="min-width:720px"><thead><tr><th>Concepto</th><th style="width:150px">Tipo</th><th class="num" style="width:105px">Base</th><th class="num" style="width:62px">IVA %</th><th class="num" style="width:95px">Cuota</th><th class="num" style="width:105px">Total</th>${compra?`<th style="width:70px" title="Marca la línea del precio del coche">Coche</th>`:""}<th></th></tr></thead><tbody>
+        ${g.lineas.map((l,i)=>{const gen=l.regimen==="General";return`<tr><td><input data-gl="${i}:concepto" value="${esc(l.concepto||"")}" placeholder="${compra&&l.vehiculo?"Precio del vehículo":"Concepto"}"></td>
+          <td><select data-gl="${i}:regimen">${REG_LINEA.map(([k,v])=>`<option value="${k}" ${k===l.regimen?"selected":""}>${v}</option>`).join("")}</select></td>
+          <td><input data-gl="${i}:base" class="num" inputmode="decimal" value="${esc(gen?l.base:"")}" ${gen?"":"disabled"}></td>
+          <td><input data-gl="${i}:ivaTipo" class="num" inputmode="decimal" value="${esc(gen?l.ivaTipo:"")}" ${gen?"":"disabled"}></td>
+          <td><input data-gl="${i}:cuota" class="num" inputmode="decimal" value="${esc(gen?l.cuota:"")}" ${gen?"":"disabled"}></td>
+          <td><input data-gl="${i}:total" class="num" inputmode="decimal" value="${esc(l.total)}"></td>
+          ${compra?`<td style="text-align:center"><input type="checkbox" data-gl="${i}:vehiculo" ${l.vehiculo?"checked":""} style="width:auto"></td>`:""}
+          <td>${g.lineas.length>1?`<button type="button" class="btn sm" data-g-qlinea="${i}" aria-label="Quitar línea">✕</button>`:""}</td></tr>`}).join("")}</tbody></table></div>
+        <div class="totales" id="g-tot"></div>
+        <p class="muted" style="margin:0">${compra?"Marca «Coche» en la línea del precio del vehículo: su tipo (con IVA o REBU) decide el régimen de la venta. Las demás líneas (comisiones, transporte, tasas…) suman al coche como gastos. ":""}Con IVA: escribe la base o el total y se calcula el resto; al coche suma la base (el IVA se deduce). Sin IVA o REBU: suma el total.</p></div>
+      <label class="row" style="flex-direction:row;color:var(--ink);font-weight:500"><input type="checkbox" id="g-pagado" ${g.pagado!==false?"checked":""} style="width:auto"> Pagada</label>
       <div class="row"><span style="flex:1">${id?`<button class="btn peligro" value="borrar" formnovalidate>Borrar</button>`:""}</span><button class="btn" value="cancelar" formnovalidate>Cancelar</button><button class="btn primary" value="ok">Guardar</button></div>`;
-    const leer=()=>{const v=Object.fromEntries(new FormData(f));Object.assign(g,v,{pagado:!!f.querySelector("[name=pagado]").checked})};
-    f.querySelector("[name=regimen]").onchange=()=>{leer();pintarF()};
-    f.querySelector("[name=categoria]").onchange=()=>{leer();pintarF()};
-    f.querySelector("[name=loteId]").onchange=e=>{leer();const l=S.lotes.find(x=>x.id===e.target.value);if(l){g.matricula=normMat(l.matricula)}pintarF()};
-    const num=n=>+String(n||"").replace(",",".")||0;
-    const B=f.querySelector("[name=base]"),T=f.querySelector("[name=total]"),C=f.querySelector("[name=cuota]"),P=f.querySelector("[name=ivaTipo]");
-    if(B){const desdeBase=()=>{const b=num(B.value),p=num(P.value);C.value=r2(b*p/100);T.value=r2(b+b*p/100)};
-      B.oninput=desdeBase;P.oninput=desdeBase;T.oninput=()=>{const t=num(T.value),p=num(P.value);const b=r2(t/(1+p/100));B.value=b;C.value=r2(t-b)};}
-    f.querySelector("#g-files").onchange=e=>{leer();for(const fi of e.target.files){if(fi.size>15e6){toast(fi.name+": máximo 15 MB");continue}nuevos.push(fi)}pintarF()};
-    f.querySelectorAll("[data-quitar-archivo]").forEach(b=>b.onclick=ev=>{ev.preventDefault();leer();const i=+b.dataset.quitarArchivo,n=(g.archivos||[]).length;if(i<n)borrados.push(...g.archivos.splice(i,1));else nuevos.splice(i-n,1);pintarF()});
-    f.querySelectorAll("[data-ver-archivo]").forEach(b=>b.onclick=ev=>{ev.preventDefault();verArchivo(b.dataset.verArchivo,b.dataset.nombre)});
+    pintarTot();
   };
-  pintarF();const d=$("#dlg-gasto");d.returnValue="";d.showModal();
+  const calcLinea=(i,campo)=>{const l=g.lineas[i];const row=f.querySelectorAll(".lineas tbody tr")[i];const set=(k,v)=>{l[k]=v;const n=row&&row.querySelector(`[data-gl="${i}:${k}"]`);if(n)n.value=v};
+    if(l.regimen!=="General"){l.base=l.total;l.cuota=0;return}
+    const b=numES2(l.base),p=numES2(l.ivaTipo),t=numES2(l.total);
+    if(campo==="base"||campo==="ivaTipo"){if(l.base==="")return;const c=r2(b*p/100);set("cuota",c);set("total",r2(b+c))}
+    else if(campo==="total"){if(l.total==="")return;const bb=r2(t/(1+p/100));set("base",bb);set("cuota",r2(t-bb))}
+    else if(campo==="cuota"){set("total",r2(b+numES2(l.cuota)))}};
+  f.oninput=e=>{const t=e.target;
+    if(t.dataset.g){g[t.dataset.g]=t.value;return}
+    if(t.dataset.gl){const[i,k]=t.dataset.gl.split(":");if(k==="vehiculo"){g.lineas[+i].vehiculo=t.checked;return}if(k==="regimen")return;g.lineas[+i][k]=t.value;calcLinea(+i,k);pintarTot()}};
+  f.onchange=e=>{const t=e.target;
+    if(t.id==="g-files"){const fs=[...t.files];t.value="";let primero=null;
+      for(const fi of fs){if(fi.size>15e6){toast(fi.name+": máximo 15 MB");continue}nuevos.push(fi);if(!primero)primero=fi}
+      if(primero){g.sinFactura=false;leer(primero,false)}else pintarF();return}
+    if(t.id==="g-sinf"){g.sinFactura=t.checked;if(t.checked)g.formaPago="Efectivo";pintarF();return}
+    if(t.id==="g-pagado"){g.pagado=t.checked;return}
+    if(t.id==="g-prov"){const p=S.proveedores.get(t.value);g.proveedorId=p?p.id:"";if(p){g.proveedor=p.nombre;g.nifProveedor=p.nif||"";if(p.categoria&&!id)g.categoria=p.categoria;if(p.formaPago&&!id)g.formaPago=p.formaPago;
+      if(p.regimen&&!id&&g.lineas.length===1&&!numES2(g.lineas[0].total))g.lineas[0].regimen=p.regimen}pintarF();return}
+    if(t.dataset.g==="categoria"){g.categoria=t.value;if(g.categoria==="Compra del vehículo"&&!g.lineas.some(l=>l.vehiculo)){const mx=g.lineas.reduce((a,l)=>numES2(l.total)>numES2(a.total)?l:a,g.lineas[0]);if(mx)mx.vehiculo=true}pintarF();return}
+    if(t.dataset.g==="loteId"){g.loteId=t.value;const l=S.lotes.find(x=>x.id===t.value);if(l)g.matricula=normMat(l.matricula);pintarF();return}
+    if(t.dataset.gl&&t.dataset.gl.endsWith(":regimen")){const i=+t.dataset.gl.split(":")[0],l=g.lineas[i];l.regimen=t.value;if(l.regimen==="General"){l.ivaTipo=l.ivaTipo||21;l.base="";calcLinea(i,"total")}else{l.base=l.total;l.cuota=0;l.ivaTipo=0}pintarF()}};
+  f.onclick=async e=>{const t=e.target;
+    const ver=t.closest("[data-g-ver]");if(ver){e.preventDefault();verArchivo(ver.dataset.gVer,ver.dataset.nombre);return}
+    const q=t.closest("[data-g-quitar]");if(q){e.preventDefault();const i=+q.dataset.gQuitar,n=(g.archivos||[]).length;if(i<n)borrados.push(...g.archivos.splice(i,1));else nuevos.splice(i-n,1);pintarF();return}
+    const lr=t.closest("[data-g-leerruta]");if(lr){e.preventDefault();try{const b=await HUELSAN.bajar("documentos",lr.dataset.gLeerruta);const nm=lr.dataset.nombre||"factura.pdf";leer(new File([b],nm,{type:b.type||(/\.pdf$/i.test(nm)?"application/pdf":"image/jpeg")}),true)}catch(err){toast(err.message,6000)}return}
+    const rl=t.closest("[data-g-leer]");if(rl){e.preventDefault();const fi=nuevos[+rl.dataset.gLeer];if(fi)leer(fi,true);return}
+    const nl=t.closest("[data-g-linea]");if(nl){e.preventDefault();g.lineas.push(lineaNueva(false,nl.dataset.gLinea));pintarF();return}
+    const ql=t.closest("[data-g-qlinea]");if(ql){e.preventDefault();g.lineas.splice(+ql.dataset.gQlinea,1);pintarF();return}};
+  const leer=async(fi,forzar)=>{
+    if(!window.HuelsanLector){lectura={ok:false,msg:"El lector de facturas no está disponible: rellena los datos a mano."};pintarF();return}
+    const vacio=!numES2(totales().total);if(!vacio&&!forzar){lectura={ok:true,msg:"Archivo añadido. Los datos ya estaban rellenos: pulsa «Leer otra vez» si quieres coger los de este archivo."};pintarF();return}
+    leyendo=true;pintarF();
+    try{const r=await window.HuelsanLector.leer(fi,{nifPropio:(S.emisor||{}).nif||"",proveedores:provs()});
+      const cambios=[];
+      if(r.proveedorId&&S.proveedores.has(r.proveedorId)){const p=S.proveedores.get(r.proveedorId);g.proveedorId=p.id;g.proveedor=p.nombre;g.nifProveedor=p.nif||r.nif||"";if(p.categoria&&!id)g.categoria=p.categoria;cambios.push("proveedor")}
+      else{if(r.proveedor){g.proveedor=r.proveedor;cambios.push("proveedor")}if(r.nif){g.nifProveedor=r.nif;cambios.push("NIF")}}
+      if(r.numFactura){g.numFactura=r.numFactura;cambios.push("nº de factura")}
+      if(r.fecha){g.fecha=r.fecha;cambios.push("fecha")}
+      if(r.compraVehiculo&&!id)g.categoria="Compra del vehículo";
+      if(r.matricula&&!g.loteId){const l=S.lotes.find(x=>normMat(x.matricula)===r.matricula);if(l){g.loteId=l.id;g.matricula=r.matricula;cambios.push("coche "+r.matricula)}else{g.matricula=r.matricula;cambios.push("matrícula")}}
+      if(r.lineas&&r.lineas.length){g.lineas=r.lineas.map(l=>({...lineaNueva(false),...l,id:nid(),vehiculo:g.categoria==="Compra del vehículo"&&!!l.vehiculo}));
+        if(g.categoria==="Compra del vehículo"&&!g.lineas.some(l=>l.vehiculo)){const mx=g.lineas.reduce((a,l)=>numES2(l.total)>numES2(a.total)?l:a,g.lineas[0]);mx.vehiculo=true}cambios.push(g.lineas.length+(g.lineas.length===1?" línea":" líneas"))}
+      const cuadra=r.total&&Math.abs(totales().total-r.total)<0.05;
+      lectura={ok:cambios.length>0,msg:cambios.length?`Leído de la factura: ${esc(cambios.join(", "))}.${r.total?` Total de la factura: <b>${eur(r.total)}</b>${cuadra?" (cuadra con las líneas)":" — <b>no cuadra con las líneas: revísalas</b>"}.`:""} Revisa todo antes de guardar.`:"No he podido leer datos de este archivo: rellénalos a mano."};
+    }catch(err){lectura={ok:false,msg:"No se ha podido leer la factura ("+esc(err.message||err)+"). Rellena los datos a mano."}}
+    leyendo=false;pintarF();
+  };
+  pintarF();
+  f.onsubmit=e=>{if(!e.submitter||e.submitter.value!=="ok")return;const err=validar();if(err){e.preventDefault();toast(err,6000)}};
+  const validar=()=>{
+    if(!String(g.proveedor||"").trim())return"Falta el proveedor";
+    if(!g.fecha)return"Falta la fecha de la factura";
+    if(!(totales().total>0))return"Falta el importe en las líneas";
+    return"";
+  };
+  const d=$("#dlg-gasto");d.returnValue="";d.showModal();
   d.onclose=async()=>{
     try{
       if(d.returnValue==="borrar"){if(!confirm("¿Borrar este gasto y sus archivos?"))return;
         for(const a of g.archivos||[])await HUELSAN.borrarArchivo("documentos",a.ruta).catch(()=>{});
-        await S.db.doc("gastos/"+id).delete();await sincronizarLote({...g,id,_borrar:true});toast("Gasto borrado");return}
+        await S.db.doc("gastos/"+id).delete();await sincronizarLote({...S.gastos.get(id)||g,id,_borrar:true});toast("Gasto borrado");return}
       if(d.returnValue!=="ok")return;
-      const v=Object.fromEntries(new FormData(f));const num=n=>r2(+String(n||"").replace(",",".")||0);
-      const dato={fecha:v.fecha,categoria:v.categoria,regimen:v.regimen,proveedor:String(v.proveedor||"").trim(),nifProveedor:nifLimpio(v.nifProveedor),numFactura:String(v.numFactura||"").trim(),concepto:String(v.concepto||"").trim(),
-        loteId:v.loteId||"",matricula:normMat(v.matricula),pagado:!!f.querySelector("[name=pagado]").checked,total:num(v.total),archivos:[...(g.archivos||[])],actualizado:new Date().toISOString()};
-      if(dato.regimen==="General"){dato.ivaTipo=num(v.ivaTipo);dato.base=num(v.base)||r2(dato.total/(1+dato.ivaTipo/100));dato.cuota=num(v.cuota)||r2(dato.total-dato.base)}else{dato.base=dato.total;dato.cuota=0;dato.ivaTipo=0}
-      if(!dato.total)throw new Error("Falta el total de la factura");
+      const compra=g.categoria==="Compra del vehículo";
+      const ls=g.lineas.map(l=>{const reg=l.regimen;let base=numES2(l.base),iva=reg==="General"?numES2(l.ivaTipo):0,tot=numES2(l.total),cu=numES2(l.cuota);
+        if(reg==="General"){if(!base&&tot)base=r2(tot/(1+iva/100));if(!cu&&base)cu=r2(base*iva/100);if(!tot)tot=r2(base+cu)}else{base=tot;cu=0}
+        return{id:l.id||nid(),concepto:String(l.concepto||"").trim(),regimen:reg,base:r2(base),ivaTipo:iva,cuota:r2(cu),total:r2(tot),vehiculo:compra&&!!l.vehiculo}}).filter(l=>l.total);
+      if(compra&&!ls.some(l=>l.vehiculo)){const mx=ls.reduce((a,l)=>l.total>a.total?l:a,ls[0]);mx.vehiculo=true}
+      const regs=[...new Set(ls.map(l=>l.regimen))];
+      const dato={fecha:g.fecha,categoria:g.categoria,proveedor:String(g.proveedor||"").trim(),proveedorId:g.proveedorId||"",nifProveedor:nifLimpio(g.nifProveedor),numFactura:String(g.numFactura||"").trim(),concepto:String(g.concepto||"").trim(),
+        loteId:g.loteId||"",matricula:normMat(g.matricula),pagado:g.pagado!==false,formaPago:g.formaPago||"Transferencia",sinFactura:!!g.sinFactura,lineas:ls,
+        total:r2(ls.reduce((s,l)=>s+l.total,0)),base:r2(ls.filter(l=>l.regimen==="General").reduce((s,l)=>s+l.base,0)),cuota:r2(ls.filter(l=>l.regimen==="General").reduce((s,l)=>s+l.cuota,0)),
+        regimen:g.sinFactura?"SinFactura":regs.length===1?(regs[0]==="Exento"?"Exento":regs[0]):"Mixto",ivaTipo:(ls.find(l=>l.regimen==="General")||{}).ivaTipo||0,
+        archivos:[...(g.archivos||[])],actualizado:new Date().toISOString()};
+      if(g.detalleOrigen)dato.detalleOrigen=g.detalleOrigen;
       if(!dato.matricula&&dato.loteId){const l=S.lotes.find(x=>x.id===dato.loteId);if(l)dato.matricula=normMat(l.matricula)}
       toast(nuevos.length?"Subiendo archivos…":"Guardando…",20000);
       for(const fi of nuevos){const r=await HUELSAN.subir("documentos",fi);dato.archivos.push({ruta:r.id,nombre:fi.name,tipo:fi.type,size:fi.size,subido:new Date().toISOString()})}
       for(const a of borrados)await HUELSAN.borrarArchivo("documentos",a.ruta).catch(()=>{});
+      dato.proveedorId=await guardarProveedorDesdeGasto(dato).catch(()=>dato.proveedorId)||dato.proveedorId;
       const gid=id||nid();if(!id)dato.creado=new Date().toISOString();
       await S.db.doc("gastos/"+gid).set(dato);
-      if(id&&g.loteId&&g.loteId!==dato.loteId)await sincronizarLote({...S.gastos.get(id),id:gid,_borrar:true});
+      if(id&&g.loteId!==(S.gastos.get(id)||{}).loteId){const ant=S.gastos.get(id);if(ant&&ant.loteId)await sincronizarLote({...ant,id:gid,_borrar:true})}
       await sincronizarLote({...dato,id:gid});
-      toast("Guardado");
+      toast(!dato.sinFactura&&!dato.archivos.length?"Guardado. ⚠ Falta subir la factura: queda marcado como pendiente.":"Guardado",!dato.sinFactura&&!dato.archivos.length?6000:3200);
     }catch(err){toast(err.message,6000)}
   };
+}
+/* Gasto anotado en la ficha del coche (app) → se sube su factura y pasa a ser un gasto con factura */
+function subirFacturaDetalle(loteId,detId){
+  const l=S.lotes.find(x=>x.id===loteId);const gd=l&&(l.gastosDetalle||[]).find(x=>x.id===detId);
+  if(!gd){toast("No encuentro ese gasto en la ficha del coche");return}
+  const cat=CATS_GASTO.includes(gd.categoria)?gd.categoria:"Otros";
+  abrirGasto(null,{categoria:cat,concepto:gd.concepto||"",fecha:gd.fecha||hoyISO(),loteId:l.id,matricula:normMat(l.matricula),detalleOrigen:{loteId:l.id,id:gd.id},
+    lineas:[{id:nid(),concepto:gd.concepto||cat,regimen:"General",base:r2(+gd.importe/1.21),ivaTipo:21,cuota:r2(+gd.importe-r2(+gd.importe/1.21)),total:r2(+gd.importe),vehiculo:false}]});
+}
+/* Gasto de la ficha sin factura: eliminarlo, o marcarlo como pago en efectivo sin factura (pasa a ser un gasto «sin factura» en contabilidad) */
+const detallesDe=l=>Array.isArray(l.gastosDetalle)?l.gastosDetalle:(+l.gastos>0?[{id:"g0",fecha:null,categoria:"Otros",concepto:"Gastos anotados antes del desglose",importe:+l.gastos}]:[]);
+async function eliminarDetalle(loteId,detId){
+  const l=S.lotes.find(x=>x.id===loteId);const gd=l&&detallesDe(l).find(x=>x.id===detId);
+  if(!gd){toast("No encuentro ese gasto en la ficha del coche");return}
+  if(!await confirmar("¿Eliminar este gasto?",`Se quitará de la ficha del coche: ${gd.categoria||"Otros"}${gd.concepto?" · "+gd.concepto:""} (${eur(gd.importe)}). Dejará de contar en el coste del coche.`,"Sí, eliminar"))return;
+  try{const det=detallesDe(l).filter(x=>x.id!==detId);const patch={gastosDetalle:det,gastos:r2(det.reduce((s,x)=>s+(+x.importe||0),0))};
+    await S.db.doc("lotes/"+loteId).update(patch);Object.assign(l,patch);toast("Gasto eliminado");pintar()}catch(err){toast("No se ha podido eliminar: "+err.message,6000)}
+}
+async function marcarDetalleSinFactura(loteId,detId){
+  const l=S.lotes.find(x=>x.id===loteId);const gd=l&&detallesDe(l).find(x=>x.id===detId);
+  if(!gd){toast("No encuentro ese gasto en la ficha del coche");return}
+  if(!await confirmar("¿Marcar como pago en efectivo sin factura?",`${gd.categoria||"Otros"}${gd.concepto?" · "+gd.concepto:""} (${eur(gd.importe)}). Quedará fuera de los libros de IVA y contará por el total en el coste del coche.`,"Sí, sin factura"))return;
+  try{const cat=CATS_GASTO.includes(gd.categoria)?gd.categoria:"Otros",tot=r2(+gd.importe||0),id=nid();
+    const dato={fecha:gd.fecha||hoyISO(),categoria:cat,proveedor:"",proveedorId:"",nifProveedor:"",numFactura:"",concepto:String(gd.concepto||"").trim(),loteId:l.id,matricula:normMat(l.matricula),pagado:true,formaPago:"Efectivo",sinFactura:true,
+      lineas:[{id:nid(),concepto:gd.concepto||cat,regimen:"Exento",base:tot,ivaTipo:0,cuota:0,total:tot,vehiculo:false}],total:tot,base:0,cuota:0,regimen:"SinFactura",ivaTipo:0,archivos:[],detalleOrigen:{loteId:l.id,id:gd.id},creado:new Date().toISOString(),actualizado:new Date().toISOString()};
+    await S.db.doc("gastos/"+id).set(dato);await sincronizarLote({...dato,id});toast("Marcado como pago en efectivo sin factura");pintar()}catch(err){toast("No se ha podido marcar: "+err.message,6000)}
 }
 // El gasto se refleja en la ficha del coche (gastos y precio de compra), sin duplicar
 async function sincronizarLote(g){
   if(!g.loteId)return;
   try{const sn=await S.db.doc("lotes/"+g.loteId).get();if(!sn.exists)return;const l=sn.data();
-    const det=(Array.isArray(l.gastosDetalle)?l.gastosDetalle:(+l.gastos>0?[{id:"g0",fecha:null,categoria:"Otros",concepto:"Gastos anotados antes del desglose",importe:+l.gastos}]:[])).filter(x=>x.gastoId!==g.id);
+    const origen=g.detalleOrigen&&g.detalleOrigen.loteId===g.loteId?g.detalleOrigen.id:null;
+    const det=(Array.isArray(l.gastosDetalle)?l.gastosDetalle:(+l.gastos>0?[{id:"g0",fecha:null,categoria:"Otros",concepto:"Gastos anotados antes del desglose",importe:+l.gastos}]:[])).filter(x=>x.gastoId!==g.id&&!(origen&&x.id===origen));
     const patch={};
     if(g.categoria==="Compra del vehículo"){
+      const cv=costeVehiculo(g),resto=r2(gastoCoste(g)-cv);
       if(g._borrar){if(l.precioCompraGasto===g.id){patch.precioCompra=l.precioCompraAnterior||null;patch.precioCompraGasto=null}}
-      else{ // la factura de compra manda: el precio de compra del coche pasa a ser el de la factura
-        if(l.precioCompra&&l.precioCompraGasto!==g.id&&r2(l.precioCompra)!==gastoCoste(g)){patch.precioCompraAnterior=l.precioCompra;toast(`Precio de compra del coche actualizado de ${eur(l.precioCompra)} a ${eur(gastoCoste(g))} (el de la factura).`,6000)}
-        patch.precioCompra=gastoCoste(g);patch.precioCompraGasto=g.id;
-        patch.iva=g.regimen==="General"?"General":"REBU"} // la venta irá en el mismo régimen
-    }else if(!g._borrar)det.push({id:"f-"+g.id,gastoId:g.id,fecha:g.fecha,categoria:g.categoria,concepto:[g.proveedor,g.concepto].filter(Boolean).join(" · "),importe:gastoCoste(g)});
+      else{ // la factura de compra manda: el precio de compra del coche pasa a ser el de la línea del vehículo
+        if(l.precioCompra&&l.precioCompraGasto!==g.id&&r2(l.precioCompra)!==cv){patch.precioCompraAnterior=l.precioCompra;toast(`Precio de compra del coche actualizado de ${eur(l.precioCompra)} a ${eur(cv)} (el de la factura).`,6000)}
+        patch.precioCompra=cv;patch.precioCompraGasto=g.id;
+        patch.iva=regimenVehiculo(g)==="General"?"General":"REBU"; // la venta irá en el mismo régimen
+        if(resto>0)det.push({id:"f-"+g.id,gastoId:g.id,fecha:g.fecha,categoria:"Comisiones de compra",concepto:[g.proveedor,"otros conceptos de la factura de compra"].filter(Boolean).join(" · "),importe:resto})}
+    }else if(!g._borrar)det.push({id:"f-"+g.id,gastoId:g.id,fecha:g.fecha,categoria:g.categoria,concepto:[g.proveedor,g.concepto].filter(Boolean).join(" · "),importe:gastoCoste(g),sinFactura:!!g.sinFactura});
     patch.gastosDetalle=det;patch.gastos=r2(det.reduce((s,x)=>s+(+x.importe||0),0));
     await S.db.doc("lotes/"+g.loteId).update(patch);
     const lc=S.lotes.find(x=>x.id===g.loteId);if(lc)Object.assign(lc,patch);
   }catch(e){toast("Guardado, pero no se ha podido actualizar la ficha del coche: "+e.message,6000)}
 }
+
+/* ======================================================================
+   PROVEEDORES
+   ====================================================================== */
+function vistaProveedores(){
+  const q=String(S.pq||"").toLowerCase();
+  const ls=[...S.proveedores.values()].filter(p=>!q||[p.nombre,p.nif,p.municipio].join(" ").toLowerCase().includes(q)).sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre),"es"));
+  const usos=id=>[...S.gastos.values()].filter(g=>g.proveedorId===id);
+  const sinFicha=[...new Map([...S.gastos.values()].filter(g=>g.proveedor&&!g.proveedorId&&![...S.proveedores.values()].some(p=>(p.nif&&nifLimpio(p.nif)===nifLimpio(g.nifProveedor))||String(p.nombre).toLowerCase()===String(g.proveedor).toLowerCase())).map(g=>[g.proveedor.toLowerCase(),g])).values()];
+  return`<div class="row sp"><div><h1>Proveedores</h1><p class="muted" style="margin:4px 0 0">Al elegir un proveedor en una compra o gasto se rellenan su NIF, la categoría, el régimen y la forma de pago habituales. Los proveedores nuevos se guardan solos al guardar un gasto.</p></div>
+    <span class="row">${sinFicha.length?`<button class="btn" data-acc="prov-importar">Crear ${sinFicha.length} desde los gastos</button>`:""}<button class="btn primary" data-acc="prov-alta">+ Nuevo proveedor</button></span></div>
+  <label>Buscar<input type="search" data-pq value="${esc(S.pq||"")}" placeholder="Nombre, NIF o municipio"></label>
+  ${ls.length?`<div class="tw"><table><thead><tr><th>Proveedor</th><th>NIF</th><th>Categoría habitual</th><th>Régimen</th><th>Forma de pago</th><th class="num">Gastos</th><th class="num">Total</th></tr></thead><tbody>
+    ${ls.map(p=>{const u=usos(p.id);return`<tr data-prov="${esc(p.id)}" style="cursor:pointer"><td><b>${esc(p.nombre)}</b><div class="muted">${esc([p.municipio,p.telefono,p.email].filter(Boolean).join(" · "))}</div></td><td>${esc(p.nif||"—")}</td><td>${esc(p.categoria||"—")}</td><td>${esc((REG_LINEA.find(x=>x[0]===p.regimen)||[0,"—"])[1])}</td><td>${esc(p.formaPago||"—")}</td><td class="num">${u.length}</td><td class="num">${eur(u.reduce((s,g)=>s+(+g.total||0),0))}</td></tr>`}).join("")}</tbody></table></div>`
+  :`<div class="vacio">Aún no hay proveedores guardados.</div>`}`;
+}
+function abrirProveedor(id){
+  const p=id?{...S.proveedores.get(id)}:{nombre:"",nif:"",categoria:"",regimen:"General",formaPago:"Transferencia"};
+  let d=$("#dlg-proveedor");if(!d){d=document.createElement("dialog");d.id="dlg-proveedor";d.innerHTML=`<form method="dialog" id="f-proveedor" autocomplete="off"></form>`;document.body.appendChild(d)}
+  const f=$("#f-proveedor");
+  f.innerHTML=`<h2>${id?"Editar":"Nuevo"} proveedor</h2>
+    <div class="g2"><label>Nombre o razón social<input name="nombre" value="${esc(p.nombre||"")}" required></label><label>NIF / CIF<input name="nif" value="${esc(p.nif||"")}"></label></div>
+    <label>Dirección<input name="direccion" value="${esc(p.direccion||"")}"></label>
+    <div class="g3"><label>C. P.<input name="cp" value="${esc(p.cp||"")}"></label><label>Municipio<input name="municipio" value="${esc(p.municipio||"")}"></label><label>Provincia<input name="provincia" value="${esc(p.provincia||"")}"></label></div>
+    <div class="g3"><label>Teléfono<input name="telefono" value="${esc(p.telefono||"")}"></label><label>Correo<input name="email" value="${esc(p.email||"")}"></label><label>IBAN<input name="iban" value="${esc(p.iban||"")}"></label></div>
+    <div class="g3"><label>Categoría habitual<select name="categoria"><option value="">—</option>${CATS_GASTO.map(c=>`<option ${c===p.categoria?"selected":""}>${c}</option>`).join("")}</select></label>
+      <label>Régimen habitual<select name="regimen">${REG_LINEA.map(([k,v])=>`<option value="${k}" ${k===p.regimen?"selected":""}>${v}</option>`).join("")}</select></label>
+      <label>Forma de pago habitual<select name="formaPago">${FORMAS_PAGO_GASTO.map(c=>`<option ${c===p.formaPago?"selected":""}>${c}</option>`).join("")}</select></label></div>
+    <label>Palabras del extracto del banco <small>para la conciliación, separadas por comas (ej.: BCA, AUTOSUBASTAS)</small><input name="claves" value="${esc(p.claves||"")}"></label>
+    <label>Notas<textarea name="notas" rows="2">${esc(p.notas||"")}</textarea></label>
+    <div class="row"><span style="flex:1">${id?`<button class="btn peligro" value="borrar" formnovalidate>Borrar</button>`:""}</span><button class="btn" value="cancelar" formnovalidate>Cancelar</button><button class="btn primary" value="ok">Guardar</button></div>`;
+  d.returnValue="";d.showModal();
+  d.onclose=async()=>{try{
+    if(d.returnValue==="borrar"){if(confirm("¿Borrar este proveedor? Sus gastos no se borran.")){await S.db.doc("proveedores/"+id).delete();toast("Proveedor borrado")}return}
+    if(d.returnValue!=="ok")return;const v=Object.fromEntries(new FormData(f));
+    const dato={...v,nombre:String(v.nombre||"").trim(),nif:nifLimpio(v.nif),actualizado:new Date().toISOString()};if(!dato.nombre)throw new Error("Falta el nombre");
+    await S.db.doc("proveedores/"+(id||nid())).set(dato);toast("Proveedor guardado")}catch(e){toast(e.message,6000)}};
+}
+async function guardarProveedorDesdeGasto(g){
+  if(!g.proveedor)return g.proveedorId;
+  const nif=nifLimpio(g.nifProveedor);
+  let p=(g.proveedorId&&S.proveedores.get(g.proveedorId))||[...S.proveedores.values()].find(x=>(nif&&nifLimpio(x.nif)===nif)||String(x.nombre).toLowerCase()===g.proveedor.toLowerCase());
+  if(p){if(nif&&!p.nif)await S.db.doc("proveedores/"+p.id).set({...p,id:undefined,nif}).catch(()=>{});return p.id}
+  const pid=nid();await S.db.doc("proveedores/"+pid).set({nombre:g.proveedor,nif,categoria:g.categoria,regimen:(g.lineas&&g.lineas[0]&&g.lineas[0].regimen)||"General",formaPago:g.formaPago||"Transferencia",creado:new Date().toISOString()});return pid;
+}
+async function importarProveedores(){
+  const vistos=new Set([...S.proveedores.values()].map(p=>nifLimpio(p.nif)||String(p.nombre).toLowerCase()));let n=0;
+  for(const g of S.gastos.values()){if(!g.proveedor)continue;const k=nifLimpio(g.nifProveedor)||g.proveedor.toLowerCase();if(vistos.has(k)||vistos.has(g.proveedor.toLowerCase()))continue;vistos.add(k);
+    await S.db.doc("proveedores/"+nid()).set({nombre:g.proveedor,nif:nifLimpio(g.nifProveedor),categoria:g.categoria,regimen:regimenVehiculo(g),formaPago:g.formaPago||"Transferencia",creado:new Date().toISOString()});n++}
+  toast(n?`${n} ${n===1?"proveedor creado":"proveedores creados"}`:"No había proveedores nuevos");
+}
+
 async function verArchivo(ruta,nombre){
   try{toast("Abriendo…");const b=await HUELSAN.bajar("documentos",ruta);const u=URL.createObjectURL(b);const w=open(u,"_blank");
     if(!w){const a=document.createElement("a");a.href=u;a.download=nombre||ruta;a.click()}setTimeout(()=>URL.revokeObjectURL(u),60000)}catch(e){toast(e.message,6000)}}
+
+/* ======================================================================
+   DOCUMENTOS DEL COCHE (póliza, permiso, ficha técnica, ITV…): almacén privado «documentos»,
+   registro en docscoche/<id>. Las pólizas de seguro subidas a una factura de «Seguro» salen aquí solas,
+   y una póliza subida aquí se puede adjuntar (copia) a la factura de seguro del coche.
+   ====================================================================== */
+const DOC_TIPOS=["Póliza de seguro","Permiso de circulación","Ficha técnica","ITV","Contrato de compra","Informe o peritaje","Garantía","Mandato / transferencia","Otros"];
+const esPoliza=t=>t==="Póliza de seguro";
+const cocheDe=k=>porMatricula().find(y=>y.matricula===k);
+const gastosSeguro=x=>x.docs.filter(g=>g.categoria==="Seguro"&&!g.sinFactura).sort((a,b)=>String(b.fecha||"").localeCompare(String(a.fecha||"")));
+function docsPropios(x){const l=x.lote,k=x.matricula.startsWith("lote:")?null:x.matricula;
+  return[...S.docsCoche.values()].filter(d=>(l&&d.loteId===l.id)||(k&&normMat(d.matricula)===k)).sort((a,b)=>String(b.creado||"").localeCompare(String(a.creado||"")))}
+function docsDerivados(x){const out=[];for(const g of x.docs)if(g.categoria==="Seguro")for(const a of g.archivos||[])if(!a.docId)out.push({tipo:"Póliza de seguro",archivo:a,fecha:g.fecha,gasto:g});return out}
+const docsTotales=x=>docsPropios(x).length+docsDerivados(x).length;
+const gastoConDoc=(d)=>[...S.gastos.values()].find(g=>(g.archivos||[]).some(a=>a.docId===d.id));
+function tarjetaDocs(x){
+  const own=docsPropios(x),der=docsDerivados(x),seg=gastosSeguro(x);
+  const btns=a=>`<button class="btn sm" data-ver-archivo="${esc(a.ruta)}" data-nombre="${esc(a.nombre)}">${esc(a.nombre.length>26?a.nombre.slice(0,24)+"…":a.nombre)}</button>`;
+  const filas=[...own.map(d=>{const g=gastoConDoc(d);
+      return`<tr><td>${fecha(d.fecha)}</td><td><span class="tag acc">${esc(d.tipo)}</span></td><td>${esc(d.nota||"")}</td>
+        <td class="muted">${g?`También en la factura de seguro de ${esc(g.proveedor||"—")} (${fecha(g.fecha)})`:"Subido aquí"}</td>
+        <td style="white-space:nowrap">${(d.archivos||[]).map(btns).join(" ")}</td>
+        <td style="white-space:nowrap">${esPoliza(d.tipo)&&!g&&seg.length?`<button class="btn sm" data-doc-adj="${esc(d.id)}" title="Copiar la póliza a una factura de seguro de este coche">Adjuntar a factura</button> `:""}<button class="btn sm" data-doc-del="${esc(d.id)}" title="Eliminar documento" aria-label="Eliminar documento">✕</button></td></tr>`}),
+    ...der.map(r=>`<tr><td>${fecha(r.fecha)}</td><td><span class="tag acc">${esc(r.tipo)}</span></td><td></td>
+        <td class="muted">De la factura de seguro de ${esc(r.gasto.proveedor||"—")}</td><td>${btns(r.archivo)}</td>
+        <td><button class="btn sm" data-gasto="${esc(r.gasto.id)}">Ver factura</button></td></tr>`)];
+  return`<div class="card"><div class="row sp"><h3 style="margin:0">Documentos del coche${filas.length?` (${filas.length})`:""}</h3><button class="btn sm primary" data-doc-add="${esc(x.matricula)}">+ Añadir documento</button></div>
+    ${filas.length?`<div class="tw"><table><tbody>${filas.join("")}</tbody></table></div>`:`<p class="muted" style="margin:6px 0 0">Aún no hay documentos. Sube la póliza, el permiso de circulación, la ficha técnica, la ITV… Las pólizas que subas en una factura de «Seguro» aparecen aquí automáticamente.</p>`}</div>`;
+}
+function formDocumento(x,seg){return new Promise(res=>{
+  const f=$("#f-confirm");
+  f.innerHTML=`<h2>Añadir documento</h2>
+    <label>Tipo<select name="tipo">${DOC_TIPOS.map(t=>`<option>${esc(t)}</option>`).join("")}</select></label>
+    <label>Nota <span class="muted">(opcional)</span><input name="nota" placeholder="Ej.: Mapfre, todo riesgo, hasta 12/2027"></label>
+    <label>Archivos<input type="file" name="files" multiple required accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx"></label>
+    ${seg.length?`<label id="adj-wrap">Adjuntar también a la factura de seguro<select name="gasto"><option value="">No adjuntar</option>${seg.map((g,i)=>`<option value="${esc(g.id)}" ${i===0?"selected":""}>${esc(fecha(g.fecha))} · ${esc(g.proveedor||"Seguro")} · ${esc(eur(g.total))}</option>`).join("")}</select></label>`:""}
+    <div class="row" style="justify-content:flex-end"><button class="btn" value="no" formnovalidate>Cancelar</button><button class="btn primary" value="si">Guardar</button></div>`;
+  const tipo=f.elements.tipo,w=$("#adj-wrap");const act=()=>{if(w)w.hidden=!esPoliza(tipo.value)};tipo.onchange=act;act();
+  const d=$("#dlg-confirm");d.returnValue="";d.showModal();
+  d.onclose=()=>{if(d.returnValue!=="si")return res(null);const fd=new FormData(f);res({tipo:String(fd.get("tipo")),nota:String(fd.get("nota")||"").trim(),files:[...f.elements.files.files],gastoId:esPoliza(String(fd.get("tipo")))?String(fd.get("gasto")||""):""})}})}
+async function copiarAGasto(d,g){
+  const nuevos=[];for(const a of d.archivos||[]){const b=await HUELSAN.bajar("documentos",a.ruta);const r=await HUELSAN.subir("documentos",new File([b],a.nombre,{type:a.tipo||b.type||""}));
+    nuevos.push({ruta:r.id,nombre:a.nombre,tipo:a.tipo||"",size:a.size||0,subido:new Date().toISOString(),docId:d.id})}
+  await S.db.doc("gastos/"+g.id).update({archivos:[...(g.archivos||[]),...nuevos],actualizado:new Date().toISOString()})}
+async function anadirDocumento(k){
+  const x=cocheDe(k);if(!x){toast("No encuentro ese coche");return}
+  const r=await formDocumento(x,gastosSeguro(x));if(!r)return;
+  try{const id=nid(),archivos=[];
+    for(const fi of r.files){toast("Subiendo "+fi.name+"…",20000);const u=await HUELSAN.subir("documentos",fi);archivos.push({ruta:u.id,nombre:fi.name,tipo:fi.type,size:fi.size,subido:new Date().toISOString()})}
+    const l=x.lote;const d={loteId:l?l.id:"",matricula:x.matricula.startsWith("lote:")?"":x.matricula,tipo:r.tipo,nota:r.nota,fecha:hoyISO(),archivos,creado:new Date().toISOString()};
+    await S.db.doc("docscoche/"+id).set(d);
+    const g=r.gastoId&&S.gastos.get(r.gastoId);if(g)await copiarAGasto({...d,id},g);
+    toast(g?"Documento guardado y adjuntado a la factura de seguro":"Documento guardado");pintar()}catch(e){toast("No se ha podido guardar: "+e.message,6000)}}
+async function adjuntarPolizaAGasto(docId){
+  const d=S.docsCoche.get(docId);if(!d)return;const x=[...porMatricula()].find(y=>docsPropios(y).some(z=>z.id===docId));if(!x)return;
+  const seg=gastosSeguro(x);if(!seg.length){toast("Este coche no tiene facturas de seguro");return}
+  const f=$("#f-confirm");f.innerHTML=`<h2>Adjuntar a factura de seguro</h2><label>Factura<select name="g">${seg.map(g=>`<option value="${esc(g.id)}">${esc(fecha(g.fecha))} · ${esc(g.proveedor||"Seguro")} · ${esc(eur(g.total))}</option>`).join("")}</select></label>
+    <div class="row" style="justify-content:flex-end"><button class="btn" value="no" formnovalidate>Cancelar</button><button class="btn primary" value="si">Adjuntar</button></div>`;
+  const dlg=$("#dlg-confirm");dlg.returnValue="";dlg.showModal();
+  const gid=await new Promise(ok=>{dlg.onclose=()=>ok(dlg.returnValue==="si"?String(new FormData(f).get("g")):"")});if(!gid)return;
+  try{toast("Adjuntando…",20000);await copiarAGasto({...d,id:docId},S.gastos.get(gid));toast("Póliza adjuntada a la factura");pintar()}catch(e){toast("No se ha podido adjuntar: "+e.message,6000)}}
+async function borrarDocumento(docId){
+  const d=S.docsCoche.get(docId);if(!d)return;const g=gastoConDoc(d);
+  if(!await confirmar("¿Eliminar este documento?",`${d.tipo}${d.nota?" · "+d.nota:""}. Se borran sus archivos.${g?` También se quitará la copia adjunta a la factura de ${g.proveedor||"seguro"}.`:""}`,"Sí, eliminar"))return;
+  try{for(const a of d.archivos||[])await HUELSAN.borrarArchivo("documentos",a.ruta).catch(()=>{});
+    if(g){const quitar=(g.archivos||[]).filter(a=>a.docId===d.id);for(const a of quitar)await HUELSAN.borrarArchivo("documentos",a.ruta).catch(()=>{});
+      await S.db.doc("gastos/"+g.id).update({archivos:(g.archivos||[]).filter(a=>a.docId!==d.id),actualizado:new Date().toISOString()})}
+    await S.db.doc("docscoche/"+docId).delete();toast("Documento eliminado");pintar()}catch(e){toast("No se ha podido eliminar: "+e.message,6000)}}
 
 /* ======================================================================
    POR MATRÍCULA: compra + gastos + ventas = margen
    ====================================================================== */
 function porMatricula(){
   const m=new Map();
-  const get=k=>{if(!m.has(k))m.set(k,{matricula:k,lote:null,titulo:"",compra:0,compraRebu:0,gastos:0,iva:0,ventas:0,ventaRebu:0,ventaBase:0,ventaCuota:0,facturas:[],docs:[],gastosApp:0});return m.get(k)};
+  const get=k=>{if(!m.has(k))m.set(k,{matricula:k,lote:null,titulo:"",compra:0,compraRebu:0,gastos:0,iva:0,ventas:0,ventaRebu:0,ventaBase:0,ventaCuota:0,facturas:[],docs:[],gastosApp:0,appSinFactura:[],sinFactura:0});return m.get(k)};
   for(const l of S.lotes){if(!["comprado","stock","vendido"].includes(l.estado))continue;const k=normMat(l.matricula)||("lote:"+l.id);const x=get(k);x.lote=l;x.titulo=[l.marca,l.modelo].filter(Boolean).join(" ");
     const tieneCompra=[...S.gastos.values()].some(g=>g.categoria==="Compra del vehículo"&&(g.loteId===l.id||(normMat(l.matricula)&&normMat(g.matricula)===normMat(l.matricula))));
     if(l.precioCompra&&!l.precioCompraGasto&&!tieneCompra){x.compra+=+l.precioCompra;if(l.iva!=="General")x.compraRebu+=+l.precioCompra}
-    for(const gd of Array.isArray(l.gastosDetalle)?l.gastosDetalle:[])if(!gd.gastoId){x.gastos+=+gd.importe||0;x.gastosApp+=+gd.importe||0}
-    if(!Array.isArray(l.gastosDetalle)&&+l.gastos>0){x.gastos+=+l.gastos;x.gastosApp+=+l.gastos}}
+    for(const gd of Array.isArray(l.gastosDetalle)?l.gastosDetalle:[])if(!gd.gastoId){x.gastos+=+gd.importe||0;x.gastosApp+=+gd.importe||0;x.appSinFactura.push(gd)}
+    if(!Array.isArray(l.gastosDetalle)&&+l.gastos>0){x.gastos+=+l.gastos;x.gastosApp+=+l.gastos;x.appSinFactura.push({id:"g0",categoria:"Otros",concepto:"Gastos anotados antes del desglose",importe:+l.gastos})}}
   for(const g of S.gastos.values()){const l=g.loteId&&S.lotes.find(y=>y.id===g.loteId);const k=normMat(g.matricula)||(l?normMat(l.matricula)||("lote:"+l.id):"");if(!k)continue;const x=get(k);
     if(!x.titulo&&l)x.titulo=[l.marca,l.modelo].filter(Boolean).join(" ");
-    if(g.categoria==="Compra del vehículo"){x.compra+=gastoCoste(g);if(g.regimen!=="General")x.compraRebu+=gastoCoste(g)}else x.gastos+=gastoCoste(g);
+    if(g.categoria==="Compra del vehículo"){const cv=costeVehiculo(g);x.compra+=cv;if(regimenVehiculo(g)!=="General")x.compraRebu+=cv;x.gastos+=r2(gastoCoste(g)-cv)}else x.gastos+=gastoCoste(g);
+    if(g.sinFactura)x.sinFactura+=gastoCoste(g);
     x.iva+=gastoCuota(g);x.docs.push(g)}
   for(const f of emitidas()){const k=normMat(f.vehiculo&&f.vehiculo.matricula);if(!k)continue;const x=get(k);if(!x.titulo)x.titulo=[f.vehiculo.marca,f.vehiculo.modelo].filter(Boolean).join(" ");
     const e=efecto(f);x.ventaRebu+=e.rebu;x.ventaBase+=e.base;x.ventaCuota+=e.cuota;x.ventas+=e.rebu+e.base;x.facturas.push(f)}
@@ -633,7 +884,7 @@ function vistaMatriculas(){
   if(S.mat){const x=lista.find(y=>y.matricula===S.mat);if(x)return detalleMatricula(x);S.mat=null}
   const fil=lista.filter(x=>!q||x.matricula.includes(q)||x.titulo.toLowerCase().includes(qt)).sort((a,b)=>(b.facturas.length?1:0)-(a.facturas.length?1:0)||b.coste-a.coste);
   const T=k=>r2(fil.reduce((s,x)=>s+x[k],0));
-  return`<div><h1>Contabilidad por matrícula</h1><p class="muted" style="margin:4px 0 0">Cada coche con su compra, sus gastos y su venta. El margen neto descuenta el IVA del REBU (21/121 del margen de las ventas en REBU). Son cifras orientativas: la liquidación la confirma la gestoría.</p></div>
+  return`<div><h1>Contabilidad por matrícula</h1><p class="muted" style="margin:4px 0 0">Cada coche con su compra, sus gastos y su venta. Los gastos con IVA deducible cuentan por su base (el IVA se recupera); los de REBU, sin IVA o en efectivo sin factura, por el total. El margen neto descuenta el IVA del REBU (21/121 del margen de las ventas en REBU). Son cifras orientativas: la liquidación la confirma la gestoría.</p></div>
   <label>Buscar<input type="search" data-mq value="${esc(S.mq||"")}" placeholder="Matrícula, marca o modelo"></label>
   <div class="kpis"><div class="kpi"><b>${eur(T("coste"))}</b><span>compras + gastos</span></div><div class="kpi"><b>${eur(T("ventas"))}</b><span>ventas (sin IVA general)</span></div><div class="kpi"><b>${eur(T("margen"))}</b><span>margen bruto</span></div><div class="kpi"><b>${eur(T("margenNeto"))}</b><span>margen tras IVA del REBU</span></div></div>
   ${fil.length?`<div class="tw"><table><thead><tr><th>Matrícula</th><th>Vehículo</th><th>Estado</th><th class="num">Compra</th><th class="num">Gastos</th><th class="num">Venta</th><th class="num">Margen</th><th class="num">IVA REBU</th><th class="num">Margen neto</th><th>Documentos</th></tr></thead><tbody>
@@ -641,29 +892,37 @@ function vistaMatriculas(){
       <td>${x.lote?esc(({comprado:"Comprado",stock:"Stock",vendido:"Vendido"})[x.lote.estado]||x.lote.estado):x.facturas.length?"Vendido":"—"}</td>
       <td class="num">${eur(x.compra)}</td><td class="num">${eur(x.gastos)}</td><td class="num">${x.ventas?eur(x.ventas):"—"}</td>
       <td class="num" style="color:${x.ventas?(x.margen>=0?"var(--ok)":"var(--bad)"):"inherit"}">${x.ventas?eur(x.margen):"—"}</td><td class="num">${x.ivaRebu?eur(x.ivaRebu):"—"}</td><td class="num"><b>${x.ventas?eur(x.margenNeto):"—"}</b></td>
-      <td>${x.facturas.length?`<span class="tag ok">${x.facturas.length} venta</span> `:""}${x.docs.length?`<span class="tag acc">${x.docs.length} gasto${x.docs.length>1?"s":""}</span>`:""}${!x.docs.some(g=>g.categoria==="Compra del vehículo")&&x.compra?` <span class="tag warn">sin factura de compra</span>`:""}</td></tr>`).join("")}
+      <td>${x.facturas.length?`<span class="tag ok">${x.facturas.length} venta</span> `:""}${x.docs.length?`<span class="tag acc">${x.docs.length} gasto${x.docs.length>1?"s":""}</span>`:""}${docsTotales(x)?` <span class="tag">${docsTotales(x)} doc${docsTotales(x)>1?"s":""}</span>`:""}${!x.docs.some(g=>g.categoria==="Compra del vehículo")&&x.compra?` <span class="tag warn">sin factura de compra</span>`:""}${x.appSinFactura.length?` <span class="tag bad">${x.appSinFactura.length} sin factura</span>`:""}</td></tr>`).join("")}
   </tbody></table></div>`:`<div class="vacio">Aún no hay coches comprados, gastos ni ventas.</div>`}`;
 }
 function detalleMatricula(x){
   const l=x.lote;
   return`<div class="row sp"><div class="row"><button class="btn sm" data-acc="mat-volver">← Todas</button><h1>${x.matricula.startsWith("lote:")?"Sin matrícula":`<span class="mat" style="font-size:18px">${esc(x.matricula)}</span>`} ${esc(x.titulo)}</h1></div>
     <span class="row"><button class="btn" data-acc="mat-gasto">+ Subir factura de compra o gasto</button>${l&&l.estado!=="vendido"&&!x.facturas.length?`<button class="btn primary" data-acc="mat-facturar">Crear factura de venta</button>`:""}</span></div>
-  <div class="kpis"><div class="kpi"><b>${eur(x.compra)}</b><span>compra</span></div><div class="kpi"><b>${eur(x.gastos)}</b><span>gastos</span></div><div class="kpi"><b>${x.ventas?eur(x.ventas):"—"}</b><span>venta (sin IVA general)</span></div>
+  <div class="kpis"><div class="kpi"><b>${eur(x.compra)}</b><span>compra</span></div><div class="kpi"><b>${eur(x.gastos)}</b><span>gastos (sin IVA deducible)</span></div><div class="kpi"><b>${eur(x.iva)}</b><span>IVA soportado (se recupera)</span></div><div class="kpi"><b>${x.ventas?eur(x.ventas):"—"}</b><span>venta (sin IVA general)</span></div>
     <div class="kpi"><b>${x.ventas?eur(x.margen):"—"}</b><span>margen bruto</span></div><div class="kpi"><b>${x.ivaRebu?eur(x.ivaRebu):"—"}</b><span>IVA del REBU</span></div><div class="kpi"><b>${x.ventas?eur(x.margenNeto):"—"}</b><span>margen neto</span></div></div>
-  ${l?`<p class="muted" style="margin:0">${esc([l.vin?"Bastidor "+l.vin:"",l.anio,l.km?miles(String(Math.round(l.km)))+" km":"",l.combustible,l.iva?"Compra en "+l.iva:""].filter(Boolean).join(" · "))}${x.gastosApp?` · ${eur(x.gastosApp)} de gastos anotados en la ficha del coche (sin factura subida)`:""}</p>`:""}
+  ${l?`<p class="muted" style="margin:0">${esc([l.vin?"Bastidor "+l.vin:"",l.anio,l.km?miles(String(Math.round(l.km)))+" km":"",l.combustible,l.iva?"Compra en "+l.iva:""].filter(Boolean).join(" · "))}</p>`:""}
+  ${x.appSinFactura.length?`<div class="card" style="border-color:var(--bad)"><h3 style="color:var(--bad)">Gastos anotados en la ficha sin factura (${eur(x.gastosApp)})</h3>
+    <p class="muted" style="margin:0">Cada gasto necesita su factura. Súbela (se leen el IVA y la base) o márcalo como pago en efectivo sin factura.</p>
+    <div class="tw"><table><tbody>${x.appSinFactura.map(gd=>`<tr><td>${gd.fecha?fecha(gd.fecha):"—"}</td><td>${esc(gd.categoria||"Otros")}</td><td>${esc(gd.concepto||"")}</td><td class="num">${eur(gd.importe)}</td>
+      <td style="white-space:nowrap">${l&&gd.id!=="g0"?`<button class="btn sm primary" data-subir-detalle="${esc(l.id)}|${esc(gd.id)}">Subir factura</button> `:""}${l?`<button class="btn sm" data-sinf-detalle="${esc(l.id)}|${esc(gd.id)}" title="Pago en efectivo sin factura">Sin factura</button> <button class="btn sm" data-del-detalle="${esc(l.id)}|${esc(gd.id)}" title="Eliminar este gasto de la ficha" aria-label="Eliminar gasto">✕</button>`:""}</td></tr>`).join("")}</tbody></table></div></div>`:""}
+  ${tarjetaDocs(x)}
   <h3>Ventas</h3>${x.facturas.length?`<div class="tw"><table><tbody>${x.facturas.map(f=>`<tr data-ir-factura="${esc(f.id)}" style="cursor:pointer"><td><b>${esc(f.codigo)}</b></td><td>${fecha(f.fechaExpedicion)}</td><td>${esc(f.cliente&&f.cliente.nombre)}</td><td>${etiquetaEstado(f)}</td><td class="num">${eur(f.totales&&f.totales.total)}</td></tr>`).join("")}</tbody></table></div>`:`<p class="muted" style="margin:0">Sin facturas de venta.</p>`}
-  <h3>Compras y gastos con factura</h3>${x.docs.length?`<div class="tw"><table><tbody>${x.docs.sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha))).map(g=>`<tr data-gasto="${esc(g.id)}" style="cursor:pointer"><td>${fecha(g.fecha)}</td><td>${esc(g.categoria)}</td><td>${esc(g.proveedor||"")}<div class="muted">${esc(g.concepto||"")}</div></td><td class="num">${eur(gastoCoste(g))}</td>
-    <td>${(g.archivos||[]).map(a=>`<button class="btn sm" data-ver-archivo="${esc(a.ruta)}" data-nombre="${esc(a.nombre)}">${esc(a.nombre.length>24?a.nombre.slice(0,22)+"…":a.nombre)}</button>`).join(" ")||`<span class="tag warn">Sin archivo</span>`}</td></tr>`).join("")}</tbody></table></div>`:`<p class="muted" style="margin:0">Aún no hay facturas de compra ni de gastos de este coche.</p>`}`;
+  <h3>Compras y gastos</h3>${x.docs.length?`<div class="tw"><table><thead><tr><th>Fecha</th><th>Categoría</th><th>Proveedor</th><th>Régimen</th><th class="num">Total pagado</th><th class="num">IVA deducible</th><th class="num">Coste al coche</th><th>Factura</th></tr></thead><tbody>${x.docs.sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha))).map(g=>`<tr data-gasto="${esc(g.id)}" style="cursor:pointer"><td>${fecha(g.fecha)}</td><td>${esc(g.categoria)}</td><td>${esc(g.proveedor||"")}<div class="muted">${esc(g.concepto||"")}</div></td><td>${esc(regimenTexto(g))}</td><td class="num">${eur(g.total)}</td><td class="num">${gastoCuota(g)?eur(gastoCuota(g)):"—"}</td><td class="num"><b>${eur(gastoCoste(g))}</b></td>
+    <td>${g.sinFactura?`<span class="tag">Efectivo sin factura</span>`:(g.archivos||[]).map(a=>`<button class="btn sm" data-ver-archivo="${esc(a.ruta)}" data-nombre="${esc(a.nombre)}">${esc(a.nombre.length>24?a.nombre.slice(0,22)+"…":a.nombre)}</button>`).join(" ")||`<span class="tag bad">Falta factura</span>`}</td></tr>`).join("")}</tbody></table></div>`:`<p class="muted" style="margin:0">Aún no hay facturas de compra ni de gastos de este coche.</p>`}`;
 }
 
 /* ======================================================================
    IVA Y LIBROS
    ====================================================================== */
+const enPeriodo=(f,anio,tq)=>String(f||"").startsWith(anio)&&(!tq||trimestre(f)===+tq);
+const per=()=>S.res.tq?S.res.tq+"T "+S.res.anio:S.res.anio;
+const sufijo=(anio,tq)=>tq?`${anio}-${tq}T`:anio;
 function vistaResumen(){
-  const anio=S.res.anio;const anios=aniosDe([...emitidas().map(f=>f.fechaExpedicion),...[...S.gastos.values()].map(g=>g.fecha)]);
+  const anio=S.res.anio;S.res.filas=null;const anios=aniosDe([...emitidas().map(f=>f.fechaExpedicion),...[...S.gastos.values()].map(g=>g.fecha)]);
   const filas=[1,2,3,4].map(tq=>{
     const fs=emitidas().filter(f=>String(f.fechaExpedicion||"").startsWith(anio)&&trimestre(f.fechaExpedicion)===tq);
-    const gs=[...S.gastos.values()].filter(g=>String(g.fecha||"").startsWith(anio)&&trimestre(g.fecha)===tq);
+    const gs=[...S.gastos.values()].filter(g=>!g.sinFactura&&String(g.fecha||"").startsWith(anio)&&trimestre(g.fecha)===tq);
     const rep={};let rebuVentas=0;
     for(const f of fs){const e=efecto(f);rebuVentas+=e.rebu;for(const g of e.grupos){const x=rep[g.tipo]=rep[g.tipo]||{base:0,cuota:0};x.base+=g.base;x.cuota+=g.cuota}}
     // REBU por operación: margen de cada coche vendido en el trimestre (venta REBU − su compra REBU)
@@ -671,48 +930,59 @@ function vistaResumen(){
     for(const f of fs){const k=normMat(f.vehiculo&&f.vehiculo.matricula);if(!k||vistos.has(k))continue;vistos.add(k);
       const x=porMatricula().find(y=>y.matricula===k);if(x&&x.ventaRebu>0)margenRebu+=Math.max(0,x.ventaRebu-x.compraRebu)}
     const baseRebu=r2(margenRebu/1.21),cuotaRebu=r2(margenRebu-baseRebu);
-    const sop=r2(gs.reduce((s,g)=>s+gastoCuota(g),0)),sopBase=r2(gs.filter(g=>g.regimen==="General").reduce((s,g)=>s+(+g.base||0),0));
+    const sop=r2(gs.reduce((s,g)=>s+gastoCuota(g),0)),sopBase=r2(gs.reduce((s,g)=>s+gastoBase(g),0));
     const cuotaRep=r2(Object.values(rep).reduce((s,x)=>s+x.cuota,0));
     return{tq,n:fs.length,rep,rebuVentas:r2(rebuVentas),margenRebu:r2(margenRebu),baseRebu,cuotaRebu,sop,sopBase,cuotaRep,resultado:r2(cuotaRep+cuotaRebu-sop)};
-  });
+  });S.res.filas=filas;
   return`<div class="row sp"><div><h1>IVA y libros registro</h1><p class="muted" style="margin:4px 0 0">Resumen por trimestre para preparar el modelo 303 con la gestoría y descarga de los libros (en CSV, se abren con Excel). Orientativo: el REBU se calcula coche a coche con el margen de venta sobre su compra.</p></div>
     <label style="max-width:120px">Año<select data-ra>${anios.map(a=>`<option ${a===anio?"selected":""}>${a}</option>`).join("")}</select></label></div>
-  <div class="tw"><table><thead><tr><th>Trimestre</th><th class="num">Facturas</th><th class="num">Base general</th><th class="num">IVA repercutido</th><th class="num">Ventas REBU</th><th class="num">Margen REBU</th><th class="num">IVA del REBU</th><th class="num">IVA soportado</th><th class="num">Resultado</th></tr></thead><tbody>
+  <div class="tw"><table><thead><tr><th>Trimestre</th><th class="num">Facturas</th><th class="num">Base general</th><th class="num">IVA repercutido</th><th class="num">Ventas REBU</th><th class="num">Margen REBU</th><th class="num">IVA del REBU</th><th class="num">IVA soportado</th><th class="num">Resultado</th><th></th></tr></thead><tbody>
     ${filas.map(r=>`<tr><td><b>${r.tq}T ${anio}</b></td><td class="num">${r.n}</td><td class="num">${eur(Object.values(r.rep).reduce((s,x)=>s+x.base,0))}</td><td class="num">${eur(r.cuotaRep)}</td><td class="num">${eur(r.rebuVentas)}</td><td class="num">${eur(r.margenRebu)}</td><td class="num">${eur(r.cuotaRebu)}</td><td class="num">${eur(r.sop)}</td>
-      <td class="num"><b style="color:${r.resultado>0?"var(--bad)":"var(--ok)"}">${eur(r.resultado)}</b><div class="muted">${r.resultado>0?"a ingresar":r.resultado<0?"a compensar":""}</div></td></tr>`).join("")}
+      <td class="num"><b style="color:${r.resultado>0?"var(--bad)":"var(--ok)"}">${eur(r.resultado)}</b><div class="muted">${r.resultado>0?"a ingresar":r.resultado<0?"a compensar":""}</div></td><td><button class="btn sm" data-tq-bajar="${r.tq}">Libros del ${r.tq}T ↓</button></td></tr>`).join("")}
   </tbody></table></div>
-  <div class="card"><h3>Descargas</h3><div class="row">
-    <button class="btn" data-acc="csv-expedidas">Libro de facturas expedidas ${anio}</button>
-    <button class="btn" data-acc="csv-recibidas">Libro de facturas recibidas ${anio}</button>
-    <button class="btn" data-acc="csv-rebu">Libro de bienes usados (REBU) ${anio}</button>
-    <button class="btn" data-acc="zip-pdf">Todas las facturas ${anio} en PDF (ZIP)</button></div>
+  <div class="card"><div class="row sp"><h3>Descargas</h3><label style="max-width:200px;flex-direction:row;align-items:center;gap:8px">Periodo<select data-rt><option value="">Año ${anio} completo</option>${[1,2,3,4].map(t=>`<option value="${t}" ${+S.res.tq===t?"selected":""}>${t}º trimestre ${anio}</option>`).join("")}</select></label></div>
+    <div class="row">
+    <button class="btn" data-acc="csv-resumen">Resumen de IVA (modelo 303) ${per()}</button>
+    <button class="btn" data-acc="csv-expedidas">Libro de facturas expedidas ${per()}</button>
+    <button class="btn" data-acc="csv-recibidas">Libro de facturas recibidas ${per()}</button>
+    <button class="btn" data-acc="csv-rebu">Libro de bienes usados (REBU) ${per()}</button>
+    <button class="btn" data-acc="zip-pdf">Facturas emitidas ${per()} en PDF (ZIP)</button>
+    <button class="btn" data-acc="zip-recibidas">Facturas recibidas ${per()} (ZIP)</button></div>
+    <p class="muted" style="margin:0">Los pagos en efectivo sin factura no salen en los libros de IVA (sí en los balances de los coches).</p>
     <p class="muted" style="margin:0">Conservad las facturas y estos libros al menos 4 años (Ley General Tributaria) y 6 años la documentación contable (Código de Comercio).</p></div>`;
 }
 function bajarCSV(nombre,filas){
   const csv="﻿"+filas.map(f=>f.map(v=>{const s=typeof v==="number"?(Number.isInteger(v)?String(v):numES(v).replace(/\./g,"")):String(v??"");return/[;"\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s}).join(";")).join("\r\n");
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download=nombre;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
 }
-function csvExpedidas(anio){
-  const fs=emitidas().filter(f=>String(f.fechaExpedicion||"").startsWith(anio)).sort((a,b)=>String(a.serie).localeCompare(String(b.serie))||a.numero-b.numero);
+function csvExpedidas(anio,tq){
+  const fs=emitidas().filter(f=>enPeriodo(f.fechaExpedicion,anio,tq)).sort((a,b)=>String(a.serie).localeCompare(String(b.serie))||a.numero-b.numero);
   const filas=[["Fecha expedición","Fecha operación","Serie","Número","Factura","Tipo","Rectifica a","Motivo","Cliente","NIF","Matrícula","Bastidor","Régimen","Base imponible","Tipo IVA %","Cuota IVA","Importe REBU","Total factura","Estado","Huella"]];
   for(const f of fs){const t=f.totales||calcular(f.lineas);const base=[f.fechaExpedicion,f.fechaOperacion||"",f.serie,f.numero,f.codigo,f.tipo==="rectificativa"?"Rectificativa ("+((f.rectifica||{}).tipo||"")+")":"Ordinaria",(f.rectifica||{}).codigo||"",(f.rectifica||{}).motivo||"",f.cliente.nombre,f.cliente.nif,(f.vehiculo||{}).matricula||"",(f.vehiculo||{}).bastidor||""];
     const est=f.anulada?"Anulada":f.estado==="rectificada"?"Rectificada":"Emitida";
     if(t.rebu)filas.push([...base,TXT_REBU,"","","",t.rebu,t.total,est,f.huella||""]);
     for(const g of t.grupos)filas.push([...base,"General",g.base,g.tipo,g.cuota,"",t.total,est,f.huella||""])}
-  bajarCSV(`libro-expedidas-${anio}.csv`,filas);
+  bajarCSV(`libro-expedidas-${sufijo(anio,tq)}.csv`,filas);
 }
-function csvRecibidas(anio){
-  const gs=[...S.gastos.values()].filter(g=>String(g.fecha||"").startsWith(anio)).sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha)));
-  const filas=[["Fecha","Proveedor","NIF proveedor","Nº factura","Categoría","Concepto","Matrícula","Régimen","Base imponible","Tipo IVA %","Cuota IVA deducible","Total","Pagada","Archivos"]];
-  gs.forEach(g=>filas.push([g.fecha,g.proveedor,g.nifProveedor||"",g.numFactura||"",g.categoria,g.concepto||"",g.matricula||"",g.regimen,g.regimen==="General"?g.base:"",g.regimen==="General"?g.ivaTipo:"",gastoCuota(g),g.total,g.pagado?"Sí":"No",(g.archivos||[]).length]));
-  bajarCSV(`libro-recibidas-${anio}.csv`,filas);
+function csvRecibidas(anio,tq){
+  const gs=[...S.gastos.values()].filter(g=>!g.sinFactura&&enPeriodo(g.fecha,anio,tq)).sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha)));
+  const filas=[["Fecha","Proveedor","NIF proveedor","Nº factura","Categoría","Concepto","Matrícula","Línea","Régimen","Base imponible","Tipo IVA %","Cuota IVA deducible","Importe sin IVA / REBU","Total línea","Total factura","Forma de pago","Pagada","Archivos"]];
+  for(const g of gs)for(const l of lineasDe(g)){const gen=l.regimen==="General";
+    filas.push([g.fecha,g.proveedor,g.nifProveedor||"",g.numFactura||"",g.categoria,g.concepto||"",g.matricula||"",l.concepto||"",gen?"General":l.regimen==="REBU"?TXT_REBU:"Exento / no sujeto",gen?l.base:"",gen?l.ivaTipo:"",gen?l.cuota:"",gen?"":l.total,l.total,g.total,g.formaPago||"",g.pagado?"Sí":"No",(g.archivos||[]).length])}
+  bajarCSV(`libro-recibidas-${sufijo(anio,tq)}.csv`,filas);
 }
-function csvRebu(anio){
+function csvResumen(anio,tq){
+  if(!S.res.filas)vistaResumen();const fl=(S.res.filas||[]).filter(r=>!tq||r.tq===+tq);
+  const filas=[["Periodo","Facturas emitidas","Base IVA general","IVA repercutido","Ventas REBU","Margen REBU","Base REBU (margen/1,21)","IVA del REBU","Base IVA soportado","IVA soportado deducible","Resultado (a ingresar + / a compensar −)"]];
+  for(const r of fl)filas.push([r.tq+"T "+anio,r.n,r2(Object.values(r.rep).reduce((s,x)=>s+x.base,0)),r.cuotaRep,r.rebuVentas,r.margenRebu,r.baseRebu,r.cuotaRebu,r.sopBase,r.sop,r.resultado]);
+  bajarCSV(`resumen-iva-${sufijo(anio,tq)}.csv`,filas);
+}
+function csvRebu(anio,tq){
   const filas=[["Matrícula","Vehículo","Bastidor","Documento de compra","Fecha compra","Precio de compra","Factura de venta","Fecha venta","Precio de venta","Margen","Base imponible (margen/1,21)","IVA (21 %)"]];
-  for(const x of porMatricula()){const vs=x.facturas.filter(f=>String(f.fechaExpedicion||"").startsWith(anio)&&efecto(f).rebu);if(!vs.length||!r2(x.ventaRebu))continue;
+  for(const x of porMatricula()){const vs=x.facturas.filter(f=>enPeriodo(f.fechaExpedicion,anio,tq)&&efecto(f).rebu);if(!vs.length||!r2(x.ventaRebu))continue;
     const comp=x.docs.filter(g=>g.categoria==="Compra del vehículo");const m=r2(x.ventaRebu-x.compraRebu);const base=m>0?r2(m/1.21):0;
     filas.push([x.matricula,x.titulo,(x.lote&&x.lote.vin)||(vs[0].vehiculo||{}).bastidor||"",comp.map(g=>[g.proveedor,g.numFactura].filter(Boolean).join(" ")).join(" / ")||"Ficha del coche",comp[0]&&comp[0].fecha||"",x.compraRebu,vs.map(f=>f.codigo).join(" / "),vs[vs.length-1].fechaExpedicion,x.ventaRebu,m,base,m>0?r2(m-base):0])}
-  bajarCSV(`libro-bienes-usados-${anio}.csv`,filas);
+  bajarCSV(`libro-bienes-usados-${sufijo(anio,tq)}.csv`,filas);
 }
 
 /* ======================================================================
@@ -750,12 +1020,16 @@ function accionesOtras(a){
   else if(a==="importar-demandas")importarDemandas().catch(e=>toast(e.message));
   else if(a==="gasto-alta")abrirGasto(null);
   else if(a==="mat-volver"){S.mat=null;pintar()}
-  else if(a==="mat-gasto"){const x=porMatricula().find(y=>y.matricula===S.mat);abrirGasto(null,{matricula:S.mat.startsWith("lote:")?"":S.mat,loteId:x&&x.lote?x.lote.id:"",categoria:x&&!x.docs.some(g=>g.categoria==="Compra del vehículo")?"Compra del vehículo":"Transporte y portes",regimen:x&&!x.docs.some(g=>g.categoria==="Compra del vehículo")&&x.lote&&x.lote.iva!=="General"?"REBU":"General"})}
+  else if(a==="mat-gasto"){const x=porMatricula().find(y=>y.matricula===S.mat);abrirGasto(null,{matricula:S.mat.startsWith("lote:")?"":S.mat,loteId:x&&x.lote?x.lote.id:"",categoria:x&&!x.docs.some(g=>g.categoria==="Compra del vehículo")?"Compra del vehículo":"Transporte y portes",lineas:(()=>{const c=x&&!x.docs.some(g=>g.categoria==="Compra del vehículo");return[lineaNueva(c,c&&x.lote&&x.lote.iva!=="General"?"REBU":"General")]})()})}
   else if(a==="mat-facturar"){const x=porMatricula().find(y=>y.matricula===S.mat);S.tab="facturas";pintarTabs();nuevaFactura({loteId:x&&x.lote?x.lote.id:""})}
-  else if(a==="csv-expedidas")csvExpedidas(S.res.anio);
-  else if(a==="csv-recibidas")csvRecibidas(S.res.anio);
-  else if(a==="csv-rebu")csvRebu(S.res.anio);
-  else if(a==="zip-pdf")zipPDF(S.res.anio).catch(e=>toast(e.message,6000));
+  else if(a==="csv-expedidas")csvExpedidas(S.res.anio,S.res.tq);
+  else if(a==="csv-recibidas")csvRecibidas(S.res.anio,S.res.tq);
+  else if(a==="csv-rebu")csvRebu(S.res.anio,S.res.tq);
+  else if(a==="csv-resumen")csvResumen(S.res.anio,S.res.tq);
+  else if(a==="zip-pdf")zipPDF(S.res.anio,S.res.tq).catch(e=>toast(e.message,6000));
+  else if(a==="zip-recibidas")zipRecibidas(S.res.anio,S.res.tq).catch(e=>toast(e.message,6000));
+  else if(a==="prov-alta")abrirProveedor(null);
+  else if(a==="prov-importar")importarProveedores().catch(e=>toast(e.message,6000));
   else if(a==="guardar-emisor")guardarEmisor().catch(e=>toast(e.message,6000));
 }
 document.addEventListener("click",e=>{
@@ -766,6 +1040,15 @@ document.addEventListener("click",e=>{
   const va=t.closest("[data-ver-archivo]");if(va&&!t.closest("dialog")){e.stopPropagation();verArchivo(va.dataset.verArchivo,va.dataset.nombre);return}
   const gs=t.closest("[data-gasto]");if(gs){abrirGasto(gs.dataset.gasto);return}
   const mt=t.closest("[data-mat]");if(mt){S.mat=mt.dataset.mat;pintar();scrollTo(0,0);return}
+  const pv=t.closest("[data-prov]");if(pv){abrirProveedor(pv.dataset.prov);return}
+  const da=t.closest("[data-doc-add]");if(da){e.stopPropagation();anadirDocumento(da.dataset.docAdd);return}
+  const dx=t.closest("[data-doc-del]");if(dx){e.stopPropagation();borrarDocumento(dx.dataset.docDel);return}
+  const dj=t.closest("[data-doc-adj]");if(dj){e.stopPropagation();adjuntarPolizaAGasto(dj.dataset.docAdj);return}
+  const sf=t.closest("[data-sinf-detalle]");if(sf){e.stopPropagation();const[lid,did]=sf.dataset.sinfDetalle.split("|");marcarDetalleSinFactura(lid,did);return}
+  const dd=t.closest("[data-del-detalle]");if(dd){e.stopPropagation();const[lid,did]=dd.dataset.delDetalle.split("|");eliminarDetalle(lid,did);return}
+  const sd=t.closest("[data-subir-detalle]");if(sd){e.stopPropagation();const[lid,did]=sd.dataset.subirDetalle.split("|");subirFacturaDetalle(lid,did);return}
+  const it=t.closest("[data-ir-tab]");if(it){e.preventDefault();S.tab=it.dataset.irTab;S.ed=null;history.replaceState(null,"","?tab="+S.tab);pintarTabs();pintar();return}
+  const tb=t.closest("[data-tq-bajar]");if(tb){S.res.tq=tb.dataset.tqBajar;pintar();const c=$("[data-rt]");if(c)c.closest(".card").scrollIntoView({behavior:"smooth",block:"center"});toast("Descargas del "+S.res.tq+"º trimestre");return}
 },true);
 
 /* ======================================================================
@@ -871,9 +1154,17 @@ async function descargarPDF(f){
   if(f.estado!=="borrador"&&!f.pdfDescargado)try{await S.db.doc("facturas/"+f.id).update({pdfDescargado:new Date().toISOString()});f.pdfDescargado=true}catch(e){}
   if(f.estado!=="borrador"&&!f.entregada&&!f.anulada)toast("PDF descargado. Cuando se lo entregues al cliente, pulsa «Marcar como entregada».",5000);
 }
-async function zipPDF(anio){
-  const fs=emitidas().filter(f=>String(f.fechaExpedicion||"").startsWith(anio));if(!fs.length)throw new Error("No hay facturas emitidas en "+anio);
+async function cargarJSZip(){if(!window.JSZip)await new Promise((ok,ko)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";s.onload=ok;s.onerror=()=>ko(new Error("No se ha podido cargar el compresor"));document.head.appendChild(s)})}
+async function zipRecibidas(anio,tq){
+  const gs=[...S.gastos.values()].filter(g=>!g.sinFactura&&enPeriodo(g.fecha,anio,tq)&&(g.archivos||[]).length);if(!gs.length)throw new Error("No hay facturas recibidas con archivo en ese periodo");
+  await cargarJSZip();const z=new JSZip();let i=0;
+  for(const g of gs)for(const a of g.archivos){toast(`Descargando ${++i}…`,20000);const b=await HUELSAN.bajar("documentos",a.ruta);
+    const ext=(a.nombre.match(/\.[a-z0-9]+$/i)||[".pdf"])[0];z.file(`${g.fecha}_${(g.proveedor||"proveedor").replace(/[^\wÀ-ÿ]+/g,"-").slice(0,40)}_${(g.numFactura||g.id).replace(/[^\w-]+/g,"-")}${g.archivos.length>1?"_"+i:""}${ext}`,b)}
+  const el=document.createElement("a");el.href=URL.createObjectURL(await z.generateAsync({type:"blob"}));el.download=`facturas-recibidas-${sufijo(anio,tq)}.zip`;el.click();setTimeout(()=>URL.revokeObjectURL(el.href),4000);toast("ZIP descargado");
+}
+async function zipPDF(anio,tq){
+  const fs=emitidas().filter(f=>enPeriodo(f.fechaExpedicion,anio,tq));if(!fs.length)throw new Error("No hay facturas emitidas en ese periodo");
   if(!window.JSZip)await new Promise((ok,ko)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";s.onload=ok;s.onerror=()=>ko(new Error("No se ha podido cargar el compresor"));document.head.appendChild(s)});
   const z=new JSZip();let i=0;for(const f of fs){toast(`Generando ${++i}/${fs.length}…`,20000);z.file(`${f.codigo}.pdf`,(await pdfFactura(f)).output("blob"))}
-  const a=document.createElement("a");a.href=URL.createObjectURL(await z.generateAsync({type:"blob"}));a.download=`facturas-${anio}.zip`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast("ZIP descargado");
+  const a=document.createElement("a");a.href=URL.createObjectURL(await z.generateAsync({type:"blob"}));a.download=`facturas-emitidas-${sufijo(anio,tq)}.zip`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast("ZIP descargado");
 }

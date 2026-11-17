@@ -289,7 +289,10 @@ window.HUELSAN_HIST={
   aligerar:()=>listo.then(()=>api("/rest/v1/rpc/aligerar_historico",{method:"POST",body:"{}"})),
   precargar:ids=>listo.then(()=>precargarLotes(ids)),
 };
-window.HUELSAN={rest:(path,opt)=>listo.then(()=>api(path,opt)),subir:(bucket,blob,nombre)=>listo.then(()=>subir(bucket,blob,nombre)),bajar:(b,r)=>listo.then(()=>bajar(b,r)),borrarArchivo:(b,r)=>listo.then(()=>borrarArchivo(b,r)),rpc:(n,a)=>listo.then(()=>rpc(n,a)),email:()=>ses&&ses.email,SB_URL,FOTOS_WEB:SB_URL+"/storage/v1/object/public/fotos-web/"};
+window.HUELSAN={rest:(path,opt)=>listo.then(()=>api(path,opt)),subir:(bucket,blob,nombre)=>listo.then(()=>subir(bucket,blob,nombre)),bajar:(b,r)=>listo.then(()=>bajar(b,r)),borrarArchivo:(b,r)=>listo.then(()=>borrarArchivo(b,r)),rpc:(n,a)=>listo.then(()=>rpc(n,a)),funcion:async(nombre,cuerpo)=>{await listo;const t=await token();let r;
+  try{r=await fetch(SB_URL+"/functions/v1/"+nombre,{method:"POST",headers:{apikey:SB_KEY,Authorization:"Bearer "+t,"Content-Type":"application/json"},body:JSON.stringify(cuerpo||{})})}
+  catch(e){throw Object.assign(new Error("Sin conexión"),{code:"network"})}
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(j.msg||j.error||("HTTP "+r.status)),{code:j.error||("http"+r.status)});return j},email:()=>ses&&ses.email,SB_URL,FOTOS_WEB:SB_URL+"/storage/v1/object/public/fotos-web/"};
 
 /* ---------------- window.claude de reemplazo ---------------- */
 const noDisp=n=>Promise.reject(Object.assign(new Error(n+" no disponible en la web"),{code:"capability_disabled"}));
