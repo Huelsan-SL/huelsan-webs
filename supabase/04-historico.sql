@@ -6,7 +6,7 @@
 --      Se quitan los enlaces de BCA, las fotos de BCA salvo la primera (sirve de miniatura) y datos repetidos de la subasta.
 --      Se conservan las notas del vendedor, los precios, los daños y los datos del coche.
 --   2) Lotes de subastas de hace más de 1 año: pasan a la tabla «lotes_archivo» (la app no los carga, pero se pueden buscar).
---   Nunca toca lotes nuestros (interesante, pujar, comprado, stock, vendido) ni los publicados en la web.
+--   Nunca toca lotes nuestros (interesante, pujar, comprado, stock, vendido), ni los publicados en la web, ni los que tienen precio de venta (remate) conocido: esos se quedan siempre en el histórico.
 --   Se ejecuta sola el día 1 de cada mes a las 04:00 (UTC) y con el botón «Aligerar y archivar ahora» del Histórico.
 
 create table if not exists public.lotes_archivo (
@@ -38,6 +38,7 @@ begin
            'aligerado', to_char(now() at time zone 'UTC', 'YYYY-MM-DD'))
   where l.estado in ('nuevo','descartado') and not l.publico
     and l.subasta_fin is not null and l.subasta_fin < corte3m
+    and case when l.data->>'precioRemate' ~ '^[0-9]+([.][0-9]+)?$' then (l.data->>'precioRemate')::numeric else 0 end = 0
     and not (l.data ? 'aligerado');
   get diagnostics n_alig = row_count;
 
@@ -46,6 +47,7 @@ begin
     delete from public.lotes l
     where l.estado in ('nuevo','descartado') and not l.publico
       and l.subasta_fin is not null and l.subasta_fin < corte1a
+      and case when l.data->>'precioRemate' ~ '^[0-9]+([.][0-9]+)?$' then (l.data->>'precioRemate')::numeric else 0 end = 0
     returning l.id, l.data)
   insert into public.lotes_archivo (id, data)
   select id, data from movidos

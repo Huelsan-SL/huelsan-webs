@@ -55,14 +55,14 @@ function enc(s){return encodeURIComponent(s)}
 /* ---------------- lotes que se cargan al abrir la app ----------------
    Se cargan: los de subastas abiertas (o cerradas hace menos de 1 día), los nuestros (interesante, pujar, comprado,
    stock, vendido), los publicados en la web y, del histórico, solo los de grado mecánico A o B, daños 1 o 2 y con
-   precio de BCA (salida o puja). El resto sigue en la base de datos: se busca o se carga desde la pestaña Histórico. */
+   precio de BCA (salida o puja), más todos los que tienen precio de venta (remate) conocido. El resto sigue en la base de datos: se busca o se carga desde la pestaña Histórico. */
 const ESTADOS_SIEMPRE=["interesante","pujar","comprado","stock","vendido"];
 const corteFin=()=>new Date(Date.now()-24*3600e3).toISOString();
 const FILTRO_BUENOS='and(data->>gradoMecanico.in.(A,B),data->>danosClasif.in.(1,2),or(data->>precioSalida.not.is.null,data->>pujaActual.not.is.null))';
-const filtroInicio=()=>`(estado.in.(${ESTADOS_SIEMPRE.join(",")}),publico.is.true,subasta_fin.is.null,subasta_fin.gte."${corteFin()}",${FILTRO_BUENOS})`;
+const filtroInicio=()=>`(estado.in.(${ESTADOS_SIEMPRE.join(",")}),publico.is.true,subasta_fin.is.null,subasta_fin.gte."${corteFin()}",data->>precioRemate.not.is.null,${FILTRO_BUENOS})`;
 function seCargaAlInicio(d){
   if(!d)return false;const fin=d.subasta&&d.subasta.fin;
-  if(ESTADOS_SIEMPRE.includes(d.estado)||d.publico===true||!fin||String(fin)>=corteFin())return true;
+  if(ESTADOS_SIEMPRE.includes(d.estado)||d.publico===true||!fin||String(fin)>=corteFin()||+d.precioRemate>0)return true;
   return["A","B"].includes(d.gradoMecanico)&&["1","2"].includes(String(d.danosClasif))&&(d.precioSalida!=null||d.pujaActual!=null);
 }
 /* ---------------- copia local (IndexedDB) y sincronización por cambios ----------------
