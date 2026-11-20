@@ -47,7 +47,7 @@ async function unir(partes){
   for(const p of partes){
     if(p.pdf){const src=await PDFDocument.load(p.pdf,{ignoreEncryption:true});(await out.copyPages(src,src.getPageIndices())).forEach(pg=>out.addPage(pg))}
     else if(p.img)await paginaImagen(out,p.img)}
-  return out.save();
+  return out.save({useObjectStreams:false});
 }
 
 /* ---------- valores para rellenar ---------- */
@@ -129,6 +129,20 @@ const DGT={"matricula":"vehiculo_matricula","nifnie del tutor":null,"codigo iae 
 function reglaForm(nombre){const ex=DGT[norm(nombre)];if(ex!==undefined)return ex;const l=norm(nombre).replace(/[_\-.\[\]0-9]+/g," ").trim();
   const sec=/vendedor|transmitente|cedente/.test(l)?"vendedor":/mandatario|gestor/.test(l)?"gestor":"comprador";
   return reglaCampo(l,sec)||(/(^|\s)(dni|nif|nie|cif)(\s|$)/.test(l)?(sec==="vendedor"?"vendedor_nif":"comprador_dni"):null)}
+/* campos de un formulario PDF → posiciones sobre la página (para poder verlos y moverlos en «Colocar campos») */
+function formACampos(pd,formMap,campos){
+  const out={...(campos||{})},pages=pd.getPages(),form=pd.getForm();
+  const libre=k=>{if(!out[k])return k;let i=2;while(out[k+"#"+i])i++;return k+"#"+i};
+  for(const [nombre,clave] of Object.entries(formMap||{})){
+    try{const fl=form.getField(nombre),tp=fl.constructor.name,[k,opc]=String(clave).split("|");
+      for(const w of fl.acroField.getWidgets()){let ov="";try{ov=w.getOnValue().decodeText()}catch(e){}
+        if(tp==="PDFRadioGroup"&&opc&&ov!==opc)continue;
+        const r=w.getRectangle(),x0=Math.min(r.x,r.x+r.width),y0=Math.min(r.y,r.y+r.height),bw=Math.abs(r.width),bh=Math.abs(r.height);
+        const pi=Math.max(0,pages.findIndex(pg=>(pg.node.Annots()?pg.node.Annots().asArray():[]).some(a=>pd.context.lookup(a)===w.dict))),{width:W,height:H}=pages[pi].getSize();
+        const r4=v=>Math.round(v*1e4)/1e4,marca=/PDFRadioGroup|PDFCheckBox/.test(tp);
+        out[libre(k)]=marca?{p:pi,x:r4((x0+(bw-6.7)/2)/W),y:r4((H-y0-(bh-7)/2)/H),s:10}:{p:pi,x:r4((x0+3)/W),y:r4((H-y0-Math.max(2,(bh-9)/2))/H),s:9};
+        break}}catch(e){}}
+  return out}
 async function sugerir(doc){
   const m=await bytesModelo(doc);const out={campos:{},form:{},n:0};if(!m.pdf)return out;
   // 1) formulario rellenable
@@ -143,7 +157,9 @@ async function sugerir(doc){
         if(!ok&&!Object.values(out.form).includes(k0)){out.form[fl.getName()]=k0;out.n++}
         continue}
       out.form[fl.getName()]=k0;out.n++}}catch(e){}
-  if(Object.keys(out.form).length||Object.keys(out.campos).length)return out;
+  if(Object.keys(out.form).length||Object.keys(out.campos).length){
+    try{const pd2=await PDFLib.PDFDocument.load(m.bytes,{ignoreEncryption:true});out.campos=formACampos(pd2,out.form,out.campos);out.n=Object.keys(out.campos).length;out.form={}}catch(e){}
+    return out}
   // 2) texto del documento: etiquetas y su posición
   const lib=await pdfjs();const pdf=await lib.getDocument({data:m.bytes.slice(),isEvalSupported:false}).promise;const etiq={};
   for(let p=0;p<pdf.numPages;p++){const pg=await pdf.getPage(p+1),v=pg.getViewport({scale:1}),W=v.width,H=v.height,tc=await pg.getTextContent();
@@ -164,18 +180,30 @@ async function rellenarMandato(tplBytes,esPdfTpl,campos,vals,formMap){
   else{doc=await PDFDocument.create();const png=tplBytes[0]===0x89;const img=png?await doc.embedPng(tplBytes):await doc.embedJpg(tplBytes);
     const W=A4[0],H=W*img.height/img.width;const pg=doc.addPage([W,H]);pg.drawImage(img,{x:0,y:0,width:W,height:H})}
   const font=await doc.embedFont(StandardFonts.Helvetica),pages=doc.getPages();
-  if(formMap&&Object.keys(formMap).length){const form=doc.getForm();
-    for(const [nombre,clave] of Object.entries(formMap)){const[k,opc]=String(clave).split("|"),txt=limpia(vals[k]);if(!txt)continue;
-      try{const fl=form.getField(nombre),tp=fl.constructor.name;
-        if(tp==="PDFTextField")fl.setText(txt);
-        else if(tp==="PDFCheckBox")fl.check();
-        else if(tp==="PDFRadioGroup"){const o=fl.getOptions();fl.select(o.includes(opc)?opc:o[0])}
-        else if(tp==="PDFDropdown"||tp==="PDFOptionList"){const o=fl.getOptions(),n=norm(txt),h=o.find(x=>norm(x)===n)||o.find(x=>norm(x).startsWith(n)||n.startsWith(norm(x)&&norm(x)));
-          if(h)fl.select(h);else{fl.addOptions([txt]);fl.select(txt)}}}catch(e){}}
-    try{for(const fl of form.getFields())if(/PDFTextField|PDFDropdown/.test(fl.constructor.name)){try{fl.acroField.setDefaultAppearance("/Helv 9 Tf 0 g")}catch(e){}try{fl.setFontSize(9)}catch(e){}}form.updateFieldAppearances(font);form.flatten()}catch(e){}}
-  for(const [k,c] of Object.entries(campos||{})){const txt=limpia(vals[k]);if(!txt||!c)continue;const pg=pages[c.p||0];if(!pg)continue;const{width:W,height:H}=pg.getSize();
+  if(esPdfTpl){formMap=formMap||{};
+    // Se escribe el texto directamente sobre cada casilla y se quitan los campos de texto: aplanar el formulario con pdf-lib daba PDF dañados (en blanco en algunos visores)
+    const form=doc.getForm(),{PDFName,PDFArray}=PDFLib,ancho=(t,z)=>font.widthOfTextAtSize(t,z);
+    const quita=fl=>{const ws=fl.acroField.getWidgets();
+      for(const pg of pages){const an=pg.node.Annots();if(!an)continue;for(let i=an.size()-1;i>=0;i--)if(ws.some(w=>w.dict===doc.context.lookup(an.get(i))))an.remove(i)}
+      const fs=doc.catalog.lookup(PDFName.of("AcroForm")).lookup(PDFName.of("Fields"),PDFArray);
+      for(let i=fs.size()-1;i>=0;i--)if(doc.context.lookup(fs.get(i))===fl.acroField.dict)fs.remove(i)};
+    for(const fl of form.getFields()){const tp=fl.constructor.name,nombre=fl.getName();
+      if(/PDFRadioGroup|PDFCheckBox/.test(tp)){try{ // casillas: se dibuja el cuadro vacío y se quita el campo (la «X» va aparte)
+          const cl=formMap[nombre],[ck,opc]=String(cl||"").split("|"),marca=cl&&limpia(vals[ck]);
+          for(const w of fl.acroField.getWidgets()){let ov="";try{ov=w.getOnValue().decodeText()}catch(e){}const r=w.getRectangle(),pi=Math.max(0,pages.findIndex(pg=>(pg.node.Annots()?pg.node.Annots().asArray():[]).some(a=>doc.context.lookup(a)===w.dict)));
+            pages[pi].drawRectangle({x:Math.min(r.x,r.x+r.width),y:Math.min(r.y,r.y+r.height),width:Math.abs(r.width),height:Math.abs(r.height),color:rgb(1,1,1),borderColor:rgb(.5,.5,.5),borderWidth:.7});
+            if(marca&&(tp==="PDFCheckBox"||!opc||ov===opc)){const bw=Math.abs(r.width),bh=Math.abs(r.height);pages[pi].drawText("X",{x:Math.min(r.x,r.x+r.width)+(bw-6.7)/2,y:Math.min(r.y,r.y+r.height)+(bh-7)/2,size:10,font,color:rgb(0,0,0)})}}
+          quita(fl)}catch(e){}continue}
+      if(!/PDFTextField|PDFDropdown|PDFButton|PDFOptionList/.test(tp))continue;
+      try{const clave=formMap[nombre],txt=clave&&tp!=="PDFButton"?limpia(vals[String(clave).split("|")[0]]):"";
+        if(txt)for(const w of fl.acroField.getWidgets()){const r=w.getRectangle(),x0=Math.min(r.x,r.x+r.width),y0=Math.min(r.y,r.y+r.height),bw=Math.abs(r.width),bh=Math.abs(r.height);
+          const pi=Math.max(0,pages.findIndex(pg=>(pg.node.Annots()?pg.node.Annots().asArray():[]).some(a=>doc.context.lookup(a)===w.dict)));let z=9;while(z>5&&ancho(txt,z)>bw-6)z-=.5;
+          pages[pi].drawText(txt,{x:x0+3,y:y0+Math.max(2,(bh-z)/2),size:z,font,color:rgb(0,0,0)})}
+        quita(fl)}catch(e){}}
+  }
+  for(const [k,c] of Object.entries(campos||{})){const txt=limpia(vals[k.split("#")[0]]);if(!txt||!c)continue;const pg=pages[c.p||0];if(!pg)continue;const{width:W,height:H}=pg.getSize();
     pg.drawText(txt,{x:c.x*W,y:H-c.y*H,size:c.s||10,font,color:rgb(0,0,0)})}
-  return doc.save();
+  return doc.save({useObjectStreams:false});
 }
 async function modeloBytes(doc,cx,tipo){const m=await bytesModelo(doc);return rellenarMandato(m.bytes,m.pdf,doc.campos||{},valores(cx,tipo),doc.form||{})}
 function abrirPDF(bytes,nombre){const b=new Blob([bytes],{type:"application/pdf"});const u=URL.createObjectURL(b);const w=window.open(u,"_blank");if(!w)descargarBlob(b,nombre);setTimeout(()=>URL.revokeObjectURL(u),120000)}
@@ -197,7 +225,7 @@ async function abrirConfig(){
   await cargarModelo();
   const f=$("#f-confirm"),d=$("#dlg-confirm");
   const coches=porMatricula().filter(x=>x.lote&&(x.facturas.length||x.lote.estado==="vendido"));
-  const pintarC=()=>{
+  const pintarC=()=>{d.style.width="";d.style.maxWidth="";
     f.innerHTML=`<h2>Solicitudes y mandatos · modelos en blanco</h2>
       <p class="muted" style="margin:0">Sube cada modelo vacío (solicitud de la DGT, mandato de la gestoría, etc.: PDF, JPG o PNG), el mismo para todas las ventas. Al subirlo se buscan solos los datos a rellenar (nombre, DNI, matrícula…); luego puedes retocarlos en «Colocar campos».</p>
       ${M.cfg.docs.map(x=>{const n=Object.keys(x.campos||{}).length+Object.keys(x.form||{}).length;return`<div class="card" style="padding:10px"><div class="row" style="align-items:center">
@@ -243,7 +271,7 @@ async function abrirConfig(){
       if((id=g("quitar"))){e.preventDefault();const x=docModelo(id);if(!confirm(`¿Quitar el modelo «${x.nombre}»? Se borra el archivo y sus campos.`))return;
         await HUELSAN.borrarArchivo("documentos",x.archivo.ruta).catch(()=>{});M.cfg.docs=M.cfg.docs.filter(y=>y.id!==id);await guardarCfg();pintarC();return}
     }catch(err){toast(err.message||String(err),7000)}};
-  pintarC();d.returnValue="";d.showModal();d.onclose=()=>{f.onclick=null;f.onchange=null};
+  pintarC();d.returnValue="";d.showModal();d.onclose=()=>{f.onclick=null;f.onchange=null;d.style.width="";d.style.maxWidth=""};
 }
 
 /* editor: se pincha sobre el documento dónde va cada campo */
@@ -252,36 +280,40 @@ async function editor(docId,volver){
   let pdf=null,n=1,pdim=A4,img=null;
   if(m.pdf){const lib=await pdfjs();pdf=await lib.getDocument({data:m.bytes.slice(),isEvalSupported:false}).promise;n=pdf.numPages}
   else{img=await createImageBitmap(new Blob([m.bytes],{type:m.bytes[0]===0x89?"image/png":"image/jpeg"}))}
-  const campos=JSON.parse(JSON.stringify(doc.campos||{}));
-  let pag=0,sel=TODOS[0][0],tam=10,base=null;
+  let campos=JSON.parse(JSON.stringify(doc.campos||{})),convertido=false;
+  if(m.pdf&&Object.keys(doc.form||{}).length){try{campos=formACampos(await PDFLib.PDFDocument.load(m.bytes,{ignoreEncryption:true}),doc.form,campos);convertido=true}catch(e){}}
+  const dlg=$("#dlg-confirm");dlg.style.width="min(1400px,96vw)";dlg.style.maxWidth="96vw";
+  let pag=0,sel=TODOS[0][0],tam=9,base=null,zoom=100;
   const render=async()=>{
-    if(pdf){const pg=await pdf.getPage(pag+1);const v1=pg.getViewport({scale:1});pdim=[v1.width,v1.height];const vp=pg.getViewport({scale:1100/v1.width});
+    if(pdf){const pg=await pdf.getPage(pag+1);const v1=pg.getViewport({scale:1});pdim=[v1.width,v1.height];const vp=pg.getViewport({scale:1800/v1.width});
       const cv=document.createElement("canvas");cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);const x=cv.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,cv.width,cv.height);await pg.render({canvasContext:x,viewport:vp}).promise;base=cv}
-    else{const cv=document.createElement("canvas");cv.width=1100;cv.height=Math.round(1100*img.height/img.width);const x=cv.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,cv.width,cv.height);x.drawImage(img,0,0,cv.width,cv.height);pdim=[A4[0],A4[0]*img.height/img.width];base=cv}};
+    else{const cv=document.createElement("canvas");cv.width=1800;cv.height=Math.round(1800*img.height/img.width);const x=cv.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,cv.width,cv.height);x.drawImage(img,0,0,cv.width,cv.height);pdim=[A4[0],A4[0]*img.height/img.width];base=cv}};
   const dibujar=()=>{const cv=f.querySelector("#m-cv");if(!cv||!base)return;cv.width=base.width;cv.height=base.height;const x=cv.getContext("2d");x.drawImage(base,0,0);
     const k=cv.width/pdim[0];
-    for(const [key,c] of Object.entries(campos)){if((c.p||0)!==pag)continue;const lab=(TODOS.find(t=>t[0]===key)||[0,key])[1];const px=c.x*cv.width,py=c.y*cv.height;
+    for(const [key,c] of Object.entries(campos)){if((c.p||0)!==pag)continue;const lab=(TODOS.find(t=>t[0]===key.split("#")[0])||[0,key])[1];const px=c.x*cv.width,py=c.y*cv.height;
       x.fillStyle=key===sel?"#d6336c":"#1c63d6";x.font=`${Math.max(8,(c.s||10)*k)}px Helvetica,Arial,sans-serif`;x.fillText(lab,px,py);
-      x.beginPath();x.arc(px,py,3.5,0,7);x.fill()}};
-  const pintarE=()=>{const nCol=Object.keys(campos).length,delForm=Object.keys(doc.form||{}).length;
+      x.beginPath();x.arc(px,py,5,0,7);x.fill()}};
+  const pintarE=()=>{const nCol=Object.keys(campos).length,delForm=0;
     f.innerHTML=`<h2>Colocar campos · ${esc(doc.nombre)}</h2>
       ${delForm?`<div class="aviso">Este PDF es un formulario rellenable: ${delForm} campos se rellenan solos. Aquí puedes añadir los que falten pinchando en el documento.</div>`:""}
       <p class="muted" style="margin:0">1) Elige un campo de la lista. 2) Pincha en el documento, donde debe empezar a escribirse (el punto es el inicio del texto, en la línea de base). Salta solo al siguiente. Los que no uses, déjalos sin colocar. Los azules ya estaban detectados o colocados; el rosa es el que estás moviendo.</p>
       <div class="row" style="align-items:center">${n>1?`<button type="button" class="btn sm" data-e-pag="-1" ${pag===0?"disabled":""}>←</button><span>Página ${pag+1} de ${n}</span><button type="button" class="btn sm" data-e-pag="1" ${pag===n-1?"disabled":""}>→</button>`:""}
-        <label style="max-width:120px">Tamaño letra<input type="number" min="6" max="18" step="0.5" value="${tam}" data-e-tam></label><span class="muted">${nCol} colocados</span></div>
+        <label style="max-width:120px">Tamaño letra<input type="number" min="6" max="18" step="0.5" value="${tam}" data-e-tam></label><span class="row" style="gap:4px;align-items:center"><button type="button" class="btn sm" data-e-zoom="-25" aria-label="Alejar">−</button><b style="min-width:48px;text-align:center">${zoom}%</b><button type="button" class="btn sm" data-e-zoom="25" aria-label="Acercar">+</button><button type="button" class="btn sm" data-e-zoom="0">Ajustar</button></span><span class="muted">${nCol} colocados</span></div>
       <div style="display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:10px;align-items:start">
-        <div style="overflow:auto;max-height:62vh;border:1px solid var(--line,#ccc)"><canvas id="m-cv" style="width:100%;cursor:crosshair;display:block"></canvas></div>
-        <div style="overflow:auto;max-height:62vh">${CAMPOS.map(([g,cs])=>`<b style="font-size:12px">${esc(g)}</b>${cs.map(([k,l])=>`<div class="row" style="gap:4px;margin:2px 0"><button type="button" class="btn sm ${sel===k?"primary":""}" style="flex:1;text-align:left;white-space:normal" data-e-sel="${k}">${campos[k]?"✓ ":""}${esc(l)}</button>${campos[k]?`<button type="button" class="btn sm" data-e-quitar="${k}" aria-label="Quitar" title="Quitar">✕</button>`:""}</div>`).join("")}`).join("")}</div></div>
+        <div id="m-scroll" style="overflow:auto;max-height:72vh;border:1px solid var(--line,#ccc)"><canvas id="m-cv" style="width:${zoom}%;cursor:crosshair;display:block"></canvas></div>
+        <div style="overflow:auto;max-height:72vh">${CAMPOS.map(([g,cs])=>`<b style="font-size:12px">${esc(g)}</b>${cs.map(([k,l])=>`<div class="row" style="gap:4px;margin:2px 0"><button type="button" class="btn sm ${sel===k?"primary":""}" style="flex:1;text-align:left;white-space:normal" data-e-sel="${k}">${campos[k]?"✓ ":""}${esc(l)}</button>${campos[k]?`<button type="button" class="btn sm" data-e-quitar="${k}" aria-label="Quitar" title="Quitar">✕</button>`:""}</div>`).join("")}`).join("")}</div></div>
+      ${Object.keys(campos).filter(k=>k.includes("#")).map(k=>`<div class="row" style="gap:4px;margin:2px 0"><button type="button" class="btn sm ${sel===k?"primary":""}" style="flex:1;text-align:left;white-space:normal" data-e-sel="${k}">✓ ${esc((TODOS.find(t=>t[0]===k.split("#")[0])||[0,k])[1])} (${k.split("#")[1]})</button><button type="button" class="btn sm" data-e-quitar="${k}" title="Quitar">✕</button></div>`).join("")}
       <div class="row" style="justify-content:flex-end"><button type="button" class="btn" data-e-volver>Volver</button><button type="button" class="btn primary" data-e-guardar>Guardar campos</button></div>`;
     dibujar();
     const cv=f.querySelector("#m-cv");cv.onclick=e=>{const r=cv.getBoundingClientRect();const x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
       campos[sel]={p:pag,x:Math.round(x*1e4)/1e4,y:Math.round(y*1e4)/1e4,s:tam};
       const i=TODOS.findIndex(t=>t[0]===sel),sig=TODOS.slice(i+1).find(t=>!campos[t[0]])||TODOS.find(t=>!campos[t[0]]);if(sig)sel=sig[0];pintarE()}};
   f.onclick=async e=>{const t=e.target;
+    const zm=t.closest("[data-e-zoom]");if(zm){e.preventDefault();const sc=f.querySelector("#m-scroll"),fx=sc?sc.scrollLeft/Math.max(1,sc.scrollWidth):0,fy=sc?sc.scrollTop/Math.max(1,sc.scrollHeight):0,d0=+zm.dataset.eZoom;zoom=d0?Math.max(50,Math.min(400,zoom+d0)):100;pintarE();const s2=f.querySelector("#m-scroll");if(s2){s2.scrollLeft=fx*s2.scrollWidth;s2.scrollTop=fy*s2.scrollHeight}return}
     const p=t.closest("[data-e-pag]");if(p){e.preventDefault();pag=Math.max(0,Math.min(n-1,pag+(+p.dataset.ePag)));await render();pintarE();return}
     const s=t.closest("[data-e-sel]");if(s){e.preventDefault();sel=s.dataset.eSel;if(campos[sel]&&(campos[sel].p||0)!==pag){pag=campos[sel].p||0;await render()}pintarE();return}
     const q=t.closest("[data-e-quitar]");if(q){e.preventDefault();delete campos[q.dataset.eQuitar];pintarE();return}
-    if(t.closest("[data-e-guardar]")){e.preventDefault();doc.campos=campos;await guardarCfg();toast("Campos guardados");volver();return}
+    if(t.closest("[data-e-guardar]")){e.preventDefault();doc.campos=campos;if(convertido)doc.form={};await guardarCfg();toast("Campos guardados");volver();return}
     if(t.closest("[data-e-volver]")){e.preventDefault();volver();return}};
   f.onchange=e=>{const t=e.target;if(t.dataset.eTam!=null){tam=+t.value||10;if(campos[sel])campos[sel].s=tam;dibujar()}};
   await render();pintarE();
