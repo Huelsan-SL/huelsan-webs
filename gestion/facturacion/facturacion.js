@@ -312,6 +312,7 @@ function vistaEditor(){
     :`<button class="btn primary" data-acc="pdf">Descargar PDF</button>
       ${!f.anulada?`<button class="btn" data-acc="entregada">${f.entregada?"Marcar como no entregada":"Marcar como entregada"}</button>`:""}
       ${!f.anulada&&f.estado==="emitida"?`<button class="btn" data-acc="rectificar">Rectificar…</button><button class="btn peligro" data-acc="anular">Anular…</button>`:""}
+      ${!rect&&!f.anulada&&f.vehiculo&&f.vehiculo.matricula?`<button class="btn" data-gest="${esc(normMat(f.vehiculo.matricula))}" title="Documentación y datos para el cambio de nombre">Cambio de nombre · gestoría</button>`:""}
       <button class="btn" data-acc="duplicar">Duplicar como borrador</button>
       <span style="flex:1"></span>${ultima&&!f.entregada&&!(f.rectificadaPor||[]).length?`<button class="btn peligro" data-acc="deshacer">Deshacer emisión</button>`:""}
       ${S.edSucio?`<button class="btn" data-acc="guardar-notas">Guardar notas</button>`:""}`}
@@ -833,7 +834,7 @@ async function verArchivo(ruta,nombre){
    registro en docscoche/<id>. Las pólizas de seguro subidas a una factura de «Seguro» salen aquí solas,
    y una póliza subida aquí se puede adjuntar (copia) a la factura de seguro del coche.
    ====================================================================== */
-const DOC_TIPOS=["Póliza de seguro","Permiso de circulación","Ficha técnica","ITV","Contrato de compra","Informe o peritaje","Garantía","Mandato / transferencia","Otros"];
+const DOC_TIPOS=["Póliza de seguro","Permiso de circulación","Ficha técnica","ITV","Contrato de compra","Informe o peritaje","Garantía","Mandato / transferencia","Solicitud y mandato","DNI / NIE del comprador","CIF del comprador","Representación de persona jurídica","DNI del administrador","Otros"];
 const esPoliza=t=>t==="Póliza de seguro";
 const cocheDe=k=>porMatricula().find(y=>y.matricula===k);
 const gastosSeguro=x=>x.docs.filter(g=>g.categoria==="Seguro"&&!g.sinFactura).sort((a,b)=>String(b.fecha||"").localeCompare(String(a.fecha||"")));
@@ -937,7 +938,7 @@ function vistaMatriculas(){
 function detalleMatricula(x){
   const l=x.lote;
   return`<div class="row sp"><div class="row"><button class="btn sm" data-acc="mat-volver">← Todas</button><h1>${x.matricula.startsWith("lote:")?"Sin matrícula":`<span class="mat" style="font-size:18px">${esc(x.matricula)}</span>`} ${esc(x.titulo)}</h1></div>
-    <span class="row"><button class="btn" data-acc="mat-gasto">+ Subir factura de compra o gasto</button>${l&&l.estado!=="vendido"&&!x.facturas.length?`<button class="btn primary" data-acc="mat-facturar">Crear factura de venta</button>`:""}</span></div>
+    <span class="row"><button class="btn" data-acc="mat-gasto">+ Subir factura de compra o gasto</button>${l&&l.estado!=="vendido"&&!x.facturas.length?`<button class="btn primary" data-acc="mat-facturar">Crear factura de venta</button>`:""}${l&&(l.estado==="vendido"||x.facturas.length)?`<button class="btn ${x.facturas.length?"primary":""}" data-gest="${esc(x.matricula)}" title="Documentación y datos para el cambio de nombre">Cambio de nombre · gestoría</button>`:""}</span></div>
   <div class="kpis"><div class="kpi"><b>${eur(x.compra)}</b><span>compra</span></div><div class="kpi"><b>${eur(x.gastos)}</b><span>gastos (sin IVA deducible)</span></div><div class="kpi"><b>${eur(x.iva)}</b><span>IVA soportado (se recupera)</span></div><div class="kpi"><b>${x.ventas?eur(x.ventas):"—"}</b><span>venta (sin IVA general)</span></div>
     <div class="kpi"><b>${x.ventas?eur(x.margen):"—"}</b><span>margen bruto</span></div><div class="kpi"><b>${x.ivaRebu?eur(x.ivaRebu):"—"}</b><span>IVA del REBU</span></div><div class="kpi"><b>${x.ventas?eur(x.margenNeto):"—"}</b><span>margen neto</span></div></div>
   ${l?`<p class="muted" style="margin:0">${esc([l.vin?"Bastidor "+l.vin:"",l.anio,l.km?miles(String(Math.round(l.km)))+" km":"",l.combustible,l.iva?"Compra en "+l.iva:""].filter(Boolean).join(" · "))}</p>`:""}
