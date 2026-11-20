@@ -15,10 +15,10 @@ const GT=()=>window.HuelsanGestoria&&window.HuelsanGestoria._t;
 
 /* campos que se pueden colocar en el modelo */
 const CAMPOS=[
-  ["Comprador",[["comprador_nombre","Nombre y apellidos / razón social"],["comprador_dni","DNI, NIE o CIF"],["comprador_domicilio","Domicilio (calle y número)"],["comprador_cp","Código postal"],["comprador_municipio","Municipio"],["comprador_provincia","Provincia"],["comprador_direccion","Domicilio completo (en una línea)"],["comprador_telefono","Teléfono"],["comprador_email","Correo electrónico"],["marca_particular","Marca «X» si es particular"],["marca_empresa","Marca «X» si es empresa"],["representante_nombre","Representante o administrador (empresa)"],["representante_dni","DNI del representante (empresa)"],["representante_cargo","Cargo del representante (empresa)"]]],
+  ["Comprador",[["comprador_nombre","Nombre y apellidos / razón social"],["comprador_nombre_pila","Solo el nombre (o razón social)"],["comprador_apellido1","Primer apellido"],["comprador_apellido2","Segundo apellido"],["comprador_apellidos","Apellidos (los dos)"],["comprador_tipo_via","Tipo de vía (Calle, Avenida…)"],["comprador_calle","Nombre de la vía"],["comprador_numero","Número de la vía"],["comprador_dni","DNI, NIE o CIF"],["comprador_domicilio","Domicilio (calle y número)"],["comprador_cp","Código postal"],["comprador_municipio","Municipio"],["comprador_provincia","Provincia"],["comprador_direccion","Domicilio completo (en una línea)"],["comprador_telefono","Teléfono"],["comprador_email","Correo electrónico"],["marca_particular","Marca «X» si es particular"],["marca_empresa","Marca «X» si es empresa"],["representante_nombre","Representante o administrador (empresa)"],["representante_dni","DNI del representante (empresa)"],["representante_cargo","Cargo del representante (empresa)"]]],
   ["Vendedor",[["vendedor_nombre","Razón social del vendedor"],["vendedor_nif","NIF del vendedor"],["vendedor_direccion","Domicilio del vendedor (una línea)"],["vendedor_rep_nombre","Representante de Huelsan"],["vendedor_rep_dni","DNI del representante de Huelsan"]]],
   ["Vehículo",[["vehiculo_matricula","Matrícula"],["vehiculo_bastidor","Bastidor (VIN)"],["vehiculo_marca","Marca"],["vehiculo_modelo","Modelo"],["vehiculo_marca_modelo","Marca y modelo"],["vehiculo_fecha_matric","Fecha de matriculación"],["vehiculo_km","Kilómetros"]]],
-  ["Operación y firma",[["precio","Precio total"],["fecha_venta","Fecha de la venta"],["lugar","Lugar (municipio)"],["fecha_hoy","Fecha de hoy (dd/mm/aaaa)"],["dia_hoy","Día de hoy"],["mes_hoy","Mes de hoy (en letra)"],["anio_hoy","Año de hoy"],["gestoria_nombre","Nombre de la gestoría"]]]];
+  ["Operación y firma",[["x_cambio_titularidad","Marca «Cambio de titularidad»"],["x_comprador_interesado","Marca «Interesado» (comprador)"],["x_vendedor_titular","Marca «Titular» (vendedor)"],["precio","Precio total"],["fecha_venta","Fecha de la venta"],["lugar","Lugar (municipio)"],["fecha_hoy","Fecha de hoy (dd/mm/aaaa)"],["dia_hoy","Día de hoy"],["mes_hoy","Mes de hoy (en letra)"],["anio_hoy","Año de hoy"],["gestoria_nombre","Nombre de la gestoría"]]]];
 const TODOS=CAMPOS.flatMap(g=>g[1]);
 
 /* ---------- utilidades ---------- */
@@ -58,11 +58,19 @@ function valores(cx,tipo){
   const nombre=emp?(cl.nombre||cc.razonSocial||""):(cl.nombre||[cc.nombre,cc.apellidos].filter(Boolean).join(" "));
   const calle=cl.direccion||(emp?cc.domicilioEmpresa:cc.domicilio)||"",cp=cl.cp||cc.cp||"",mun=cl.municipio||cc.municipio||"",prov=cl.provincia||cc.provincia||"";
   const hoy=hoyISO().split("-");
+  let pila=emp?nombre:(cc.nombre||""),apes=emp?"":(cc.apellidos||"");
+  if(!emp&&!pila&&nombre){const w=nombre.trim().split(/\s+/);pila=w[0];apes=w.slice(1).join(" ")}
+  const ap=apes.trim().split(/\s+/).filter(Boolean),ap1=ap[0]||"",ap2=ap.slice(1).join(" ");
+  const via=String(calle).match(/^\s*(c\/|calle|cl\.?|avenida|avda\.?|av\.?|plaza|pza\.?|paseo|camino|carretera|ctra\.?|urbanizaci[oó]n|ronda|traves[ií]a|pol[ií]gono|barrio|travesia)\s+(.*)$/i);
+  const tipoVia=via?({"c/":"Calle","cl":"Calle","cl.":"Calle","avda":"Avenida","avda.":"Avenida","av":"Avenida","av.":"Avenida","pza":"Plaza","pza.":"Plaza","ctra":"Carretera","ctra.":"Carretera"}[via[1].toLowerCase()]||via[1].replace(/^./,c=>c.toUpperCase())):"",resto=via?via[2]:calle;
+  const nm=String(resto).match(/^(.*?)[,\s]+(?:n[ºo°.]?\s*)?(\d+[A-Za-z]?)\b\s*(.*)$/),calleSola=(nm?nm[1]:resto).replace(/[,\s]+$/,""),numVia=nm?nm[2]:"";
   const fv=(cx.f&&(cx.f.fechaOperacion||cx.f.fechaExpedicion))||(cx.c&&cx.c.fecha)||"";
   const precio=t?t.total:(cx.c&&cx.c.precio&&+cx.c.precio.total)||0;
   return{
     comprador_nombre:nombre,comprador_dni:emp?(cl.nif||cc.cif||""):(cl.nif||cc.dni||""),comprador_domicilio:calle,comprador_cp:cp,comprador_municipio:mun,comprador_provincia:prov,
     comprador_direccion:dir(calle,cp,mun,prov),comprador_telefono:cl.telefono||cc.telefono||"",comprador_email:cl.email||cc.email||"",
+    comprador_nombre_pila:pila,comprador_apellido1:ap1,comprador_apellido2:ap2,comprador_apellidos:apes,comprador_tipo_via:tipoVia,comprador_calle:calleSola,comprador_numero:numVia,
+    x_cambio_titularidad:"X",x_comprador_interesado:"X",x_vendedor_titular:"X",
     marca_particular:emp?"":"X",marca_empresa:emp?"X":"",
     representante_nombre:emp?[cc.nombre,cc.apellidos].filter(Boolean).join(" "):"",representante_dni:emp?(cc.dni||""):"",representante_cargo:emp?(cc.cargo||""):"",
     vendedor_nombre:e.razonSocial||"",vendedor_nif:e.nif||"",vendedor_direccion:dir(e.domicilio,e.cp,e.municipio,e.provincia),
@@ -110,15 +118,28 @@ function reglaCampo(texto,sec){
   if(l==="fecha")return"fecha_hoy";
   return null}
 // nombre de un campo de formulario PDF → clave (misma idea, con nombres tipo «nombre_apellidos», «dni_comprador»…)
-function reglaForm(nombre){const l=norm(nombre).replace(/[_\-.\[\]0-9]+/g," ").trim();
+const DGT={"matricula":"vehiculo_matricula","nifnie del tutor":null,"codigo iae impuesto de actividades economicas":null,"otrosrow1":null,"fecha nacimiento":null,"exencion itp":null,"codigo cet":null,"codigo cema":null,"bloque":null,"portal":null,"escalera":null,"planta":null,"puerta":null,"servicio al que se destina el vehiculo":null,"fecha matriculacion":"vehiculo_fecha_matric","tipo via":"comprador_tipo_via","nombre de la via":"comprador_calle","numero":"comprador_numero","km":null,"codigo postal":"comprador_cp","provincia":"comprador_provincia","municipio":"comprador_municipio","localidad":"comprador_municipio","correo electronico":"comprador_email","telefono":"comprador_telefono",
+  "nifniecif":"comprador_dni","nombrerazon social":"comprador_nombre_pila","apellido 1":"comprador_apellido1","apellido 2":"comprador_apellido2",
+  "nifniecif_2":"vendedor_nif","nombrerazon social_2":"vendedor_nombre","en":"lugar","a":"dia_hoy","de":"mes_hoy","de_2":"anio_hoy",
+  "tramite":"x_cambio_titularidad|cambio","datoscomprador":"x_comprador_interesado|interesado","datosvendedor":"x_vendedor_titular|0"};
+function reglaForm(nombre){const ex=DGT[norm(nombre)];if(ex!==undefined)return ex;const l=norm(nombre).replace(/[_\-.\[\]0-9]+/g," ").trim();
   const sec=/vendedor|transmitente|cedente/.test(l)?"vendedor":/mandatario|gestor/.test(l)?"gestor":"comprador";
   return reglaCampo(l,sec)||(/(^|\s)(dni|nif|nie|cif)(\s|$)/.test(l)?(sec==="vendedor"?"vendedor_nif":"comprador_dni"):null)}
 async function sugerir(doc){
   const m=await bytesModelo(doc);const out={campos:{},form:{},n:0};if(!m.pdf)return out;
   // 1) formulario rellenable
   try{await cargarPDFLib();const pd=await PDFLib.PDFDocument.load(m.bytes,{ignoreEncryption:true});
-    for(const fl of pd.getForm().getFields()){if(fl.constructor.name!=="PDFTextField")continue;const k=reglaForm(fl.getName());if(k&&!Object.values(out.form).includes(k)){out.form[fl.getName()]=k;out.n++}}}catch(e){}
-  if(Object.keys(out.form).length)return out;
+    const pages=pd.getPages();
+    for(const fl of pd.getForm().getFields()){const tp=fl.constructor.name;if(/Button|Signature/.test(tp))continue;const k0=reglaForm(fl.getName());if(!k0)continue;
+      if(tp==="PDFRadioGroup"){ // los botones de opción se marcan con una «X» en su casilla (más fiable que rellenarlos)
+        const[k,opc]=k0.split("|");let ok=false;
+        for(const w of fl.acroField.getWidgets()){let ov="";try{ov=w.getOnValue().decodeText()}catch(e){}if(opc&&ov!==opc)continue;
+          const r=w.getRectangle(),pi=Math.max(0,pages.findIndex(pg=>(pg.node.Annots()?pg.node.Annots().asArray():[]).some(a=>pd.context.lookup(a)===w.dict))),{width:W,height:H}=pages[pi].getSize();
+          if(!out.campos[k]){out.campos[k]={p:pi,x:Math.round((r.x+2.5)/W*1e4)/1e4,y:Math.round((H-r.y-1)/H*1e4)/1e4,s:10};out.n++;ok=true}break}
+        if(!ok&&!Object.values(out.form).includes(k0)){out.form[fl.getName()]=k0;out.n++}
+        continue}
+      out.form[fl.getName()]=k0;out.n++}}catch(e){}
+  if(Object.keys(out.form).length||Object.keys(out.campos).length)return out;
   // 2) texto del documento: etiquetas y su posición
   const lib=await pdfjs();const pdf=await lib.getDocument({data:m.bytes.slice(),isEvalSupported:false}).promise;const etiq={};
   for(let p=0;p<pdf.numPages;p++){const pg=await pdf.getPage(p+1),v=pg.getViewport({scale:1}),W=v.width,H=v.height,tc=await pg.getTextContent();
@@ -140,7 +161,13 @@ async function rellenarMandato(tplBytes,esPdfTpl,campos,vals,formMap){
     const W=A4[0],H=W*img.height/img.width;const pg=doc.addPage([W,H]);pg.drawImage(img,{x:0,y:0,width:W,height:H})}
   const font=await doc.embedFont(StandardFonts.Helvetica),pages=doc.getPages();
   if(formMap&&Object.keys(formMap).length){const form=doc.getForm();
-    for(const [nombre,k] of Object.entries(formMap)){const txt=limpia(vals[k]);if(!txt)continue;try{form.getTextField(nombre).setText(txt)}catch(e){}}
+    for(const [nombre,clave] of Object.entries(formMap)){const[k,opc]=String(clave).split("|"),txt=limpia(vals[k]);if(!txt)continue;
+      try{const fl=form.getField(nombre),tp=fl.constructor.name;
+        if(tp==="PDFTextField")fl.setText(txt);
+        else if(tp==="PDFCheckBox")fl.check();
+        else if(tp==="PDFRadioGroup"){const o=fl.getOptions();fl.select(o.includes(opc)?opc:o[0])}
+        else if(tp==="PDFDropdown"||tp==="PDFOptionList"){const o=fl.getOptions(),n=norm(txt),h=o.find(x=>norm(x)===n)||o.find(x=>norm(x).startsWith(n)||n.startsWith(norm(x)&&norm(x)));
+          if(h)fl.select(h);else{fl.addOptions([txt]);fl.select(txt)}}}catch(e){}}
     try{form.updateFieldAppearances(font);form.flatten()}catch(e){}}
   for(const [k,c] of Object.entries(campos||{})){const txt=limpia(vals[k]);if(!txt||!c)continue;const pg=pages[c.p||0];if(!pg)continue;const{width:W,height:H}=pg.getSize();
     pg.drawText(txt,{x:c.x*W,y:H-c.y*H,size:c.s||10,font,color:rgb(0,0,0)})}
