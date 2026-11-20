@@ -224,7 +224,8 @@ const nombreDeArchivo=n=>String(n||"Documento").replace(/\.[a-z0-9]{2,5}$/i,"").
 async function abrirConfig(){
   await cargarModelo();
   const f=$("#f-confirm"),d=$("#dlg-confirm");
-  const coches=porMatricula().filter(x=>x.lote&&(x.facturas.length||x.lote.estado==="vendido"));
+  const todos=porMatricula(),vendidos=todos.filter(x=>x.facturas.length||(x.lote&&x.lote.estado==="vendido"));
+  const coches=vendidos.length?vendidos:todos.filter(x=>!x.matricula.startsWith("lote:")); // si aún no hay ventas, se puede probar con cualquier coche
   const pintarC=()=>{d.style.width="";d.style.maxWidth="";
     f.innerHTML=`<h2>Solicitudes y mandatos · modelos en blanco</h2>
       <p class="muted" style="margin:0">Sube cada modelo vacío (solicitud de la DGT, mandato de la gestoría, etc.: PDF, JPG o PNG), el mismo para todas las ventas. Al subirlo se buscan solos los datos a rellenar (nombre, DNI, matrícula…); luego puedes retocarlos en «Colocar campos».</p>
