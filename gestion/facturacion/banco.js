@@ -70,29 +70,51 @@ async function importar(file){
 }
 
 /* ---------- enlaces ---------- */
-const enlazados=()=>{const g=new Map(),f=new Map();for(const m of B.movs.values()){const e=m.enlace;if(!e)continue;if(e.tipo==="gasto")g.set(e.id,m);if(e.tipo==="factura")f.set(e.id,m)}return{g,f}};
+/* Un movimiento puede enlazar con varios documentos (enlaces[] con el importe asignado a cada uno) y un documento con varios movimientos (varios pagos de una misma factura). */
+const enls=m=>Array.isArray(m.enlaces)&&m.enlaces.length?m.enlaces:(m.enlace?[m.enlace]:[]);
+const asig=(e,m)=>e.importe!=null?+e.importe:Math.abs(m.importe);
+const enlazados=()=>{const g=new Map(),f=new Map();for(const m of B.movs.values())for(const e of enls(m)){if(e.tipo!=="gasto"&&e.tipo!=="factura")continue;const mp=e.tipo==="gasto"?g:f;if(!mp.has(e.id))mp.set(e.id,[]);mp.get(e.id).push({m,e})}return{g,f}};
+const cubierto=(mp,id)=>r2((mp.get(id)||[]).reduce((s,x)=>s+asig(x.e,x.m),0)); // importe del documento ya cubierto por movimientos del banco
 const dias=(a,b)=>Math.abs((new Date(a)-new Date(b))/864e5);
 const palabras=s=>String(s||"").toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"").split(/[^A-Z0-9]+/).filter(w=>w.length>=4&&!/^(ESPANA|SOCIEDAD|LIMITADA|ANONIMA|TRANSFERENCIA|COMPRA|RECIBO|PAGO|TARJ|TARJETA)$/.test(w));
 function parecido(concepto,nombre,claves){const c=String(concepto||"").toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
   if(claves&&claves.split(",").map(s=>s.trim().toUpperCase()).filter(Boolean).some(k=>c.includes(k)))return 1;
   const ws=palabras(nombre);return ws.length?ws.filter(w=>c.includes(w)).length/ws.length:0}
 function candidatos(m){
-  const{g:gU,f:fU}=enlazados();const out=[];
-  if(m.importe<0){const imp=Math.abs(m.importe);
-    for(const g of S.gastos.values()){if(g.sinFactura||(gU.has(g.id)&&gU.get(g.id).id!==m.id))continue;
-      const dif=Math.abs((+g.total||0)-imp);if(dif>0.02)continue;const d=dias(g.fecha,m.fecha);if(d>60)continue;
-      const p=parecido(m.concepto,g.proveedor,(S.proveedores.get(g.proveedorId)||{}).claves);out.push({tipo:"gasto",id:g.id,txt:`${g.proveedor||"Gasto"} · ${g.numFactura?"Fra. "+g.numFactura+" · ":""}${fecha(g.fecha)} · ${eur(g.total)}`,score:100-d+p*50})}}
-  else{for(const g of S.gastos.values()){if(g.sinFactura||!(+g.total<0)||(gU.has(g.id)&&gU.get(g.id).id!==m.id))continue; // abono de un proveedor: llega como cobro
-      if(Math.abs(-(+g.total)-m.importe)>0.02)continue;const d=dias(g.fecha,m.fecha);if(d>90)continue;
-      const p=parecido(m.concepto,g.proveedor,(S.proveedores.get(g.proveedorId)||{}).claves);out.push({tipo:"gasto",id:g.id,txt:`Abono ${g.proveedor||""} · ${g.numFactura?g.numFactura+" · ":""}${fecha(g.fecha)} · ${eur(g.total)}`,score:100-d+p*50})}
-    for(const f of emitidas()){if(f.anulada||(fU.has(f.id)&&fU.get(f.id).id!==m.id))continue;const t=(f.totales||{}).total||0;
-      const ok=Math.abs(t-m.importe)<=0.02||(f.cobros||[]).some(c=>Math.abs((+c.importe||0)-m.importe)<=0.02);if(!ok)continue;const d=dias(f.fechaExpedicion,m.fecha);if(d>90)continue;
-      const p=parecido(m.concepto,(f.cliente||{}).nombre);out.push({tipo:"factura",id:f.id,txt:`Factura ${f.codigo} · ${(f.cliente||{}).nombre||""} · ${eur(t)}`,score:100-d+p*50})}}
+  const{g:gU,f:fU}=enlazados();const out=[];const ya=new Set(enls(m).map(e=>e.tipo+"|"+e.id));const imp=Math.abs(m.importe);
+  const pon=(tipo,id,txt,total,pend,fechaDoc,nombre,claves,cobros,maxD)=>{
+    if(pend<=0.02||ya.has(tipo+"|"+id))return;const d=dias(fechaDoc,m.fecha);if(d>maxD)return;
+    const exacto=Math.abs(total-imp)<=0.02||Math.abs(pend-imp)<=0.02||(cobros||[]).some(c=>Math.abs((+c.importe||0)-imp)<=0.02);
+    const p=parecido(m.concepto,nombre,claves);
+    if(exacto)out.push({tipo,id,txt,score:100-d+p*50});
+    else if(imp<pend&&p>=0.5)out.push({tipo,id,txt:txt+" · pago parcial (pendiente "+eur(pend)+")",score:60-d+p*20}); // nunca se enlaza sola
+  };
+  if(m.importe<0){
+    for(const g of S.gastos.values()){if(g.sinFactura||+g.total<0)continue;const t=+g.total||0;
+      pon("gasto",g.id,`${g.proveedor||"Gasto"} · ${g.numFactura?"Fra. "+g.numFactura+" · ":""}${fecha(g.fecha)} · ${eur(g.total)}`,t,r2(t-cubierto(gU,g.id)),g.fecha,g.proveedor,(S.proveedores.get(g.proveedorId)||{}).claves,null,60)}}
+  else{
+    for(const g of S.gastos.values()){if(g.sinFactura||!(+g.total<0))continue;const t=-(+g.total); // abono de un proveedor: llega como cobro
+      pon("gasto",g.id,`Abono ${g.proveedor||""} · ${g.numFactura?g.numFactura+" · ":""}${fecha(g.fecha)} · ${eur(g.total)}`,t,r2(t-cubierto(gU,g.id)),g.fecha,g.proveedor,(S.proveedores.get(g.proveedorId)||{}).claves,null,90)}
+    for(const f of emitidas()){if(f.anulada)continue;const t=(f.totales||{}).total||0;
+      pon("factura",f.id,`Factura ${f.codigo} · ${(f.cliente||{}).nombre||""} · ${eur(t)}`,t,r2(t-cubierto(fU,f.id)),f.fechaExpedicion,(f.cliente||{}).nombre,null,f.cobros,90)}}
   return out.sort((a,b)=>b.score-a.score);
 }
-async function enlazar(id,enlace){const m=B.movs.get(id);if(!m)return;const d={...m};delete d.id;if(enlace)d.enlace={...enlace,fecha:new Date().toISOString()};else delete d.enlace;await S.db.doc("banco/"+id).set(d)}
+async function guardarEnlaces(id,lista){const m=B.movs.get(id);if(!m)return;const d={...m};delete d.id;delete d.enlace;delete d.enlaces;
+  if(lista.length){const ahora=new Date().toISOString();lista=lista.map(e=>({...e,fecha:e.fecha||ahora}));d.enlace=lista[0];if(lista.length>1||lista.some(e=>e.importe!=null))d.enlaces=lista}
+  await S.db.doc("banco/"+id).set(d);B.movs.set(id,{...d,id}); // actualiza ya la copia local (la enlazada automática no se pisa con la siguiente)
+}
+const enlazar=(id,enlace)=>guardarEnlaces(id,enlace?[enlace]:[]);
+/* Añade otro documento a un movimiento ya enlazado (importe = parte del movimiento que corresponde a este documento) */
+async function anadirEnlace(id,enlace,imp){const m=B.movs.get(id);if(!m)return;const tot=Math.abs(m.importe);
+  let lista=enls(m).filter(e=>e.tipo==="gasto"||e.tipo==="factura").map(e=>({...e}));
+  if(!(imp>0.001))throw new Error("Indica qué parte del movimiento corresponde a este documento");
+  if(lista.length===1&&lista[0].importe==null){const resto=r2(tot-imp);if(resto<=0.001)throw new Error("Ese importe es todo el movimiento: desenlázalo primero o indica solo una parte");lista[0].importe=resto}
+  else{const asignado=r2(lista.reduce((s,e)=>s+asig(e,m),0));if(imp>r2(tot-asignado)+0.02)throw new Error(`Solo quedan ${eur(r2(tot-asignado))} por asignar de este movimiento`)}
+  lista.push({...enlace,importe:r2(imp)});await guardarEnlaces(id,lista);
+}
+async function quitarUno(id,idx){const m=B.movs.get(id);if(!m)return;const lista=enls(m).filter((_,i)=>i!==idx).map(e=>({...e}));if(lista.length===1)delete lista[0].importe;await guardarEnlaces(id,lista)}
 async function autoEnlazar(silencio){let n=0;
-  for(const m of [...B.movs.values()].filter(m=>!m.enlace).sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha)))){
+  for(const m of [...B.movs.values()].filter(m=>!enls(m).length).sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha)))){
     const c=candidatos(m).filter(x=>x.score>=85);if(c.length===1||(c.length>1&&c[0].score-c[1].score>=30)){await enlazar(m.id,{tipo:c[0].tipo,id:c[0].id,auto:true});n++}}
   if(!silencio||n)toast(n?`${n} ${n===1?"movimiento enlazado":"movimientos enlazados"} automáticamente (revísalos en «Enlazados»)`:"No hay coincidencias seguras para enlazar solas",5000);
 }
@@ -102,27 +124,31 @@ function vistaBanco(){
   const movs=[...B.movs.values()].sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
   const{g:gU,f:fU}=enlazados();
   const fechas=movs.map(m=>m.fecha).sort();const desde=fechas[0],hasta=fechas[fechas.length-1];
-  const pagos=movs.filter(m=>m.importe<0&&!m.enlace),cobros=movs.filter(m=>m.importe>0&&!m.enlace),enl=movs.filter(m=>m.enlace);
+  const pagos=movs.filter(m=>m.importe<0&&!enls(m).length),cobros=movs.filter(m=>m.importe>0&&!enls(m).length),enl=movs.filter(m=>enls(m).length);
   const enRango=f=>desde&&f&&f>=desde&&f<=hasta;
-  const gSin=[...S.gastos.values()].filter(g=>!g.sinFactura&&g.formaPago!=="Efectivo"&&g.pagado!==false&&enRango(g.fecha)&&!gU.has(g.id)).sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
-  const fSin=emitidas().filter(f=>!f.anulada&&(f.cobros||[]).some(c=>c.medio!=="Efectivo")&&enRango(f.fechaExpedicion)&&!fU.has(f.id));
+  const gSin=[...S.gastos.values()].filter(g=>!g.sinFactura&&g.formaPago!=="Efectivo"&&g.pagado!==false&&enRango(g.fecha)&&cubierto(gU,g.id)<Math.abs(+g.total||0)-0.02).sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
+  const cobroBanco=f=>r2((f.cobros||[]).filter(c=>c.medio!=="Efectivo").reduce((s,c)=>s+(+c.importe||0),0));
+  const fSin=emitidas().filter(f=>!f.anulada&&cobroBanco(f)>0&&enRango(f.fechaExpedicion)&&cubierto(fU,f.id)<cobroBanco(f)-0.02);
+  const pendTxt=(cub,tot)=>cub>0.02?`<div class="muted">cubierto ${eur(cub)} · pendiente ${eur(r2(tot-cub))}</div>`:"";
   const q=B.q.trim().toLowerCase();const filtra=ls=>q?ls.filter(m=>[m.concepto,m.importe,m.fecha].join(" ").toLowerCase().includes(q)):ls;
   const tab=(k,t,n)=>`<button class="btn sm ${B.vista===k?"primary":""}" data-bk-vista="${k}">${t}${n!=null?` (${n})`:""}</button>`;
-  const filaMov=m=>{const c=m.enlace?[]:candidatos(m).slice(0,3);const e=m.enlace;
-    const enlTxt=e?(e.tipo==="gasto"?(()=>{const g=S.gastos.get(e.id);return g?`<a href="#" data-gasto="${esc(g.id)}">Gasto: ${esc(g.proveedor||"")} ${g.numFactura?"· "+esc(g.numFactura):""} · ${eur(g.total)}</a>`:"Gasto borrado"})()
+  const txtEnlace=e=>e.tipo==="gasto"?(()=>{const g=S.gastos.get(e.id);return g?`<a href="#" data-gasto="${esc(g.id)}">${+g.total<0?"Abono":"Gasto"}: ${esc(g.proveedor||"")} ${g.numFactura?"· "+esc(g.numFactura):""} · ${eur(g.total)}</a>`:"Gasto borrado"})()
       :e.tipo==="factura"?(()=>{const f=S.facturas.get(e.id);return f?`<a href="#" data-ir-factura="${esc(f.id)}">Factura ${esc(f.codigo||"")} · ${esc((f.cliente||{}).nombre||"")}</a>`:"Factura borrada"})()
-      :`No necesita factura: ${esc(e.motivo||"")}`):"";
+      :`No necesita factura: ${esc(e.motivo||"")}`;
+  const filaMov=m=>{const lst=enls(m);const c=lst.length?[]:candidatos(m).slice(0,3);const multi=lst.length>1,ign=lst.some(e=>e.tipo==="ignorar");
+    const sobra=r2(Math.abs(m.importe)-lst.reduce((s,e)=>s+asig(e,m),0));
+    const enlTxt=lst.map((e,i)=>`<div>${txtEnlace(e)}${multi||e.importe!=null?` <span class="muted">(${eur(asig(e,m))} de este movimiento)</span>`:""}${e.auto?` <span class="tag">auto</span>`:""}${multi?` <button class="btn sm" data-bk-quitar1="${esc(m.id)}|${i}" title="Quitar solo este enlace">✕</button>`:""}</div>`).join("");
     return`<tr><td>${fecha(m.fecha)}</td><td>${esc(m.concepto||"—")}<div class="muted">${esc(m.origen||"")}</div></td><td class="num" style="color:${m.importe<0?"var(--bad)":"var(--ok)"}"><b>${eur(m.importe)}</b></td>
-      <td>${e?`${enlTxt}${e.auto?` <span class="tag">auto</span>`:""} <button class="btn sm" data-bk-quitar="${esc(m.id)}">Desenlazar</button>`
+      <td>${lst.length?`${enlTxt}${!ign&&sobra>0.02?`<div class="muted">Sin asignar: ${eur(sobra)}</div>`:""}<span class="row"><button class="btn sm" data-bk-quitar="${esc(m.id)}">${multi?"Desenlazar todo":"Desenlazar"}</button>${ign?"":`<button class="btn sm" data-bk-mas="${esc(m.id)}" title="Este movimiento paga también otra factura o gasto">+ Otra factura</button>`}</span>`
       :`<div style="display:grid;gap:4px">${c.map(x=>`<button class="btn sm" data-bk-enlazar="${esc(m.id)}|${x.tipo}|${esc(x.id)}" style="justify-content:flex-start;white-space:normal;text-align:left">Enlazar: ${esc(x.txt)}</button>`).join("")}
         <span class="row">${m.importe<0?`<button class="btn sm primary" data-bk-gasto="${esc(m.id)}">Crear gasto con su factura</button>`:""}<button class="btn sm" data-bk-elegir="${esc(m.id)}">Elegir…</button><button class="btn sm" data-bk-ignorar="${esc(m.id)}">No necesita factura</button></span></div>`}</td></tr>`};
   const tabla=ls=>ls.length?`<div class="tw"><table><thead><tr><th>Fecha</th><th>Concepto</th><th class="num">Importe</th><th>Enlace</th></tr></thead><tbody>${ls.map(filaMov).join("")}</tbody></table></div>`:`<div class="vacio">Nada aquí.</div>`;
   let cuerpo="";
   if(B.vista==="pagos")cuerpo=`<p class="muted" style="margin:0">Pagos del banco sin factura enlazada. Enlázalos con su gasto, crea el gasto subiendo la factura, o márcalos si no necesitan factura (traspasos, impuestos, nóminas…).</p>`+tabla(filtra(pagos));
   else if(B.vista==="cobros")cuerpo=`<p class="muted" style="margin:0">Cobros del banco sin factura de venta enlazada.</p>`+tabla(filtra(cobros));
-  else if(B.vista==="faltan")cuerpo=`<p class="muted" style="margin:0">Facturas pagadas o cobradas por banco entre el ${fecha(desde)} y el ${fecha(hasta)} que no tienen ningún movimiento enlazado. Puede que falte subir el extracto o que se pagaran de otra forma (cámbialo en el gasto).</p>
-    <h3>Gastos sin movimiento (${gSin.length})</h3>${gSin.length?`<div class="tw"><table><tbody>${gSin.map(g=>`<tr data-gasto="${esc(g.id)}" style="cursor:pointer"><td>${fecha(g.fecha)}</td><td>${esc(g.proveedor||"")}<div class="muted">${esc(g.numFactura?"Fra. "+g.numFactura:"")} · ${esc(g.formaPago||"")}</div></td><td class="num">${eur(g.total)}</td></tr>`).join("")}</tbody></table></div>`:`<p class="muted" style="margin:0">Ninguno.</p>`}
-    <h3>Facturas de venta sin movimiento (${fSin.length})</h3>${fSin.length?`<div class="tw"><table><tbody>${fSin.map(f=>`<tr data-ir-factura="${esc(f.id)}" style="cursor:pointer"><td>${esc(f.codigo)}</td><td>${fecha(f.fechaExpedicion)}</td><td>${esc((f.cliente||{}).nombre||"")}</td><td class="num">${eur((f.totales||{}).total)}</td></tr>`).join("")}</tbody></table></div>`:`<p class="muted" style="margin:0">Ninguna.</p>`}`;
+  else if(B.vista==="faltan")cuerpo=`<p class="muted" style="margin:0">Facturas pagadas o cobradas por banco entre el ${fecha(desde)} y el ${fecha(hasta)} que no tienen movimientos enlazados por todo su importe (una factura puede tener varios pagos; se avisa mientras quede parte sin enlazar). Puede que falte subir el extracto o que se pagaran de otra forma (cámbialo en el gasto).</p>
+    <h3>Gastos sin movimiento (${gSin.length})</h3>${gSin.length?`<div class="tw"><table><tbody>${gSin.map(g=>`<tr data-gasto="${esc(g.id)}" style="cursor:pointer"><td>${fecha(g.fecha)}</td><td>${esc(g.proveedor||"")}<div class="muted">${esc(g.numFactura?"Fra. "+g.numFactura:"")} · ${esc(g.formaPago||"")}</div></td><td class="num">${eur(g.total)}${pendTxt(cubierto(gU,g.id),Math.abs(+g.total||0))}</td></tr>`).join("")}</tbody></table></div>`:`<p class="muted" style="margin:0">Ninguno.</p>`}
+    <h3>Facturas de venta sin movimiento (${fSin.length})</h3>${fSin.length?`<div class="tw"><table><tbody>${fSin.map(f=>`<tr data-ir-factura="${esc(f.id)}" style="cursor:pointer"><td>${esc(f.codigo)}</td><td>${fecha(f.fechaExpedicion)}</td><td>${esc((f.cliente||{}).nombre||"")}</td><td class="num">${eur((f.totales||{}).total)}${pendTxt(cubierto(fU,f.id),cobroBanco(f))}</td></tr>`).join("")}</tbody></table></div>`:`<p class="muted" style="margin:0">Ninguna.</p>`}`;
   else if(B.vista==="enlazados")cuerpo=tabla(filtra(enl));
   else cuerpo=tabla(filtra(movs));
   return`<div class="row sp"><div><h1>Conciliación bancaria</h1><p class="muted" style="margin:4px 0 0">Sube el extracto del banco (Excel, CSV o Norma 43). Se cogen la fecha, el importe y el concepto de cada movimiento y se enlazan con los gastos y las facturas para ver qué pago no tiene factura y qué factura no aparece en el banco. Subir el mismo extracto otra vez no duplica nada.</p></div>
@@ -141,6 +167,8 @@ document.addEventListener("click",async e=>{if(S.tab!=="banco")return;const t=e.
   const v=t.closest("[data-bk-vista]");if(v){B.vista=v.dataset.bkVista;pintar();return}
   try{
     const en=t.closest("[data-bk-enlazar]");if(en){const[id,tipo,ref]=en.dataset.bkEnlazar.split("|");await enlazar(id,{tipo,id:ref});toast("Enlazado");return}
+    const q1=t.closest("[data-bk-quitar1]");if(q1){const[id,ix]=q1.dataset.bkQuitar1.split("|");await quitarUno(id,+ix);toast("Enlace quitado");return}
+    const ms=t.closest("[data-bk-mas]");if(ms){await elegirManual(ms.dataset.bkMas,true);return}
     const qu=t.closest("[data-bk-quitar]");if(qu){await enlazar(qu.dataset.bkQuitar,null);toast("Desenlazado");return}
     const ig=t.closest("[data-bk-ignorar]");if(ig){const m=await pedirMotivo();if(m)await enlazar(ig.dataset.bkIgnorar,{tipo:"ignorar",motivo:m});return}
     const el=t.closest("[data-bk-elegir]");if(el){await elegirManual(el.dataset.bkElegir);return}
@@ -153,14 +181,24 @@ document.addEventListener("click",async e=>{if(S.tab!=="banco")return;const t=e.
 function pedirMotivo(){return new Promise(res=>{const d=$("#dlg-confirm"),f=$("#f-confirm");
   f.innerHTML=`<h2>¿Por qué no necesita factura?</h2><label>Motivo<select id="bk-motivo">${MOTIVOS.map(m=>`<option>${m}</option>`).join("")}</select></label><label>Nota (opcional)<input id="bk-nota"></label><div class="row" style="justify-content:flex-end"><button class="btn" value="no">Cancelar</button><button class="btn primary" value="si">Guardar</button></div>`;
   d.returnValue="";d.showModal();d.onclose=()=>{const m=$("#bk-motivo").value,n=$("#bk-nota").value.trim();res(d.returnValue==="si"?m+(n?" · "+n:""):null)}})}
-async function elegirManual(id){const m=B.movs.get(id);if(!m)return;
-  const ops=m.importe<0?[...S.gastos.values()].filter(g=>!g.sinFactura&&!(+g.total<0)).sort((a,b)=>dias(a.fecha,m.fecha)-dias(b.fecha,m.fecha)).slice(0,60).map(g=>({v:"gasto|"+g.id,t:`${fecha(g.fecha)} · ${g.proveedor||""} · ${g.numFactura||""} · ${eur(g.total)}`}))
-    :emitidas().sort((a,b)=>dias(a.fechaExpedicion,m.fecha)-dias(b.fechaExpedicion,m.fecha)).slice(0,60).map(f=>({v:"factura|"+f.id,t:`${f.codigo} · ${fecha(f.fechaExpedicion)} · ${(f.cliente||{}).nombre||""} · ${eur((f.totales||{}).total)}`}));
+async function elegirManual(id,mas){const m=B.movs.get(id);if(!m)return;const{g:gU,f:fU}=enlazados();const tot=Math.abs(m.importe);
+  const ya=new Set(enls(m).map(e=>e.tipo+"|"+e.id));
+  const pend=(mp,k,t)=>{const c=cubierto(mp,k);return c>0.02?` · pendiente ${eur(r2(t-c))}`:""};
+  const ops=m.importe<0?[...S.gastos.values()].filter(g=>!g.sinFactura&&!(+g.total<0)&&!ya.has("gasto|"+g.id)).sort((a,b)=>dias(a.fecha,m.fecha)-dias(b.fecha,m.fecha)).slice(0,60).map(g=>({v:"gasto|"+g.id,t:`${fecha(g.fecha)} · ${g.proveedor||""} · ${g.numFactura||""} · ${eur(g.total)}${pend(gU,g.id,+g.total)}`}))
+    :[...[...S.gastos.values()].filter(g=>!g.sinFactura&&+g.total<0&&!ya.has("gasto|"+g.id)).map(g=>({f:g.fecha,v:"gasto|"+g.id,t:`Abono · ${fecha(g.fecha)} · ${g.proveedor||""} · ${g.numFactura||""} · ${eur(g.total)}`})),
+      ...emitidas().filter(f=>!f.anulada&&!ya.has("factura|"+f.id)).map(f=>({f:f.fechaExpedicion,v:"factura|"+f.id,t:`${f.codigo} · ${fecha(f.fechaExpedicion)} · ${(f.cliente||{}).nombre||""} · ${eur((f.totales||{}).total)}${pend(fU,f.id,(f.totales||{}).total||0)}`}))]
+      .sort((a,b)=>dias(a.f,m.fecha)-dias(b.f,m.fecha)).slice(0,60);
+  const lst=enls(m).filter(e=>e.tipo==="gasto"||e.tipo==="factura");
+  const libre=lst.length===1&&lst[0].importe==null?"":r2(tot-lst.reduce((s,e)=>s+asig(e,m),0)); // si ya hay un solo enlace por todo el movimiento, hay que indicar la parte
   const r=await new Promise(res=>{const d=$("#dlg-confirm"),f=$("#f-confirm");
-    f.innerHTML=`<h2>Enlazar movimiento de ${eur(m.importe)}</h2><p class="muted" style="margin:0">${esc(m.concepto||"")} · ${fecha(m.fecha)}</p><label>${m.importe<0?"Gasto":"Factura"} (los más cercanos en fecha)<select id="bk-sel">${ops.map(o=>`<option value="${esc(o.v)}">${esc(o.t)}</option>`).join("")}</select></label>
-      <p class="muted" style="margin:0">Si el importe no coincide (pago parcial o varias facturas juntas), se enlaza igualmente; anótalo en el gasto.</p><div class="row" style="justify-content:flex-end"><button class="btn" value="no">Cancelar</button><button class="btn primary" value="si" ${ops.length?"":"disabled"}>Enlazar</button></div>`;
-    d.returnValue="";d.showModal();d.onclose=()=>res(d.returnValue==="si"?$("#bk-sel").value:null)});
-  if(r){const[tipo,ref]=r.split("|");await enlazar(id,{tipo,id:ref});toast("Enlazado")}
+    f.innerHTML=`<h2>${mas?"Añadir otra factura o gasto al":"Enlazar"} movimiento de ${eur(m.importe)}</h2><p class="muted" style="margin:0">${esc(m.concepto||"")} · ${fecha(m.fecha)}</p><label>${m.importe<0?"Gasto":"Factura o abono"} (los más cercanos en fecha)<select id="bk-sel">${ops.map(o=>`<option value="${esc(o.v)}">${esc(o.t)}</option>`).join("")}</select></label>
+      <label>Parte del movimiento para este documento (€)<input id="bk-imp" inputmode="decimal" value="${mas?esc(libre):esc(tot)}"></label>
+      <p class="muted" style="margin:0">Una factura puede tener varios pagos: enlaza cada movimiento con ella (indica la parte que corresponde si no es todo). Si un movimiento paga varias facturas juntas, enlaza la primera y añade las demás con «+ Otra factura».</p><div class="row" style="justify-content:flex-end"><button class="btn" value="no">Cancelar</button><button class="btn primary" value="si" ${ops.length?"":"disabled"}>${mas?"Añadir":"Enlazar"}</button></div>`;
+    d.returnValue="";d.showModal();d.onclose=()=>res(d.returnValue==="si"?{sel:$("#bk-sel").value,imp:importe($("#bk-imp").value)}:null)});
+  if(r){const[tipo,ref]=r.sel.split("|");const imp=isNaN(r.imp)?tot:r.imp;
+    if(mas)await anadirEnlace(id,{tipo,id:ref},imp);
+    else await guardarEnlaces(id,[imp<tot-0.02?{tipo,id:ref,importe:r2(imp)}:{tipo,id:ref}]);
+    toast(mas?"Añadido":"Enlazado")}
 }
 function crearGasto(id){const m=B.movs.get(id);if(!m)return;
   const prov=[...S.proveedores.values()].find(p=>parecido(m.concepto,p.nombre,p.claves)>=0.5);
