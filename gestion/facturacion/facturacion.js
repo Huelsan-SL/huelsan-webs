@@ -93,6 +93,16 @@ function lineasDe(g){
   const gen=g.regimen==="General";
   return[{id:"l0",concepto:g.concepto||g.categoria||"",regimen:gen?"General":g.regimen==="REBU"?"REBU":"Exento",base:gen?r2(g.base):r2(g.total),ivaTipo:gen?(+g.ivaTipo||21):0,cuota:gen?r2(g.cuota):0,total:r2(g.total),vehiculo:g.categoria==="Compra del vehículo"}];
 }
+/* Nombre estándar de los archivos de factura: «YYMMDD - Empresa - Nr Factura - Concepto.ext» (sin caracteres que OneDrive/Windows no admiten) */
+const limpiaNombre=t=>String(t||"").replace(/[\\\/:*?"<>|\u0000-\u001f]+/g," ").replace(/\s+/g," ").replace(/[. ]+$/,"").trim();
+function nombreEstandar(g,ext,n){
+  const f=String(g.fecha||"").replace(/-/g,"").slice(2,8)||"000000";
+  const concepto=g.concepto||(g.categoria==="Compra del vehículo"&&g.matricula?"Compra "+g.matricula:g.categoria)||"";
+  const partes=[f,g.proveedor,g.numFactura,concepto].map(limpiaNombre).filter(Boolean);
+  const base=partes.join(" - ").slice(0,150).replace(/[. ]+$/,"");
+  return base+(n>1?" ("+n+")":"")+(ext||".pdf");
+}
+const extDe=nm=>(String(nm||"").match(/\.[a-z0-9]{2,5}$/i)||[".pdf"])[0].toLowerCase();
 const costeLinea=(l,sinF)=>sinF||l.regimen!=="General"?r2(l.total):r2(l.base);
 const gastoCoste=g=>r2(lineasDe(g).reduce((s,l)=>s+costeLinea(l,g.sinFactura),0));
 const gastoCuota=g=>g.sinFactura?0:r2(lineasDe(g).filter(l=>l.regimen==="General").reduce((s,l)=>s+(+l.cuota||0),0));
@@ -544,7 +554,7 @@ function vistaGastos(){
     <label style="flex:1 1 240px">Buscar<input type="search" data-gf="q" value="${esc(F.q)}" placeholder="Proveedor, concepto, nº factura, matrícula…"></label></div>
   <div class="kpis"><div class="kpi"><b>${eur(tot)}</b><span>total pagado (${lista.length})</span></div><div class="kpi"><b>${eur(coste)}</b><span>coste para los márgenes (sin IVA deducible)</span></div><div class="kpi"><b>${eur(iva)}</b><span>IVA soportado deducible</span></div></div>
   ${lista.length?`<div class="tw"><table><thead><tr><th>Fecha</th><th>Proveedor</th><th>Concepto</th><th>Coche</th><th>Régimen</th><th class="num">Base con IVA</th><th class="num">IVA</th><th class="num">Total</th><th>Factura</th></tr></thead><tbody>
-    ${lista.map(g=>`<tr data-gasto="${esc(g.id)}" style="cursor:pointer"><td>${fecha(g.fecha)}</td><td>${esc(g.proveedor||"—")}<div class="muted">${esc(g.numFactura?"Fra. "+g.numFactura:"")}</div></td>
+    ${lista.map(g=>`<tr data-gasto="${esc(g.id)}" style="cursor:pointer"><td>${fecha(g.fecha)}</td><td>${esc(g.proveedor||"—")}<div class="muted">${esc(g.numFactura?(+g.total<0?"Abono ":"Fra. ")+g.numFactura:"")}</div></td>
       <td>${esc(g.categoria||"")}<div class="muted">${esc(g.concepto||"")}</div></td><td>${g.matricula?`<span class="mat">${esc(g.matricula)}</span>`:"—"}</td><td>${esc(regimenTexto(g))}</td>
       <td class="num">${gastoBase(g)?eur(gastoBase(g)):"—"}</td><td class="num">${gastoCuota(g)?eur(gastoCuota(g)):"—"}</td><td class="num">${eur(g.total)}</td>
       <td>${g.sinFactura?`<span class="tag">Efectivo sin factura</span>`:(g.archivos||[]).length?`<span class="tag acc">${g.archivos.length} ${g.archivos.length===1?"archivo":"archivos"}</span>`:`<span class="tag bad">Falta factura</span>`}</td></tr>`).join("")}</tbody></table></div>`
@@ -556,22 +566,28 @@ function numES2(v){let s=String(v??"").trim().replace(/[\s€]/g,"");if(!s)retur
   if(s.includes(",")&&s.includes("."))s=s.lastIndexOf(",")>s.lastIndexOf(".")?s.replace(/\./g,"").replace(",","."):s.replace(/,/g,"");
   else if(s.includes(","))s=s.replace(",",".");
   return +s||0}
-function lineaNueva(compra,reg){return{id:nid(),concepto:"",regimen:reg||"General",base:"",ivaTipo:21,cuota:"",total:"",vehiculo:!!compra}}
+function lineaNueva(compra,reg){return{id:nid(),concepto:"",regimen:reg||"General",cantidad:1,precio:"",dto:"",base:"",ivaTipo:21,cuota:"",total:"",vehiculo:!!compra}}
+/* Rellena cantidad / precio unitario / descuento de líneas antiguas o leídas de la factura (precio = importe sin IVA ÷ cantidad) */
+function completaLinea(l){
+  if(l.cantidad==null||l.cantidad==="")l.cantidad=1;
+  if(l.dto==null)l.dto="";
+  if(l.precio==null||l.precio===""){const n=l.regimen==="General"?numES2(l.base):numES2(l.total),den=(numES2(l.cantidad)||1)*(1-numES2(l.dto)/100);l.precio=n&&den?Math.round(n/den*1e4)/1e4:""}
+  return l}
 function abrirGasto(id,pre={}){
   const g=id?JSON.parse(JSON.stringify(S.gastos.get(id))):{fecha:hoyISO(),categoria:"Transporte y portes",archivos:[],pagado:true,formaPago:"Transferencia",...pre};
   if(!Array.isArray(g.lineas)||!g.lineas.length)g.lineas=id?lineasDe(g).map(l=>({...l})):(pre.lineas||[lineaNueva(g.categoria==="Compra del vehículo")]);
-  g.lineas.forEach(l=>{l.id=l.id||nid()});
+  g.lineas.forEach(l=>{l.id=l.id||nid();completaLinea(l)});
   const nuevos=[];const borrados=[];let lectura=null,leyendo=false;
   const f=$("#f-gasto");
   const provs=()=>[...S.proveedores.values()].sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre),"es"));
   const totales=()=>{let base=0,cuota=0,total=0,sinIva=0;for(const l of g.lineas){const t=numES2(l.total);total+=t;if(l.regimen==="General"){base+=numES2(l.base);cuota+=numES2(l.cuota)}else sinIva+=t}return{base:r2(base),cuota:r2(cuota),total:r2(total),sinIva:r2(sinIva)}};
-  const pintarTot=()=>{const t=totales(),n=f.querySelector("#g-tot");if(n)n.innerHTML=`<div><span>Base con IVA</span><span>${eur(t.base)}</span></div><div><span>Cuota IVA</span><span>${eur(t.cuota)}</span></div>${t.sinIva?`<div><span>Sin IVA / REBU</span><span>${eur(t.sinIva)}</span></div>`:""}<div class="t"><span>TOTAL</span><span>${eur(t.total)}</span></div>`};
+  const pintarTot=()=>{const t=totales(),n=f.querySelector("#g-tot");if(n)n.innerHTML=`<div><span>Base con IVA</span><span>${eur(t.base)}</span></div><div><span>Cuota IVA</span><span>${eur(t.cuota)}</span></div>${t.sinIva?`<div><span>Sin IVA / REBU</span><span>${eur(t.sinIva)}</span></div>`:""}<div class="t"><span>TOTAL</span><span>${eur(t.total)}</span></div>${t.total<0?`<div class="muted" style="grid-column:1/-1">Nota de crédito / devolución: resta del coste del coche y del IVA soportado.</div>`:""}`};
   const pintarF=()=>{
     const compra=g.categoria==="Compra del vehículo";
     const archivos=[...(g.archivos||[]),...nuevos.map(n=>({nombre:n.name,nuevo:true,size:n.size}))];
     f.innerHTML=`<h2>${id?"Editar":"Nueva"} compra o gasto</h2>
       <div class="card" style="background:var(--bg)"><div class="row sp"><b>Factura (PDF o foto)</b><label class="btn sm primary" style="display:inline-flex">${leyendo?"Leyendo la factura…":archivos.length?"Subir otro archivo":"Subir la factura y leerla"}<input type="file" id="g-files" accept="application/pdf,image/*" multiple hidden></label></div>
-        <div class="files">${archivos.map((a,i)=>`<div><span>${esc(a.nombre)} <span class="muted">${a.size?Math.round(a.size/1024)+" KB":""}${a.nuevo?" · se subirá al guardar":""}</span></span><span class="row">${a.ruta?`<button type="button" class="btn sm" data-g-ver="${esc(a.ruta)}" data-nombre="${esc(a.nombre)}">Ver</button><button type="button" class="btn sm" data-g-leerruta="${esc(a.ruta)}" data-nombre="${esc(a.nombre)}">Leer</button>`:""}${!a.ruta&&a.nuevo?`<button type="button" class="btn sm" data-g-leer="${i-(g.archivos||[]).length}">Leer otra vez</button>`:""}<button type="button" class="btn sm" data-g-quitar="${i}">Quitar</button></span></div>`).join("")||`<span class="muted">${g.sinFactura?"Pago en efectivo sin factura.":"⚠ Falta la factura. Puedes guardar el gasto y subirla después: quedará marcado como pendiente."}</span>`}</div>
+        <div class="files">${archivos.map((a,i)=>`<div><span>${esc(a.nombre)} <span class="muted">${a.size?Math.round(a.size/1024)+" KB":""}${a.nuevo?" · se subirá al guardar":""}</span></span><span class="row">${a.ruta?`<button type="button" class="btn sm" data-g-ver="${esc(a.ruta)}" data-nombre="${esc(a.nombre)}">Ver</button><button type="button" class="btn sm" data-g-leerruta="${esc(a.ruta)}" data-nombre="${esc(a.nombre)}">Leer</button>`:""}${!a.ruta&&a.nuevo?`<button type="button" class="btn sm" data-g-leer="${i-(g.archivos||[]).length}">Leer otra vez</button>`:""}<button type="button" class="btn sm" data-g-ren="${i}" title="Cambiar el nombre del archivo">Renombrar</button><button type="button" class="btn sm" data-g-std="${i}" title="${esc(nombreEstandar(g,extDe(a.nombre),1))}">Nombre estándar</button><button type="button" class="btn sm" data-g-quitar="${i}">Quitar</button></span></div>`).join("")||`<span class="muted">${g.sinFactura?"Pago en efectivo sin factura.":"⚠ Falta la factura. Puedes guardar el gasto y subirla después: quedará marcado como pendiente."}</span>`}</div>
         ${lectura?`<div class="aviso ${lectura.ok?"ok":""}">${lectura.msg}</div>`:""}
         <label class="row" style="flex-direction:row;color:var(--ink);font-weight:500"><input type="checkbox" id="g-sinf" ${g.sinFactura?"checked":""} style="width:auto"> Pago en efectivo sin factura <small class="muted">— no entra en los libros de IVA; sí en el balance del coche (por el total)</small></label></div>
       <div class="g3"><label>Proveedor guardado<select id="g-prov"><option value="">— Elegir —</option>${provs().map(p=>`<option value="${esc(p.id)}" ${g.proveedorId===p.id?"selected":""}>${esc(p.nombre)}${p.nif?" · "+esc(p.nif):""}</option>`).join("")}</select></label>
@@ -581,13 +597,17 @@ function abrirGasto(id,pre={}){
         <label>Fecha de la factura<input type="date" data-g="fecha" value="${esc(g.fecha||"")}"></label>
         <label>Categoría<select data-g="categoria">${CATS_GASTO.map(c=>`<option ${c===g.categoria?"selected":""}>${c}</option>`).join("")}</select></label>
         <label>Forma de pago<select data-g="formaPago">${FORMAS_PAGO_GASTO.map(c=>`<option ${c===(g.formaPago||"Transferencia")?"selected":""}>${c}</option>`).join("")}</select></label></div>
-      <div class="g3"><label>Coche<select data-g="loteId"><option value="">— Sin coche / gasto general —</option>${S.lotes.filter(l=>["comprado","stock","vendido"].includes(l.estado)||l.id===g.loteId).map(l=>`<option value="${esc(l.id)}" ${l.id===g.loteId?"selected":""}>${esc(l.matricula||"sin matrícula")} · ${esc([l.marca,l.modelo].filter(Boolean).join(" "))}</option>`).join("")}</select></label>
+      <div class="g4"><label>Coche<select data-g="loteId"><option value="">— Sin coche / gasto general —</option>${S.lotes.filter(l=>["comprado","stock","vendido"].includes(l.estado)||l.id===g.loteId).map(l=>`<option value="${esc(l.id)}" ${l.id===g.loteId?"selected":""}>${esc(l.matricula||"sin matrícula")} · ${esc([l.marca,l.modelo].filter(Boolean).join(" "))}</option>`).join("")}</select></label>
         <label>Matrícula <small>si el coche no está en la app</small><input data-g="matricula" value="${esc(g.matricula||"")}" style="text-transform:uppercase"></label>
+        <label>Factura original <small>(si es una nota de crédito)</small><input data-g="rectificaNum" value="${esc(g.rectificaNum||"")}" placeholder="Nº de la factura que se devuelve"></label>
         <label>Concepto general<input data-g="concepto" value="${esc(g.concepto||"")}" placeholder="Ej.: adjudicación BCA, transporte…"></label></div>
       <div class="card"><div class="row sp"><b>Líneas de la factura</b><span class="row"><button type="button" class="btn sm" data-g-linea="General">+ Con IVA</button><button type="button" class="btn sm" data-g-linea="Exento">+ Sin IVA</button><button type="button" class="btn sm" data-g-linea="REBU">+ REBU</button></span></div>
-        <div class="tw"><table class="lineas" style="min-width:720px"><thead><tr><th>Concepto</th><th style="width:150px">Tipo</th><th class="num" style="width:105px">Base</th><th class="num" style="width:62px">IVA %</th><th class="num" style="width:95px">Cuota</th><th class="num" style="width:105px">Total</th>${compra?`<th style="width:70px" title="Marca la línea del precio del coche">Coche</th>`:""}<th></th></tr></thead><tbody>
+        <div class="tw"><table class="lineas" style="min-width:900px"><thead><tr><th>Concepto</th><th style="width:140px">Tipo</th><th class="num" style="width:58px">Cant.</th><th class="num" style="width:90px" title="Precio unitario sin IVA">Precio ud.</th><th class="num" style="width:62px" title="Descuento de la línea">Dto. %</th><th class="num" style="width:100px">Base</th><th class="num" style="width:62px">IVA %</th><th class="num" style="width:95px">Cuota</th><th class="num" style="width:105px">Total</th>${compra?`<th style="width:70px" title="Marca la línea del precio del coche">Coche</th>`:""}<th></th></tr></thead><tbody>
         ${g.lineas.map((l,i)=>{const gen=l.regimen==="General";return`<tr><td><input data-gl="${i}:concepto" value="${esc(l.concepto||"")}" placeholder="${compra&&l.vehiculo?"Precio del vehículo":"Concepto"}"></td>
           <td><select data-gl="${i}:regimen">${REG_LINEA.map(([k,v])=>`<option value="${k}" ${k===l.regimen?"selected":""}>${v}</option>`).join("")}</select></td>
+          <td><input data-gl="${i}:cantidad" class="num" inputmode="decimal" value="${esc(l.cantidad)}"></td>
+          <td><input data-gl="${i}:precio" class="num" inputmode="decimal" value="${esc(l.precio)}"></td>
+          <td><input data-gl="${i}:dto" class="num" inputmode="decimal" value="${esc(l.dto)}" placeholder="0"></td>
           <td><input data-gl="${i}:base" class="num" inputmode="decimal" value="${esc(gen?l.base:"")}" ${gen?"":"disabled"}></td>
           <td><input data-gl="${i}:ivaTipo" class="num" inputmode="decimal" value="${esc(gen?l.ivaTipo:"")}" ${gen?"":"disabled"}></td>
           <td><input data-gl="${i}:cuota" class="num" inputmode="decimal" value="${esc(gen?l.cuota:"")}" ${gen?"":"disabled"}></td>
@@ -601,11 +621,20 @@ function abrirGasto(id,pre={}){
     pintarTot();
   };
   const calcLinea=(i,campo)=>{const l=g.lineas[i];const row=f.querySelectorAll(".lineas tbody tr")[i];const set=(k,v)=>{l[k]=v;const n=row&&row.querySelector(`[data-gl="${i}:${k}"]`);if(n)n.value=v};
-    if(l.regimen!=="General"){l.base=l.total;l.cuota=0;return}
+    const gen=l.regimen==="General";
+    const den=(l.cantidad===""||l.cantidad==null?1:numES2(l.cantidad))*(1-numES2(l.dto)/100);
+    const syncPrecio=()=>{const n=gen?numES2(l.base):numES2(l.total);if(den)set("precio",n?Math.round(n/den*1e4)/1e4:"")};
+    if(campo==="cantidad"||campo==="precio"||campo==="dto"){ // importe = cantidad × precio × (1 − dto %)
+      if(l.precio===""||l.precio==null)return;
+      const n=r2(numES2(l.precio)*den);
+      if(gen){const c=r2(n*numES2(l.ivaTipo)/100);set("base",n);set("cuota",c);set("total",r2(n+c))}else{set("total",n);l.base=n;l.cuota=0}
+      return}
+    if(!gen){l.base=l.total;l.cuota=0;syncPrecio();return}
     const b=numES2(l.base),p=numES2(l.ivaTipo),t=numES2(l.total);
     if(campo==="base"||campo==="ivaTipo"){if(l.base==="")return;const c=r2(b*p/100);set("cuota",c);set("total",r2(b+c))}
     else if(campo==="total"){if(l.total==="")return;const bb=r2(t/(1+p/100));set("base",bb);set("cuota",r2(t-bb))}
-    else if(campo==="cuota"){set("total",r2(b+numES2(l.cuota)))}};
+    else if(campo==="cuota"){set("total",r2(b+numES2(l.cuota)))}
+    syncPrecio()};
   f.oninput=e=>{const t=e.target;
     if(t.dataset.g){g[t.dataset.g]=t.value;return}
     if(t.dataset.gl){const[i,k]=t.dataset.gl.split(":");if(k==="vehiculo"){g.lineas[+i].vehiculo=t.checked;return}if(k==="regimen")return;g.lineas[+i][k]=t.value;calcLinea(+i,k);pintarTot()}};
@@ -619,9 +648,16 @@ function abrirGasto(id,pre={}){
       if(p.regimen&&!id&&g.lineas.length===1&&!numES2(g.lineas[0].total))g.lineas[0].regimen=p.regimen}pintarF();return}
     if(t.dataset.g==="categoria"){g.categoria=t.value;if(g.categoria==="Compra del vehículo"&&!g.lineas.some(l=>l.vehiculo)){const mx=g.lineas.reduce((a,l)=>numES2(l.total)>numES2(a.total)?l:a,g.lineas[0]);if(mx)mx.vehiculo=true}pintarF();return}
     if(t.dataset.g==="loteId"){g.loteId=t.value;const l=S.lotes.find(x=>x.id===t.value);if(l)g.matricula=normMat(l.matricula);pintarF();return}
-    if(t.dataset.gl&&t.dataset.gl.endsWith(":regimen")){const i=+t.dataset.gl.split(":")[0],l=g.lineas[i];l.regimen=t.value;if(l.regimen==="General"){l.ivaTipo=l.ivaTipo||21;l.base="";calcLinea(i,"total")}else{l.base=l.total;l.cuota=0;l.ivaTipo=0}pintarF()}};
+    if(t.dataset.gl&&t.dataset.gl.endsWith(":regimen")){const i=+t.dataset.gl.split(":")[0],l=g.lineas[i];l.regimen=t.value;if(l.regimen==="General"){l.ivaTipo=l.ivaTipo||21;l.base="";calcLinea(i,"total")}else{l.base=l.total;l.cuota=0;l.ivaTipo=0;calcLinea(i,"total")}pintarF()}};
   f.onclick=async e=>{const t=e.target;
     const ver=t.closest("[data-g-ver]");if(ver){e.preventDefault();verArchivo(ver.dataset.gVer,ver.dataset.nombre);return}
+    const rn=t.closest("[data-g-ren],[data-g-std]");if(rn){e.preventDefault();
+      const est=rn.dataset.gStd!=null,i=+(est?rn.dataset.gStd:rn.dataset.gRen),n=(g.archivos||[]).length,a=i<n?g.archivos[i]:null,fi=i>=n?nuevos[i-n]:null,actual=a?a.nombre:fi.name;
+      let nuevo=est?nombreEstandar(g,extDe(actual),i+1>1?i+1:1):window.prompt("Nuevo nombre del archivo:",actual);
+      if(est&&(g.archivos||[]).length+nuevos.length===1)nuevo=nombreEstandar(g,extDe(actual),1);
+      if(!nuevo||nuevo===actual)return;nuevo=limpiaNombre(nuevo.replace(/\.[a-z0-9]{2,5}$/i,""))+extDe(nuevo.match(/\.[a-z0-9]{2,5}$/i)?nuevo:actual);
+      if(a)a.nombre=nuevo;else nuevos[i-n]=new File([fi],nuevo,{type:fi.type});
+      toast("Archivo renombrado: "+nuevo+(a?" (se guarda al pulsar Guardar)":""),4500);pintarF();return}
     const q=t.closest("[data-g-quitar]");if(q){e.preventDefault();const i=+q.dataset.gQuitar,n=(g.archivos||[]).length;if(i<n)borrados.push(...g.archivos.splice(i,1));else nuevos.splice(i-n,1);pintarF();return}
     const lr=t.closest("[data-g-leerruta]");if(lr){e.preventDefault();try{const b=await HUELSAN.bajar("documentos",lr.dataset.gLeerruta);const nm=lr.dataset.nombre||"factura.pdf";leer(new File([b],nm,{type:b.type||(/\.pdf$/i.test(nm)?"application/pdf":"image/jpeg")}),true)}catch(err){toast(err.message,6000)}return}
     const rl=t.closest("[data-g-leer]");if(rl){e.preventDefault();const fi=nuevos[+rl.dataset.gLeer];if(fi)leer(fi,true);return}
@@ -639,7 +675,7 @@ function abrirGasto(id,pre={}){
       if(r.fecha){g.fecha=r.fecha;cambios.push("fecha")}
       if(r.compraVehiculo&&!id)g.categoria="Compra del vehículo";
       if(r.matricula&&!g.loteId){const l=S.lotes.find(x=>normMat(x.matricula)===r.matricula);if(l){g.loteId=l.id;g.matricula=r.matricula;cambios.push("coche "+r.matricula)}else{g.matricula=r.matricula;cambios.push("matrícula")}}
-      if(r.lineas&&r.lineas.length){g.lineas=r.lineas.map(l=>({...lineaNueva(false),...l,id:nid(),vehiculo:g.categoria==="Compra del vehículo"&&!!l.vehiculo}));
+      if(r.lineas&&r.lineas.length){g.lineas=r.lineas.map(l=>completaLinea({...lineaNueva(false),...l,id:nid(),vehiculo:g.categoria==="Compra del vehículo"&&!!l.vehiculo}));
         if(g.categoria==="Compra del vehículo"&&!g.lineas.some(l=>l.vehiculo)){const mx=g.lineas.reduce((a,l)=>numES2(l.total)>numES2(a.total)?l:a,g.lineas[0]);mx.vehiculo=true}cambios.push(g.lineas.length+(g.lineas.length===1?" línea":" líneas"))}
       const cuadra=r.total&&Math.abs(totales().total-r.total)<0.05;
       lectura={ok:cambios.length>0,msg:cambios.length?`Leído de la factura: ${esc(cambios.join(", "))}.${r.total?` Total de la factura: <b>${eur(r.total)}</b>${cuadra?" (cuadra con las líneas)":" — <b>no cuadra con las líneas: revísalas</b>"}.`:""} Revisa todo antes de guardar.`:"No he podido leer datos de este archivo: rellénalos a mano."};
@@ -651,7 +687,7 @@ function abrirGasto(id,pre={}){
   const validar=()=>{
     if(!String(g.proveedor||"").trim())return"Falta el proveedor";
     if(!g.fecha)return"Falta la fecha de la factura";
-    if(!(totales().total>0))return"Falta el importe en las líneas";
+    if(!totales().total)return"Falta el importe en las líneas (en una nota de crédito o devolución, escríbelo en negativo)";
     return"";
   };
   const d=$("#dlg-gasto");d.returnValue="";d.showModal();
@@ -664,13 +700,13 @@ function abrirGasto(id,pre={}){
       const compra=g.categoria==="Compra del vehículo";
       const ls=g.lineas.map(l=>{const reg=l.regimen;let base=numES2(l.base),iva=reg==="General"?numES2(l.ivaTipo):0,tot=numES2(l.total),cu=numES2(l.cuota);
         if(reg==="General"){if(!base&&tot)base=r2(tot/(1+iva/100));if(!cu&&base)cu=r2(base*iva/100);if(!tot)tot=r2(base+cu)}else{base=tot;cu=0}
-        return{id:l.id||nid(),concepto:String(l.concepto||"").trim(),regimen:reg,base:r2(base),ivaTipo:iva,cuota:r2(cu),total:r2(tot),vehiculo:compra&&!!l.vehiculo}}).filter(l=>l.total);
+        return{id:l.id||nid(),concepto:String(l.concepto||"").trim(),regimen:reg,cantidad:numES2(l.cantidad)||1,precio:Math.round(numES2(l.precio)*1e4)/1e4,dto:numES2(l.dto),base:r2(base),ivaTipo:iva,cuota:r2(cu),total:r2(tot),vehiculo:compra&&!!l.vehiculo}}).filter(l=>l.total);
       if(compra&&!ls.some(l=>l.vehiculo)){const mx=ls.reduce((a,l)=>l.total>a.total?l:a,ls[0]);mx.vehiculo=true}
       const regs=[...new Set(ls.map(l=>l.regimen))];
       const dato={fecha:g.fecha,categoria:g.categoria,proveedor:String(g.proveedor||"").trim(),proveedorId:g.proveedorId||"",nifProveedor:nifLimpio(g.nifProveedor),numFactura:String(g.numFactura||"").trim(),concepto:String(g.concepto||"").trim(),
         loteId:g.loteId||"",matricula:normMat(g.matricula),pagado:g.pagado!==false,formaPago:g.formaPago||"Transferencia",sinFactura:!!g.sinFactura,lineas:ls,
         total:r2(ls.reduce((s,l)=>s+l.total,0)),base:r2(ls.filter(l=>l.regimen==="General").reduce((s,l)=>s+l.base,0)),cuota:r2(ls.filter(l=>l.regimen==="General").reduce((s,l)=>s+l.cuota,0)),
-        regimen:g.sinFactura?"SinFactura":regs.length===1?(regs[0]==="Exento"?"Exento":regs[0]):"Mixto",ivaTipo:(ls.find(l=>l.regimen==="General")||{}).ivaTipo||0,
+        abono:r2(ls.reduce((s,l)=>s+l.total,0))<0,rectificaNum:String(g.rectificaNum||"").trim(),regimen:g.sinFactura?"SinFactura":regs.length===1?(regs[0]==="Exento"?"Exento":regs[0]):"Mixto",ivaTipo:(ls.find(l=>l.regimen==="General")||{}).ivaTipo||0,
         archivos:[...(g.archivos||[])],actualizado:new Date().toISOString()};
       if(g.detalleOrigen)dato.detalleOrigen=g.detalleOrigen;
       if(!dato.matricula&&dato.loteId){const l=S.lotes.find(x=>x.id===dato.loteId);if(l)dato.matricula=normMat(l.matricula)}
@@ -1159,7 +1195,7 @@ async function zipRecibidas(anio,tq){
   const gs=[...S.gastos.values()].filter(g=>!g.sinFactura&&enPeriodo(g.fecha,anio,tq)&&(g.archivos||[]).length);if(!gs.length)throw new Error("No hay facturas recibidas con archivo en ese periodo");
   await cargarJSZip();const z=new JSZip();let i=0;
   for(const g of gs)for(const a of g.archivos){toast(`Descargando ${++i}…`,20000);const b=await HUELSAN.bajar("documentos",a.ruta);
-    const ext=(a.nombre.match(/\.[a-z0-9]+$/i)||[".pdf"])[0];z.file(`${g.fecha}_${(g.proveedor||"proveedor").replace(/[^\wÀ-ÿ]+/g,"-").slice(0,40)}_${(g.numFactura||g.id).replace(/[^\w-]+/g,"-")}${g.archivos.length>1?"_"+i:""}${ext}`,b)}
+    const ext=(a.nombre.match(/\.[a-z0-9]+$/i)||[".pdf"])[0];z.file(nombreEstandar(g,ext,g.archivos.indexOf(a)+1),b)}
   const el=document.createElement("a");el.href=URL.createObjectURL(await z.generateAsync({type:"blob"}));el.download=`facturas-recibidas-${sufijo(anio,tq)}.zip`;el.click();setTimeout(()=>URL.revokeObjectURL(el.href),4000);toast("ZIP descargado");
 }
 async function zipPDF(anio,tq){

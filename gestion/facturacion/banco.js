@@ -82,7 +82,10 @@ function candidatos(m){
     for(const g of S.gastos.values()){if(g.sinFactura||(gU.has(g.id)&&gU.get(g.id).id!==m.id))continue;
       const dif=Math.abs((+g.total||0)-imp);if(dif>0.02)continue;const d=dias(g.fecha,m.fecha);if(d>60)continue;
       const p=parecido(m.concepto,g.proveedor,(S.proveedores.get(g.proveedorId)||{}).claves);out.push({tipo:"gasto",id:g.id,txt:`${g.proveedor||"Gasto"} · ${g.numFactura?"Fra. "+g.numFactura+" · ":""}${fecha(g.fecha)} · ${eur(g.total)}`,score:100-d+p*50})}}
-  else{for(const f of emitidas()){if(f.anulada||(fU.has(f.id)&&fU.get(f.id).id!==m.id))continue;const t=(f.totales||{}).total||0;
+  else{for(const g of S.gastos.values()){if(g.sinFactura||!(+g.total<0)||(gU.has(g.id)&&gU.get(g.id).id!==m.id))continue; // abono de un proveedor: llega como cobro
+      if(Math.abs(-(+g.total)-m.importe)>0.02)continue;const d=dias(g.fecha,m.fecha);if(d>90)continue;
+      const p=parecido(m.concepto,g.proveedor,(S.proveedores.get(g.proveedorId)||{}).claves);out.push({tipo:"gasto",id:g.id,txt:`Abono ${g.proveedor||""} · ${g.numFactura?g.numFactura+" · ":""}${fecha(g.fecha)} · ${eur(g.total)}`,score:100-d+p*50})}
+    for(const f of emitidas()){if(f.anulada||(fU.has(f.id)&&fU.get(f.id).id!==m.id))continue;const t=(f.totales||{}).total||0;
       const ok=Math.abs(t-m.importe)<=0.02||(f.cobros||[]).some(c=>Math.abs((+c.importe||0)-m.importe)<=0.02);if(!ok)continue;const d=dias(f.fechaExpedicion,m.fecha);if(d>90)continue;
       const p=parecido(m.concepto,(f.cliente||{}).nombre);out.push({tipo:"factura",id:f.id,txt:`Factura ${f.codigo} · ${(f.cliente||{}).nombre||""} · ${eur(t)}`,score:100-d+p*50})}}
   return out.sort((a,b)=>b.score-a.score);
@@ -151,7 +154,7 @@ function pedirMotivo(){return new Promise(res=>{const d=$("#dlg-confirm"),f=$("#
   f.innerHTML=`<h2>¿Por qué no necesita factura?</h2><label>Motivo<select id="bk-motivo">${MOTIVOS.map(m=>`<option>${m}</option>`).join("")}</select></label><label>Nota (opcional)<input id="bk-nota"></label><div class="row" style="justify-content:flex-end"><button class="btn" value="no">Cancelar</button><button class="btn primary" value="si">Guardar</button></div>`;
   d.returnValue="";d.showModal();d.onclose=()=>{const m=$("#bk-motivo").value,n=$("#bk-nota").value.trim();res(d.returnValue==="si"?m+(n?" · "+n:""):null)}})}
 async function elegirManual(id){const m=B.movs.get(id);if(!m)return;
-  const ops=m.importe<0?[...S.gastos.values()].filter(g=>!g.sinFactura).sort((a,b)=>dias(a.fecha,m.fecha)-dias(b.fecha,m.fecha)).slice(0,60).map(g=>({v:"gasto|"+g.id,t:`${fecha(g.fecha)} · ${g.proveedor||""} · ${g.numFactura||""} · ${eur(g.total)}`}))
+  const ops=m.importe<0?[...S.gastos.values()].filter(g=>!g.sinFactura&&!(+g.total<0)).sort((a,b)=>dias(a.fecha,m.fecha)-dias(b.fecha,m.fecha)).slice(0,60).map(g=>({v:"gasto|"+g.id,t:`${fecha(g.fecha)} · ${g.proveedor||""} · ${g.numFactura||""} · ${eur(g.total)}`}))
     :emitidas().sort((a,b)=>dias(a.fechaExpedicion,m.fecha)-dias(b.fechaExpedicion,m.fecha)).slice(0,60).map(f=>({v:"factura|"+f.id,t:`${f.codigo} · ${fecha(f.fechaExpedicion)} · ${(f.cliente||{}).nombre||""} · ${eur((f.totales||{}).total)}`}));
   const r=await new Promise(res=>{const d=$("#dlg-confirm"),f=$("#f-confirm");
     f.innerHTML=`<h2>Enlazar movimiento de ${eur(m.importe)}</h2><p class="muted" style="margin:0">${esc(m.concepto||"")} · ${fecha(m.fecha)}</p><label>${m.importe<0?"Gasto":"Factura"} (los más cercanos en fecha)<select id="bk-sel">${ops.map(o=>`<option value="${esc(o.v)}">${esc(o.t)}</option>`).join("")}</select></label>
