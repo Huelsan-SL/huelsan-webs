@@ -15,10 +15,10 @@ const GT=()=>window.HuelsanGestoria&&window.HuelsanGestoria._t;
 
 /* campos que se pueden colocar en el modelo */
 const CAMPOS=[
-  ["Comprador",[["comprador_nombre","Nombre y apellidos / razón social"],["comprador_nombre_pila","Solo el nombre (o razón social)"],["comprador_fecha_nac","Fecha de nacimiento (particular)"],["comprador_apellido1","Primer apellido"],["comprador_apellido2","Segundo apellido"],["comprador_apellidos","Apellidos (los dos)"],["comprador_tipo_via","Tipo de vía (Calle, Avenida…)"],["comprador_calle","Nombre de la vía"],["comprador_numero","Número de la vía"],["comprador_dni","DNI, NIE o CIF"],["comprador_domicilio","Domicilio (calle y número)"],["comprador_cp","Código postal"],["comprador_municipio","Municipio"],["comprador_provincia","Provincia"],["comprador_direccion","Domicilio completo (en una línea)"],["comprador_telefono","Teléfono"],["comprador_email","Correo electrónico"],["marca_particular","Marca «X» si es particular"],["marca_empresa","Marca «X» si es empresa"],["representante_nombre","Representante o administrador (empresa)"],["representante_dni","DNI del representante (empresa)"],["representante_cargo","Cargo del representante (empresa)"]]],
+  ["Comprador",[["comprador_nombre","Nombre y apellidos / razón social"],["comprador_nombre_pila","Solo el nombre (o razón social)"],["comprador_fecha_nac","Fecha de nacimiento (particular)"],["comprador_apellido1","Primer apellido"],["comprador_apellido2","Segundo apellido"],["comprador_apellidos","Apellidos (los dos)"],["comprador_tipo_via","Tipo de vía (Calle, Avenida…)"],["comprador_calle","Nombre de la vía"],["comprador_numero","Número de la vía"],["comprador_bloque","Bloque"],["comprador_portal","Portal"],["comprador_escalera","Escalera"],["comprador_planta","Planta"],["comprador_puerta","Puerta"],["comprador_dni","DNI, NIE o CIF"],["comprador_domicilio","Domicilio (calle y número)"],["comprador_cp","Código postal"],["comprador_municipio","Municipio"],["comprador_provincia","Provincia"],["comprador_direccion","Domicilio completo (en una línea)"],["comprador_telefono","Teléfono"],["comprador_email","Correo electrónico"],["marca_particular","Marca «X» si es particular"],["marca_empresa","Marca «X» si es empresa"],["representante_nombre","Representante o administrador (empresa)"],["representante_dni","DNI del representante (empresa)"],["representante_cargo","Cargo del representante (empresa)"]]],
   ["Vendedor",[["vendedor_nombre","Razón social del vendedor"],["vendedor_nif","NIF del vendedor"],["vendedor_direccion","Domicilio del vendedor (una línea)"],["vendedor_rep_nombre","Representante de Huelsan"],["vendedor_rep_dni","DNI del representante de Huelsan"]]],
   ["Vehículo",[["vehiculo_matricula","Matrícula"],["vehiculo_bastidor","Bastidor (VIN)"],["vehiculo_marca","Marca"],["vehiculo_modelo","Modelo"],["vehiculo_marca_modelo","Marca y modelo"],["vehiculo_fecha_matric","Fecha de matriculación"],["vehiculo_km","Kilómetros"]]],
-  ["Operación y firma",[["x_cambio_titularidad","Marca «Cambio de titularidad»"],["x_comprador_interesado","Marca «Interesado» (comprador)"],["x_vendedor_titular","Marca «Titular» (vendedor)"],["precio","Precio total"],["fecha_venta","Fecha de la venta"],["lugar","Lugar (municipio)"],["fecha_hoy","Fecha de hoy (dd/mm/aaaa)"],["dia_hoy","Día de hoy"],["mes_hoy","Mes de hoy (en letra)"],["anio_hoy","Año de hoy"],["gestoria_nombre","Nombre de la gestoría"]]]];
+  ["Operación y firma",[["firma_vendedor","Firma del vendedor (imagen)"],["x_cambio_titularidad","Marca «Cambio de titularidad»"],["x_comprador_interesado","Marca «Interesado» (comprador)"],["x_vendedor_titular","Marca «Titular» (vendedor)"],["precio","Precio total"],["fecha_venta","Fecha de la venta"],["lugar","Lugar (municipio)"],["fecha_hoy","Fecha de hoy (dd/mm/aaaa)"],["dia_hoy","Día de hoy"],["mes_hoy","Mes de hoy (en letra)"],["anio_hoy","Año de hoy"],["gestoria_nombre","Nombre de la gestoría"]]]];
 const LUGAR_REP={francisco:"Huelva",gustavo:"Murcia"}; // dónde se vende y se firma según quién vende
 const TODOS=CAMPOS.flatMap(g=>g[1]);
 
@@ -67,13 +67,14 @@ function valores(cx,tipo){
   const ap=apes.trim().split(/\s+/).filter(Boolean),ap1=ap[0]||"",ap2=ap.slice(1).join(" ");
   const via=String(calle).match(/^\s*(c\/|calle|cl\.?|avenida|avda\.?|av\.?|plaza|pza\.?|paseo|camino|carretera|ctra\.?|urbanizaci[oó]n|ronda|traves[ií]a|pol[ií]gono|barrio|travesia)\s+(.*)$/i);
   const tipoVia=via?({"c/":"Calle","cl":"Calle","cl.":"Calle","avda":"Avenida","avda.":"Avenida","av":"Avenida","av.":"Avenida","pza":"Plaza","pza.":"Plaza","ctra":"Carretera","ctra.":"Carretera"}[via[1].toLowerCase()]||via[1].replace(/^./,c=>c.toUpperCase())):"",resto=via?via[2]:calle;
+  const dg=live.tipoVia||live.calle||live.numero?{tv:live.tipoVia||"",ca:live.calle||"",nu:live.numero||""}:null;
   const nm=String(resto).match(/^(.*?)[,\s]+(?:n[uú]mero|n[ºo°.]|num\.?)?\s*(\d+[A-Za-z]?)\b\s*(.*)$/i),calleSola=(nm?nm[1]:resto).replace(/[,\s]+$/,""),numVia=nm?nm[2]:"";
   const fv=(cx.f&&(cx.f.fechaOperacion||cx.f.fechaExpedicion))||(cx.c&&cx.c.fecha)||"";
   const precio=t?t.total:(cx.c&&cx.c.precio&&+cx.c.precio.total)||0;
   return{
     comprador_nombre:nombre,comprador_dni:emp?(cl.nif||cc.cif||""):(cl.nif||cc.dni||""),comprador_domicilio:calle,comprador_cp:cp,comprador_municipio:mun,comprador_provincia:prov,
     comprador_direccion:dir(calle,cp,mun,prov),comprador_telefono:cl.telefono||cc.telefono||"",comprador_email:cl.email||cc.email||"",
-    comprador_nombre_pila:pila,comprador_apellido1:ap1,comprador_apellido2:ap2,comprador_apellidos:apes,comprador_tipo_via:tipoVia,comprador_calle:calleSola,comprador_numero:numVia,
+    comprador_nombre_pila:pila,comprador_apellido1:ap1,comprador_apellido2:ap2,comprador_apellidos:apes,comprador_tipo_via:dg?dg.tv:tipoVia,comprador_calle:dg?dg.ca:calleSola,comprador_numero:dg?dg.nu:numVia,comprador_bloque:live.bloque||"",comprador_portal:live.portal||"",comprador_escalera:live.escalera||"",comprador_planta:live.planta||"",comprador_puerta:live.puerta||"",
     x_cambio_titularidad:"X",x_comprador_interesado:"X",x_vendedor_titular:"X",
     marca_particular:emp?"":"X",marca_empresa:emp?"X":"",
     representante_nombre:emp?[cc.nombre,cc.apellidos].filter(Boolean).join(" "):"",representante_dni:emp?(cc.dni||""):"",representante_cargo:emp?(cc.cargo||""):"",
@@ -122,7 +123,7 @@ function reglaCampo(texto,sec){
   if(l==="fecha")return"fecha_hoy";
   return null}
 // nombre de un campo de formulario PDF → clave (misma idea, con nombres tipo «nombre_apellidos», «dni_comprador»…)
-const DGT={"matricula":"vehiculo_matricula","nifnie del tutor":null,"codigo iae impuesto de actividades economicas":null,"otrosrow1":null,"fecha nacimiento":"comprador_fecha_nac","exencion itp":null,"codigo cet":null,"codigo cema":null,"bloque":null,"portal":null,"escalera":null,"planta":null,"puerta":null,"servicio al que se destina el vehiculo":null,"fecha matriculacion":"vehiculo_fecha_matric","tipo via":"comprador_tipo_via","nombre de la via":"comprador_calle","numero":"comprador_numero","km":null,"codigo postal":"comprador_cp","provincia":"comprador_provincia","municipio":"comprador_municipio","localidad":"comprador_municipio","correo electronico":"comprador_email","telefono":"comprador_telefono",
+const DGT={"matricula":"vehiculo_matricula","nifnie del tutor":null,"codigo iae impuesto de actividades economicas":null,"otrosrow1":null,"fecha nacimiento":"comprador_fecha_nac","exencion itp":null,"codigo cet":null,"codigo cema":null,"bloque":"comprador_bloque","portal":"comprador_portal","escalera":"comprador_escalera","planta":"comprador_planta","puerta":"comprador_puerta","servicio al que se destina el vehiculo":null,"fecha matriculacion":"vehiculo_fecha_matric","tipo via":"comprador_tipo_via","nombre de la via":"comprador_calle","numero":"comprador_numero","km":null,"codigo postal":"comprador_cp","provincia":"comprador_provincia","municipio":"comprador_municipio","localidad":"comprador_municipio","correo electronico":"comprador_email","telefono":"comprador_telefono",
   "nifniecif":"comprador_dni","nombrerazon social":"comprador_nombre_pila","apellido 1":"comprador_apellido1","apellido 2":"comprador_apellido2",
   "nifniecif_2":"vendedor_nif","nombrerazon social_2":"vendedor_nombre","en":"lugar","a":"dia_hoy","de":"mes_hoy","de_2":"anio_hoy",
   "tramite":"x_cambio_titularidad|cambio","datoscomprador":"x_comprador_interesado|interesado","datosvendedor":"x_vendedor_titular|0"};
@@ -157,6 +158,10 @@ async function sugerir(doc){
         if(!ok&&!Object.values(out.form).includes(k0)){out.form[fl.getName()]=k0;out.n++}
         continue}
       out.form[fl.getName()]=k0;out.n++}}catch(e){}
+  try{const lib2=await pdfjs();const pdf2=await lib2.getDocument({data:m.bytes.slice(),isEvalSupported:false}).promise;
+    for(let p=0;p<pdf2.numPages&&!out.campos.firma_vendedor;p++){const pg=await pdf2.getPage(p+1),v=pg.getViewport({scale:1}),tc=await pg.getTextContent();
+      const it=tc.items.find(i=>/^firma (del )?(vendedor|transmitente)/.test(norm(i.str)));
+      if(it){const W=v.width,H=v.height;out.campos.firma_vendedor={p,x:Math.round(Math.max(.02,it.transform[4]/W-.11)*1e4)/1e4,y:Math.round((H-it.transform[5]-3)/H*1e4)/1e4,w:.15};out.n++}}}catch(e){}
   if(Object.keys(out.form).length||Object.keys(out.campos).length){
     try{const pd2=await PDFLib.PDFDocument.load(m.bytes,{ignoreEncryption:true});out.campos=formACampos(pd2,out.form,out.campos);out.n=Object.keys(out.campos).length;out.form={}}catch(e){}
     return out}
@@ -192,7 +197,7 @@ async function rellenarMandato(tplBytes,esPdfTpl,campos,vals,formMap){
           const cl=formMap[nombre],[ck,opc]=String(cl||"").split("|"),marca=cl&&limpia(vals[ck]);
           for(const w of fl.acroField.getWidgets()){let ov="";try{ov=w.getOnValue().decodeText()}catch(e){}const r=w.getRectangle(),pi=Math.max(0,pages.findIndex(pg=>(pg.node.Annots()?pg.node.Annots().asArray():[]).some(a=>doc.context.lookup(a)===w.dict)));
             pages[pi].drawRectangle({x:Math.min(r.x,r.x+r.width),y:Math.min(r.y,r.y+r.height),width:Math.abs(r.width),height:Math.abs(r.height),color:rgb(1,1,1),borderColor:rgb(.5,.5,.5),borderWidth:.7});
-            if(marca&&(tp==="PDFCheckBox"||!opc||ov===opc)){const bw=Math.abs(r.width),bh=Math.abs(r.height);pages[pi].drawText("X",{x:Math.min(r.x,r.x+r.width)+(bw-6.7)/2,y:Math.min(r.y,r.y+r.height)+(bh-7)/2,size:10,font,color:rgb(0,0,0)})}}
+            if(marca&&(tp==="PDFCheckBox"||!opc||ov===opc)){const bw=Math.abs(r.width),bh=Math.abs(r.height);{const x1=Math.min(r.x,r.x+r.width)+(bw-6.7)/2,y1=Math.min(r.y,r.y+r.height)+(bh-7)/2;pages[pi].drawLine({start:{x:x1,y:y1},end:{x:x1+6.7,y:y1+7},thickness:1,color:rgb(0,0,0)});pages[pi].drawLine({start:{x:x1,y:y1+7},end:{x:x1+6.7,y:y1},thickness:1,color:rgb(0,0,0)})}}}
           quita(fl)}catch(e){}continue}
       if(!/PDFTextField|PDFDropdown|PDFButton|PDFOptionList/.test(tp))continue;
       try{const clave=formMap[nombre],txt=clave&&tp!=="PDFButton"?limpia(vals[String(clave).split("|")[0]]):"";
@@ -201,11 +206,18 @@ async function rellenarMandato(tplBytes,esPdfTpl,campos,vals,formMap){
           pages[pi].drawText(txt,{x:x0+3,y:y0+Math.max(2,(bh-z)/2),size:z,font,color:rgb(0,0,0)})}
         quita(fl)}catch(e){}}
   }
-  for(const [k,c] of Object.entries(campos||{})){const txt=limpia(vals[k.split("#")[0]]);if(!txt||!c)continue;const pg=pages[c.p||0];if(!pg)continue;const{width:W,height:H}=pg.getSize();
+  for(const [k,c] of Object.entries(campos||{})){if(!c)continue;const kb=k.split("#")[0],pg=pages[c.p||0];if(!pg)continue;const{width:W,height:H}=pg.getSize();
+    if(kb.startsWith("firma_")){const im=vals["_"+kb];if(!im||!im.bytes)continue; // firma: imagen con fondo transparente, esquina inferior izquierda en el punto marcado
+      try{const png=await doc.embedPng(im.bytes),w=(c.w||.18)*W,h=w*im.h/im.w;pg.drawImage(png,{x:c.x*W,y:H-c.y*H,width:w,height:h})}catch(e){}continue}
+    const txt=limpia(vals[kb]);if(!txt)continue;
+    if(kb.startsWith("x_")){const z=(c.s||10)*.7,x0=c.x*W,y0=H-c.y*H; // marca «X» dibujada con dos líneas (no depende de ninguna letra)
+      pg.drawLine({start:{x:x0,y:y0},end:{x:x0+z,y:y0+z},thickness:1,color:rgb(0,0,0)});pg.drawLine({start:{x:x0,y:y0+z},end:{x:x0+z,y:y0},thickness:1,color:rgb(0,0,0)});continue}
     pg.drawText(txt,{x:c.x*W,y:H-c.y*H,size:c.s||10,font,color:rgb(0,0,0)})}
   return doc.save({useObjectStreams:false});
 }
-async function modeloBytes(doc,cx,tipo){const m=await bytesModelo(doc);return rellenarMandato(m.bytes,m.pdf,doc.campos||{},valores(cx,tipo),doc.form||{})}
+async function modeloBytes(doc,cx,tipo){const m=await bytesModelo(doc),v=valores(cx,tipo);
+  if(Object.keys(doc.campos||{}).some(k=>k.startsWith("firma_vendedor"))){const rid=cx.repId||(cx.c&&cx.c.rep)||"",C=window.HuelsanContratos;if(rid&&C&&C.firmaRep)v._firma_vendedor=await C.firmaRep(rid)}
+  return rellenarMandato(m.bytes,m.pdf,doc.campos||{},v,doc.form||{})}
 function abrirPDF(bytes,nombre){const b=new Blob([bytes],{type:"application/pdf"});const u=URL.createObjectURL(b);const w=window.open(u,"_blank");if(!w)descargarBlob(b,nombre);setTimeout(()=>URL.revokeObjectURL(u),120000)}
 async function cargarGestoria(){try{const sn=await S.db.doc("facturacion/gestoria").get();M.gestoria=sn&&sn.exists?sn.data():{}}catch(e){M.gestoria={}}}
 // genera todos los modelos (o solo uno) para una venta y los abre para imprimir
@@ -291,7 +303,9 @@ async function editor(docId,volver){
     else{const cv=document.createElement("canvas");cv.width=1800;cv.height=Math.round(1800*img.height/img.width);const x=cv.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,cv.width,cv.height);x.drawImage(img,0,0,cv.width,cv.height);pdim=[A4[0],A4[0]*img.height/img.width];base=cv}};
   const dibujar=()=>{const cv=f.querySelector("#m-cv");if(!cv||!base)return;cv.width=base.width;cv.height=base.height;const x=cv.getContext("2d");x.drawImage(base,0,0);
     const k=cv.width/pdim[0];
-    for(const [key,c] of Object.entries(campos)){if((c.p||0)!==pag)continue;const lab=(TODOS.find(t=>t[0]===key.split("#")[0])||[0,key])[1];const px=c.x*cv.width,py=c.y*cv.height;
+    for(const [key,c] of Object.entries(campos)){if((c.p||0)!==pag)continue;
+      if(key.startsWith("firma_")){const w=(c.w||.18)*cv.width,h=w*.4,px=c.x*cv.width,py=c.y*cv.height;x.strokeStyle=key===sel?"#d6336c":"#1c63d6";x.setLineDash([6,4]);x.lineWidth=2;x.strokeRect(px,py-h,w,h);x.setLineDash([]);x.fillStyle=x.strokeStyle;x.font="16px Helvetica,Arial,sans-serif";x.fillText("Firma",px+6,py-h/2+5);continue}
+      const lab=(TODOS.find(t=>t[0]===key.split("#")[0])||[0,key])[1];const px=c.x*cv.width,py=c.y*cv.height;
       x.fillStyle=key===sel?"#d6336c":"#1c63d6";x.font=`${Math.max(8,(c.s||10)*k)}px Helvetica,Arial,sans-serif`;x.fillText(lab,px,py);
       x.beginPath();x.arc(px,py,5,0,7);x.fill()}};
   const pintarE=()=>{const nCol=Object.keys(campos).length,delForm=0;
@@ -299,7 +313,7 @@ async function editor(docId,volver){
       ${delForm?`<div class="aviso">Este PDF es un formulario rellenable: ${delForm} campos se rellenan solos. Aquí puedes añadir los que falten pinchando en el documento.</div>`:""}
       <p class="muted" style="margin:0">1) Elige un campo de la lista. 2) Pincha en el documento, donde debe empezar a escribirse (el punto es el inicio del texto, en la línea de base). Salta solo al siguiente. Los que no uses, déjalos sin colocar. Los azules ya estaban detectados o colocados; el rosa es el que estás moviendo.</p>
       <div class="row" style="align-items:center">${n>1?`<button type="button" class="btn sm" data-e-pag="-1" ${pag===0?"disabled":""}>←</button><span>Página ${pag+1} de ${n}</span><button type="button" class="btn sm" data-e-pag="1" ${pag===n-1?"disabled":""}>→</button>`:""}
-        <label style="max-width:120px">Tamaño letra<input type="number" min="6" max="18" step="0.5" value="${tam}" data-e-tam></label><span class="row" style="gap:4px;align-items:center"><button type="button" class="btn sm" data-e-zoom="-25" aria-label="Alejar">−</button><b style="min-width:48px;text-align:center">${zoom}%</b><button type="button" class="btn sm" data-e-zoom="25" aria-label="Acercar">+</button><button type="button" class="btn sm" data-e-zoom="0">Ajustar</button></span><span class="muted">${nCol} colocados</span></div>
+        <label style="max-width:120px">Tamaño letra<input type="number" min="6" max="18" step="0.5" value="${tam}" data-e-tam></label>${sel.startsWith("firma_")?`<label style="max-width:150px">Ancho de la firma (%)<input type="number" min="5" max="60" step="1" value="${Math.round(((campos[sel]||{}).w||.18)*100)}" data-e-fw></label>`:""}<span class="row" style="gap:4px;align-items:center"><button type="button" class="btn sm" data-e-zoom="-25" aria-label="Alejar">−</button><b style="min-width:48px;text-align:center">${zoom}%</b><button type="button" class="btn sm" data-e-zoom="25" aria-label="Acercar">+</button><button type="button" class="btn sm" data-e-zoom="0">Ajustar</button></span><span class="muted">${nCol} colocados</span></div>
       <div style="display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:10px;align-items:start">
         <div id="m-scroll" style="overflow:auto;max-height:72vh;border:1px solid var(--line,#ccc)"><canvas id="m-cv" style="width:${zoom}%;cursor:crosshair;display:block"></canvas></div>
         <div style="overflow:auto;max-height:72vh">${CAMPOS.map(([g,cs])=>`<b style="font-size:12px">${esc(g)}</b>${cs.map(([k,l])=>`<div class="row" style="gap:4px;margin:2px 0"><button type="button" class="btn sm ${sel===k?"primary":""}" style="flex:1;text-align:left;white-space:normal" data-e-sel="${k}">${campos[k]?"✓ ":""}${esc(l)}</button>${campos[k]?`<button type="button" class="btn sm" data-e-quitar="${k}" aria-label="Quitar" title="Quitar">✕</button>`:""}</div>`).join("")}`).join("")}</div></div>
@@ -307,7 +321,7 @@ async function editor(docId,volver){
       <div class="row" style="justify-content:flex-end"><button type="button" class="btn" data-e-volver>Volver</button><button type="button" class="btn primary" data-e-guardar>Guardar campos</button></div>`;
     dibujar();
     const cv=f.querySelector("#m-cv");cv.onclick=e=>{const r=cv.getBoundingClientRect();const x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
-      campos[sel]={p:pag,x:Math.round(x*1e4)/1e4,y:Math.round(y*1e4)/1e4,s:tam};
+      campos[sel]=sel.startsWith("firma_")?{p:pag,x:Math.round(x*1e4)/1e4,y:Math.round(y*1e4)/1e4,w:(campos[sel]&&campos[sel].w)||.18}:{p:pag,x:Math.round(x*1e4)/1e4,y:Math.round(y*1e4)/1e4,s:tam};
       const i=TODOS.findIndex(t=>t[0]===sel),sig=TODOS.slice(i+1).find(t=>!campos[t[0]])||TODOS.find(t=>!campos[t[0]]);if(sig)sel=sig[0];pintarE()}};
   f.onclick=async e=>{const t=e.target;
     const zm=t.closest("[data-e-zoom]");if(zm){e.preventDefault();const sc=f.querySelector("#m-scroll"),fx=sc?sc.scrollLeft/Math.max(1,sc.scrollWidth):0,fy=sc?sc.scrollTop/Math.max(1,sc.scrollHeight):0,d0=+zm.dataset.eZoom;zoom=d0?Math.max(50,Math.min(400,zoom+d0)):100;pintarE();const s2=f.querySelector("#m-scroll");if(s2){s2.scrollLeft=fx*s2.scrollWidth;s2.scrollTop=fy*s2.scrollHeight}return}
@@ -316,7 +330,7 @@ async function editor(docId,volver){
     const q=t.closest("[data-e-quitar]");if(q){e.preventDefault();delete campos[q.dataset.eQuitar];pintarE();return}
     if(t.closest("[data-e-guardar]")){e.preventDefault();doc.campos=campos;if(convertido)doc.form={};await guardarCfg();toast("Campos guardados");volver();return}
     if(t.closest("[data-e-volver]")){e.preventDefault();volver();return}};
-  f.onchange=e=>{const t=e.target;if(t.dataset.eTam!=null){tam=+t.value||10;if(campos[sel])campos[sel].s=tam;dibujar()}};
+  f.onchange=e=>{const t=e.target;if(t.dataset.eFw!=null){if(campos[sel])campos[sel].w=Math.max(.05,Math.min(.6,(+t.value||18)/100));dibujar();return}if(t.dataset.eTam!=null){tam=+t.value||10;if(campos[sel])campos[sel].s=tam;dibujar()}};
   await render();pintarE();
 }
 

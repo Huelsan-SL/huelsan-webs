@@ -155,7 +155,8 @@ function vistaLista(){
     :`<div class="vacio">Aún no hay contratos. Crea uno en blanco o desde una factura (también con el botón «Contrato de compraventa» dentro de cada factura).</div>`}
   <div class="card"><h3>Representantes de Huelsan (firman por la empresa)</h3>
     ${["francisco","gustavo"].map(k=>`<div class="g3"><label>Nombre y apellidos<input data-rep="${k}.nombre" value="${esc((r[k]||{}).nombre||"")}"></label><label>DNI / NIE<input data-rep="${k}.dni" value="${esc((r[k]||{}).dni||"")}"></label><label>Cargo <small>administrador, apoderado…</small><input data-rep="${k}.cargo" value="${esc((r[k]||{}).cargo||"")}"></label></div>
-      <div class="row sp"><span class="muted">Copia del DNI de ${esc(((r[k]||{}).nombre||k).split(" ")[0])} (anverso y reverso):</span><label class="btn sm" style="display:inline-flex;color:var(--ink)">Subir foto o PDF<input type="file" data-ct-file="rep:${k}" accept="image/*,application/pdf" multiple hidden></label></div>${listaArch((r[k]||{}).dniArchivos,"rep:"+k)}`).join("")}
+      <div class="row sp"><span class="muted">Copia del DNI de ${esc(((r[k]||{}).nombre||k).split(" ")[0])} (anverso y reverso):</span><label class="btn sm" style="display:inline-flex;color:var(--ink)">Subir foto o PDF<input type="file" data-ct-file="rep:${k}" accept="image/*,application/pdf" multiple hidden></label></div>${listaArch((r[k]||{}).dniArchivos,"rep:"+k)}
+      <div class="row sp"><span class="muted">Firma de ${esc(((r[k]||{}).nombre||k).split(" ")[0])} <small>(foto con fondo blanco; se pone en los contratos y solicitudes)</small>: ${(r[k]||{}).firma?`<b>${esc(r[k].firma.nombre||"firma")}</b>`:"sin subir"}</span><span class="row"><label class="btn sm" style="display:inline-flex;color:var(--ink)">${(r[k]||{}).firma?"Cambiar":"Subir"} firma<input type="file" data-ct-file="firma:${k}" accept="image/png,image/jpeg" hidden></label>${(r[k]||{}).firma?`<button class="btn sm" data-ver-archivo="${esc(r[k].firma.ruta)}" data-nombre="${esc(r[k].firma.nombre||"firma")}">Ver</button><button class="btn sm peligro" data-ct="quitar-firma:${k}">Quitar</button>`:""}</span></div>`).join("")}
     <div class="row"><button class="btn" data-ct="guardar-reps">Guardar representantes</button><span class="muted">Se copian en cada contrato al elegir quién firma. La copia del DNI sale en una página aparte del contrato.</span></div></div>
   <details class="card"><summary><b>Plantilla de documentos a pedir para la venta</b> <span class="muted">(${plantilla().length} documentos)</span></summary>
     <p class="muted" style="margin:0">Cada contrato muestra la lista que toca según el comprador (particular o empresa), si hay financiación o si entrega un coche, con casillas para marcar lo recibido y un mensaje listo para enviar.</p>
@@ -280,6 +281,7 @@ document.addEventListener("click",async e=>{
     else if(a==="volver"){if(CT.paginas.length&&!confirm("Hay páginas escaneadas sin guardar. ¿Salir y descartarlas?"))return;if(CT.sucio&&!confirm("Hay cambios sin guardar. ¿Salir sin guardarlos?"))return;CT.ed=null;CT.sucio=false;repintar()}
     else if(a==="guardar"){await guardarC();toast("Contrato guardado")}
     else if(a==="guardar-firmado")await guardarFirmado();
+    else if(a&&a.startsWith("quitar-firma:"))await quitarFirma(a.split(":")[1]);
     else if(a==="descartar-escaneo"){if(confirm("¿Descartar las páginas escaneadas sin guardar?")){limpiarPaginas();repintar()}}
     else if(a==="pdf"){if(CT.sucio)await guardarC();await descargarContrato(CT.ed)}
     else if(a==="letra"){CT.ed.precio.letra=enLetra(+CT.ed.precio.total);CT.sucio=true;repintar()}
@@ -314,7 +316,23 @@ async function subirArchivos(files){const res=[];for(const f of files){toast("Su
   for(const b of await imagenesDe(f)){const r=await HUELSAN.subir("documentos",b);res.push({ruta:r.id,nombre:f.name.replace(/\.[^.]+$/,"")+".jpg",tipo:"image/jpeg",size:b.size,subido:new Date().toISOString()})}}return res}
 function repsDelFormulario(){const r=JSON.parse(JSON.stringify(CT.reps&&CT.reps.francisco?CT.reps:REPS_DEF));$$("[data-rep]").forEach(i=>setRuta(r,i.dataset.rep,i.value.trim()));return r}
 async function guardarReps(r){await S.db.doc("contratoscfg/representantes").set(r);CT.reps=r}
+async function subirFirma(k,file){
+  if(file.size>5e6){toast("La imagen de la firma pesa demasiado (máx. 5 MB)");return}
+  toast("Subiendo la firma…",15000);const u=await HUELSAN.subir("documentos",file);const r=repsDelFormulario();r[k]=r[k]||{};const ant=r[k].firma;
+  r[k].firma={ruta:u.id,nombre:file.name,tipo:file.type,size:file.size,subido:new Date().toISOString()};await guardarReps(r);if(ant)await HUELSAN.borrarArchivo("documentos",ant.ruta).catch(()=>{});FIRMAS.clear();repintar();toast("Firma guardada")}
+async function quitarFirma(k){
+  if(!confirm("¿Quitar la firma? Se borra del almacén."))return;const r=repsDelFormulario();const f=(r[k]||{}).firma;if(f)await HUELSAN.borrarArchivo("documentos",f.ruta).catch(()=>{});if(r[k])delete r[k].firma;await guardarReps(r);FIRMAS.clear();repintar()}
+/* La firma se usa con el fondo transparente (el blanco de la foto se quita) para que no tape el texto del documento */
+const FIRMAS=new Map();
+async function firmaRep(id){
+  const f=((CT.reps||{})[id]||{}).firma;if(!f)return null;if(FIRMAS.has(f.ruta))return FIRMAS.get(f.ruta);
+  try{const b=await HUELSAN.bajar("documentos",f.ruta),im=await createImageBitmap(b),ec=Math.min(1,900/im.width),w=Math.round(im.width*ec),h=Math.round(im.height*ec);
+    const cv=document.createElement("canvas");cv.width=w;cv.height=h;const x=cv.getContext("2d");x.drawImage(im,0,0,w,h);const d=x.getImageData(0,0,w,h),p=d.data;
+    for(let i=0;i<p.length;i+=4){const lum=.299*p[i]+.587*p[i+1]+.114*p[i+2];const a=lum>=235?0:lum<=150?255:Math.round((235-lum)/85*255);p[i]=p[i+1]=p[i+2]=Math.min(p[i],p[i+1],p[i+2],60);p[i+3]=Math.min(p[i+3],a)}
+    x.putImageData(d,0,0);const url=cv.toDataURL("image/png"),bin=atob(url.split(",")[1]),bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+    const res={dataURL:url,bytes,w,h};FIRMAS.set(f.ruta,res);return res}catch(e){return null}}
 async function subirCopias(quien,files){
+  if(quien.startsWith("firma:"))return subirFirma(quien.split(":")[1],files[0]);
   const nuevos=await subirArchivos(files);
   if(quien==="comprador"){CT.ed.dniComprador=[...(CT.ed.dniComprador||[]),...nuevos];await guardarC();repintar()}
   else{const k=quien.split(":")[1];const r=repsDelFormulario();r[k]=r[k]||{};r[k].dniArchivos=[...(r[k].dniArchivos||[]),...nuevos];await guardarReps(r);repintar()}
@@ -465,10 +483,12 @@ async function pdfContrato(c,k){
   await parrafo("Y en prueba de conformidad, las partes firman este contrato por duplicado y en cada una de sus hojas, en el lugar, fecha y hora del encabezamiento.",{sep:1});
 
   /* --- firmas --- */
+  const firmaV=c.rep?await firmaRep(c.rep):null;
   const hF=30*k;await sitio(hF);const bw=(AW-8)/2;
   [[M,"PARTE VENDEDORA",[e.razonSocial||"Huelsan SL",c.vendedor.nombre?"p.p. "+c.vendedor.nombre:"p.p. ______________________________"]],
    [M+bw+8,"PARTE COMPRADORA",tipo==="empresa"&&p.razonSocial?[p.razonSocial,"p.p. "+([p.nombre,p.apellidos].filter(Boolean).join(" ")||"______________________________")]:[[p.nombre,p.apellidos].filter(Boolean).join(" ")||"______________________________",p.dni?"DNI "+p.dni:""]]]
-   .forEach(([x,tit,lin])=>{doc.setDrawColor(200,197,190);doc.setLineWidth(.3);doc.roundedRect(x,y,bw,hF,2,2);font(1,7*k,CH);doc.text(tit,x+3,y+4.5*k);
+   .forEach(([x,tit,lin],ix)=>{doc.setDrawColor(200,197,190);doc.setLineWidth(.3);doc.roundedRect(x,y,bw,hF,2,2);
+     if(ix===0&&firmaV){const maxW=bw-10,maxH=hF-14*k,r=Math.min(maxW/firmaV.w,maxH/firmaV.h),w=firmaV.w*r,h=firmaV.h*r;doc.addImage(firmaV.dataURL,"PNG",x+(bw-w)/2,y+hF-8*k-h,w,h)}font(1,7*k,CH);doc.text(tit,x+3,y+4.5*k);
      font(0,7.6*k);doc.text(lin.filter(Boolean),x+3,y+hF-6.5*k)});
   y+=hF;
 
@@ -523,5 +543,5 @@ async function descargarContrato(c){
   if(doc.__principal>2)toast("El contrato ocupa más de 2 páginas: acorta las observaciones o los defectos.",6000);
 }
 const desdeLote=l=>{const c=contratoVacio();cocheEnContrato(c,l);if(c.ubicacion)c.entrega.lugar=c.ubicacion;return c};
-window.HuelsanContratos={DOCS,desdeLote,generarContrato,desdeFactura,contratoVacio,enLetra,docsDelContrato,mensajeDocs,lista:()=>[...CT.lista.values()],reps:()=>CT.reps,abrir,abrirDesdeFactura,abrirDesdeLote};
+window.HuelsanContratos={firmaRep,DOCS,desdeLote,generarContrato,desdeFactura,contratoVacio,enLetra,docsDelContrato,mensajeDocs,lista:()=>[...CT.lista.values()],reps:()=>CT.reps,abrir,abrirDesdeFactura,abrirDesdeLote};
 })();
