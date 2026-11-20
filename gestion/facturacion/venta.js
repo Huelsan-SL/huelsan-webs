@@ -59,7 +59,7 @@ function valores(cx,tipo){
   const calle=cl.direccion||(emp?cc.domicilioEmpresa:cc.domicilio)||"",cp=cl.cp||cc.cp||"",mun=cl.municipio||cc.municipio||"",prov=cl.provincia||cc.provincia||"";
   const hoy=hoyISO().split("-");
   let pila=emp?nombre:(cc.nombre||""),apes=emp?"":(cc.apellidos||"");
-  if(!emp&&!pila&&nombre){const w=nombre.trim().split(/\s+/);pila=w[0];apes=w.slice(1).join(" ")}
+  if(!emp&&!pila&&nombre){const w=nombre.trim().split(/\s+/),k=w.length>=3?w.length-2:1;pila=w.slice(0,k).join(" ");apes=w.slice(k).join(" ")}
   const ap=apes.trim().split(/\s+/).filter(Boolean),ap1=ap[0]||"",ap2=ap.slice(1).join(" ");
   const via=String(calle).match(/^\s*(c\/|calle|cl\.?|avenida|avda\.?|av\.?|plaza|pza\.?|paseo|camino|carretera|ctra\.?|urbanizaci[oó]n|ronda|traves[ií]a|pol[ií]gono|barrio|travesia)\s+(.*)$/i);
   const tipoVia=via?({"c/":"Calle","cl":"Calle","cl.":"Calle","avda":"Avenida","avda.":"Avenida","av":"Avenida","av.":"Avenida","pza":"Plaza","pza.":"Plaza","ctra":"Carretera","ctra.":"Carretera"}[via[1].toLowerCase()]||via[1].replace(/^./,c=>c.toUpperCase())):"",resto=via?via[2]:calle;
