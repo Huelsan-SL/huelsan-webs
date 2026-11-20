@@ -74,7 +74,9 @@ function efecto(f){
   return t;
 }
 const emitidas=()=>[...S.facturas.values()].filter(f=>f.estado&&f.estado!=="borrador");
-const cobrado=f=>r2((f.cobros||[]).reduce((s,c)=>s+(+c.importe||0),0));
+// Cobrado = efectivo anotado + lo cobrado por banco (lo mayor entre lo anotado a mano y lo enlazado con movimientos del extracto)
+const cobradoBanco=f=>{const B=window.HuelsanBanco;return B&&B.cubiertoFactura?B.cubiertoFactura(f.id):0};
+const cobrado=f=>{const cs=f.cobros||[],efe=cs.filter(c=>c.medio==="Efectivo").reduce((s,c)=>s+(+c.importe||0),0),otros=cs.reduce((s,c)=>s+(+c.importe||0),0)-efe;return r2(efe+Math.max(otros,cobradoBanco(f)))};
 function estadoCobro(f){if(f.estado==="borrador")return null;if(f.anulada)return null;const t=(f.totales||{}).total||0;if(t<=0)return null;const c=cobrado(f);
   return c>=t-0.005?["Cobrada","ok"]:c>0?["Cobro parcial","warn"]:["Pendiente de cobro","warn"]}
 function etiquetaEstado(f){
@@ -146,6 +148,7 @@ async function prellenarEmisor(){
 let pintarT;function pintarSiProcede(col){clearTimeout(pintarT);pintarT=setTimeout(()=>{if(S.tab==="facturas"&&S.ed){if(!S.edSucio&&col==="facturas"&&S.ed.id&&S.facturas.has(S.ed.id)){S.ed=JSON.parse(JSON.stringify(S.facturas.get(S.ed.id)));pintar()}return}pintar()},120)}
 
 /* ---------- pestañas ---------- */
+window.HuelsanRepintar=()=>pintarSiProcede("banco");
 function pintarTabs(){$$("nav.tabs [data-tab]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===S.tab)))}
 $("nav.tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(!b)return;
   if(S.ed&&S.edSucio&&!confirm("Hay cambios sin guardar en la factura. ¿Salir sin guardarlos?"))return;

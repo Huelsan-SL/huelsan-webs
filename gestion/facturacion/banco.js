@@ -7,7 +7,7 @@
 const B={movs:new Map(),vista:"pagos",q:""};
 const MOTIVOS=["Traspaso entre cuentas","Impuestos o Seguridad Social","Nómina","Préstamo o financiación","Aportación de socios","Comisión o cuota del banco","Pago en efectivo ya apuntado","Otro"];
 (async function esperar(){if(!S.db){setTimeout(esperar,150);return}
-  S.db.collection("banco").onSnapshot(sn=>{B.movs.clear();sn.docs.forEach(d=>B.movs.set(d.id,{...d.data(),id:d.id}));if(S.tab==="banco")pintar()},e=>console.error(e));
+  S.db.collection("banco").onSnapshot(sn=>{B.movs.clear();sn.docs.forEach(d=>B.movs.set(d.id,{...d.data(),id:d.id}));if(S.tab==="banco")pintar();else if(S.tab==="facturas"&&!S.ed&&window.HuelsanRepintar)window.HuelsanRepintar()},e=>console.error(e));
 })();
 const _pintar=pintar;
 pintar=function(){if(S.tab!=="banco")return _pintar();$("#vista").innerHTML=vistaBanco()};
@@ -211,5 +211,6 @@ function crearGasto(id){const m=B.movs.get(id);if(!m)return;
   const vigila=setInterval(async()=>{if(d.open)return;clearInterval(vigila);if(window.__bkPendiente!==id)return;window.__bkPendiente=null;
     for(let i=0;i<20;i++){const nuevo=[...S.gastos.keys()].find(k=>!antes.has(k));if(nuevo){await enlazar(id,{tipo:"gasto",id:nuevo});toast("Gasto creado y enlazado con el movimiento");return}await new Promise(r=>setTimeout(r,500))}},400);
 }
-window.HuelsanBanco={leerN43,leerTabla,leerCSV,candidatos};
+const cubiertoFactura=id=>cubierto(enlazados().f,id);
+window.HuelsanBanco={leerN43,leerTabla,leerCSV,candidatos,cubiertoFactura};
 })();

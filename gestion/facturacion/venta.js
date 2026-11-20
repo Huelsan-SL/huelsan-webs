@@ -1,4 +1,4 @@
-/* Huelsan Automoción · Documentos de venta y modelo de «Solicitud y mandato».
+/* Huelsan Automoción · Documentos de venta y modelos en blanco (solicitud DGT, mandato de la gestoría…).
    - Modelo en blanco de la solicitud y mandato (PDF o imagen, el mismo para todas las ventas) guardado en contratoscfg/mandato,
      con los campos colocados encima (se pinchan una vez sobre el documento) para rellenarlo solo con los datos de cada venta.
    - Botón «Documentos de venta»: une en un solo PDF para imprimir: factura, contrato de compraventa, listado de documentos necesarios,
@@ -73,68 +73,154 @@ function valores(cx,tipo){
     fecha_hoy:`${hoy[2]}/${hoy[1]}/${hoy[0]}`,dia_hoy:String(+hoy[2]),mes_hoy:MESES[+hoy[1]-1],anio_hoy:hoy[0],gestoria_nombre:(M.gestoria&&M.gestoria.nombre)||""};
 }
 
-/* ---------- solicitud y mandato rellenado ---------- */
-async function rellenarMandato(tplBytes,esPdfTpl,campos,vals){
+/* ---------- modelos en blanco (solicitud DGT, mandato de la gestoría, etc.) ---------- */
+// contratoscfg/mandato = {docs:[{id,nombre,archivo:{ruta,nombre,tipo,size},campos:{clave:{p,x,y,s}},form:{nombreCampoPDF:clave}}]}
+async function cargarModelo(){
+  const sn=await S.db.doc("contratoscfg/mandato").get();const d=sn&&sn.exists?sn.data():{};
+  if(Array.isArray(d.docs))M.cfg={docs:d.docs};
+  else if(d.archivo)M.cfg={docs:[{id:"d1",nombre:"Solicitud y mandato",archivo:d.archivo,campos:d.campos||{},form:{}}]}; // formato anterior
+  else M.cfg={docs:[]};
+  return M.cfg}
+const guardarCfg=()=>S.db.doc("contratoscfg/mandato").set({docs:M.cfg.docs});
+const docModelo=id=>M.cfg.docs.find(x=>x.id===id);
+async function bytesModelo(doc){const a=doc.archivo;const b=await HUELSAN.bajar("documentos",a.ruta);return{bytes:await bytesDe(b),pdf:esPdf(a)}}
+
+/* detección automática: busca las etiquetas (Nombre, DNI, Matrícula…) y propone escribir justo detrás */
+const norm=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\s+/g," ").trim();
+const SECC=[["vendedor",/\b(vendedor|transmitente|cedente|titular actual|titular del vehiculo)\b/],["gestor",/\b(mandatario|gestor|gestoria|colegiado)\b/],["comprador",/\b(comprador|adquirente|adquiriente|nuevo titular|mandante|solicitante|interesado)\b/],["vehiculo",/\b(datos del vehiculo|vehiculo)\b/]];
+function reglaCampo(texto,sec){
+  const l=norm(texto).replace(/[\s:._\-]+$/,"");if(!l||l.length>48)return null;
+  const per=(c,v,g)=>sec==="vendedor"?v:sec==="gestor"?g:c;
+  if(/^(nombre|apellidos|razon social|denominacion)/.test(l)){if(/^apellidos/.test(l)&&!/nombre/.test(l)&&sec!=="vendedor"&&sec!=="gestor")return"comprador_apellidos";return per("comprador_nombre","vendedor_nombre","gestoria_nombre")}
+  if(/^(dni|nif|nie|cif|d\.? ?n\.? ?i|n\.? ?i\.? ?f|documento de identidad|numero de documento|n[º°o] ?de? ?documento)/.test(l))return/representante/.test(l)?"representante_dni":per("comprador_dni","vendedor_nif",null);
+  if(/^(domicilio|direccion|calle|via publica)/.test(l))return per("comprador_domicilio","vendedor_direccion",null);
+  if(/^(c\.? ?p\.?|codigo postal)/.test(l))return"comprador_cp";
+  if(/^(municipio|localidad|poblacion)/.test(l))return"comprador_municipio";
+  if(/^provincia/.test(l))return"comprador_provincia";
+  if(/^(telefono|tel\b|movil)/.test(l))return"comprador_telefono";
+  if(/^(correo|e-?mail)/.test(l))return"comprador_email";
+  if(/^matricula/.test(l))return"vehiculo_matricula";
+  if(/^(bastidor|vin\b|n[º°o] ?(de )?bastidor|numero de bastidor|n[º°o] ?de identificacion)/.test(l))return"vehiculo_bastidor";
+  if(/^marca/.test(l))return/modelo/.test(l)?"vehiculo_marca_modelo":"vehiculo_marca";
+  if(/^modelo/.test(l))return"vehiculo_modelo";
+  if(/^fecha de (primera )?matriculacion/.test(l))return"vehiculo_fecha_matric";
+  if(/^(kilometros|kilometraje|km\b)/.test(l))return"vehiculo_km";
+  if(/^(precio|importe)/.test(l))return"precio";
+  if(/^lugar/.test(l))return"lugar";
+  if(l==="fecha")return"fecha_hoy";
+  return null}
+// nombre de un campo de formulario PDF → clave (misma idea, con nombres tipo «nombre_apellidos», «dni_comprador»…)
+function reglaForm(nombre){const l=norm(nombre).replace(/[_\-.\[\]0-9]+/g," ").trim();
+  const sec=/vendedor|transmitente|cedente/.test(l)?"vendedor":/mandatario|gestor/.test(l)?"gestor":"comprador";
+  return reglaCampo(l,sec)||(/(^|\s)(dni|nif|nie|cif)(\s|$)/.test(l)?(sec==="vendedor"?"vendedor_nif":"comprador_dni"):null)}
+async function sugerir(doc){
+  const m=await bytesModelo(doc);const out={campos:{},form:{},n:0};if(!m.pdf)return out;
+  // 1) formulario rellenable
+  try{await cargarPDFLib();const pd=await PDFLib.PDFDocument.load(m.bytes,{ignoreEncryption:true});
+    for(const fl of pd.getForm().getFields()){if(fl.constructor.name!=="PDFTextField")continue;const k=reglaForm(fl.getName());if(k&&!Object.values(out.form).includes(k)){out.form[fl.getName()]=k;out.n++}}}catch(e){}
+  if(Object.keys(out.form).length)return out;
+  // 2) texto del documento: etiquetas y su posición
+  const lib=await pdfjs();const pdf=await lib.getDocument({data:m.bytes.slice(),isEvalSupported:false}).promise;const etiq={};
+  for(let p=0;p<pdf.numPages;p++){const pg=await pdf.getPage(p+1),v=pg.getViewport({scale:1}),W=v.width,H=v.height,tc=await pg.getTextContent();
+    const items=tc.items.filter(i=>i.str&&i.str.trim()).map(i=>({s:i.str,x:i.transform[4],y:i.transform[5],w:i.width,h:Math.abs(i.transform[3])||10}))
+      .sort((a,b)=>Math.abs(b.y-a.y)>3?b.y-a.y:a.x-b.x);
+    let sec=null;
+    for(const it of items){const t=norm(it.s);
+      const k=reglaCampo(it.s,sec);
+      if(k){if(!out.campos[k]){out.campos[k]={p,x:Math.round(Math.min(0.97,(it.x+it.w+4)/W)*1e4)/1e4,y:Math.round((H-it.y)/H*1e4)/1e4,s:10};etiq[k]=t.replace(/[\s:._\-]+$/,"");out.n++}continue}
+      for(const [nombre,re] of SECC)if(re.test(t)&&t.length<60){sec=nombre;break}}}
+  if(out.campos.comprador_apellidos&&out.campos.comprador_nombre&&etiq.comprador_nombre==="nombre"){out.campos.comprador_nombre_pila=out.campos.comprador_nombre;delete out.campos.comprador_nombre}
+  return out}
+
+/* ---------- rellenar ---------- */
+async function rellenarMandato(tplBytes,esPdfTpl,campos,vals,formMap){
   const{PDFDocument,StandardFonts,rgb}=PDFLib;let doc;
   if(esPdfTpl)doc=await PDFDocument.load(tplBytes,{ignoreEncryption:true});
   else{doc=await PDFDocument.create();const png=tplBytes[0]===0x89;const img=png?await doc.embedPng(tplBytes):await doc.embedJpg(tplBytes);
     const W=A4[0],H=W*img.height/img.width;const pg=doc.addPage([W,H]);pg.drawImage(img,{x:0,y:0,width:W,height:H})}
   const font=await doc.embedFont(StandardFonts.Helvetica),pages=doc.getPages();
+  if(formMap&&Object.keys(formMap).length){const form=doc.getForm();
+    for(const [nombre,k] of Object.entries(formMap)){const txt=limpia(vals[k]);if(!txt)continue;try{form.getTextField(nombre).setText(txt)}catch(e){}}
+    try{form.updateFieldAppearances(font);form.flatten()}catch(e){}}
   for(const [k,c] of Object.entries(campos||{})){const txt=limpia(vals[k]);if(!txt||!c)continue;const pg=pages[c.p||0];if(!pg)continue;const{width:W,height:H}=pg.getSize();
     pg.drawText(txt,{x:c.x*W,y:H-c.y*H,size:c.s||10,font,color:rgb(0,0,0)})}
   return doc.save();
 }
-async function cargarModelo(){const sn=await S.db.doc("contratoscfg/mandato").get();M.cfg=sn&&sn.exists?sn.data():{};return M.cfg}
-async function bytesModelo(){const a=M.cfg.archivo;const b=await HUELSAN.bajar("documentos",a.ruta);return{bytes:await bytesDe(b),pdf:esPdf(a)}}
-async function mandatoBytes(cx,tipo){
-  await cargarPDFLib();await cargarModelo();
-  if(!M.cfg.archivo)throw new Error("Falta subir el modelo de solicitud y mandato (Datos fiscales → Solicitud y mandato)");
-  const m=await bytesModelo();return rellenarMandato(m.bytes,m.pdf,M.cfg.campos||{},valores(cx,tipo));
-}
+async function modeloBytes(doc,cx,tipo){const m=await bytesModelo(doc);return rellenarMandato(m.bytes,m.pdf,doc.campos||{},valores(cx,tipo),doc.form||{})}
 function abrirPDF(bytes,nombre){const b=new Blob([bytes],{type:"application/pdf"});const u=URL.createObjectURL(b);const w=window.open(u,"_blank");if(!w)descargarBlob(b,nombre);setTimeout(()=>URL.revokeObjectURL(u),120000)}
 async function cargarGestoria(){try{const sn=await S.db.doc("facturacion/gestoria").get();M.gestoria=sn&&sn.exists?sn.data():{}}catch(e){M.gestoria={}}}
-async function abrirMandato(k){
+// genera todos los modelos (o solo uno) para una venta y los abre para imprimir
+async function abrirMandato(k,docId){
   const G=GT(),cx=G.contexto(k);if(!cx)return;await cargarGestoria();
-  try{toast("Preparando la solicitud y mandato…",15000);const tipo=((await S.db.doc("gestoria/"+(cx.l?cx.l.id:cx.x.matricula)).get()).data()||{}).tipoComprador||G.tipoAuto(cx);
-    abrirPDF(await mandatoBytes(cx,tipo),`Solicitud y mandato ${cx.mat||""}.pdf`);toast("Listo")}catch(e){toast(e.message,7000)}
+  try{toast("Preparando los documentos…",15000);await cargarPDFLib();await cargarModelo();
+    const lista=docId?M.cfg.docs.filter(x=>x.id===docId):M.cfg.docs;if(!lista.length)throw new Error("Falta subir los modelos en blanco (Datos fiscales → Solicitudes y mandatos)");
+    const tipo=((await S.db.doc("gestoria/"+(cx.l?cx.l.id:cx.x.matricula)).get()).data()||{}).tipoComprador||G.tipoAuto(cx);
+    const partes=[];for(const d of lista)partes.push({pdf:await modeloBytes(d,cx,tipo)});
+    abrirPDF(await unir(partes),`${docId?lista[0].nombre:"Solicitudes y mandatos"} ${cx.mat||""}.pdf`);toast("Listo")}catch(e){toast(e.message,7000)}
 }
 
-/* ---------- configuración del modelo ---------- */
+/* ---------- configuración de los modelos ---------- */
+const nombreDeArchivo=n=>String(n||"Documento").replace(/\.[a-z0-9]{2,5}$/i,"").replace(/[_\-]+/g," ").trim()||"Documento";
 async function abrirConfig(){
   await cargarModelo();
   const f=$("#f-confirm"),d=$("#dlg-confirm");
   const coches=porMatricula().filter(x=>x.lote&&(x.facturas.length||x.lote.estado==="vendido"));
-  const pintarC=()=>{const a=M.cfg.archivo,n=Object.keys(M.cfg.campos||{}).length;
-    f.innerHTML=`<h2>Solicitud y mandato · modelo en blanco</h2>
-      <p class="muted" style="margin:0">Sube el modelo vacío (PDF, JPG o PNG), el mismo para todas las ventas. Después pincha sobre el documento dónde va cada dato y se rellenará solo con los datos de cada venta.</p>
-      <div class="row" style="align-items:center"><span style="flex:1 1 200px">${a?`Modelo: <b>${esc(a.nombre)}</b>`:`<span class="tag bad">Aún no hay modelo</span>`}</span>${a?`<button type="button" class="btn sm" data-m-ver>Ver</button>`:""}
-        <label class="btn sm primary" style="display:inline-flex">${a?"Cambiar modelo":"Subir modelo"}<input type="file" data-m-sub accept="application/pdf,image/jpeg,image/png" hidden></label></div>
-      ${a?`<div class="row" style="align-items:center"><span style="flex:1 1 200px">Campos colocados: <b>${n}</b> de ${TODOS.length} <span class="muted">(solo hace falta colocar los que lleve tu modelo)</span></span><button type="button" class="btn primary" data-m-campos>Colocar campos…</button></div>
-        <div class="row" style="align-items:center"><label style="flex:1 1 240px">Probar con una venta<select data-m-coche>${coches.map(x=>`<option value="${esc(x.matricula)}">${esc(x.matricula.startsWith("lote:")?"Sin matrícula":x.matricula)} · ${esc(x.titulo||"")}</option>`).join("")||`<option value="">No hay ventas todavía</option>`}</select></label>
-        <button type="button" class="btn" data-m-probar ${coches.length?"":"disabled"}>Generar prueba</button></div>`:""}
+  const pintarC=()=>{
+    f.innerHTML=`<h2>Solicitudes y mandatos · modelos en blanco</h2>
+      <p class="muted" style="margin:0">Sube cada modelo vacío (solicitud de la DGT, mandato de la gestoría, etc.: PDF, JPG o PNG), el mismo para todas las ventas. Al subirlo se buscan solos los datos a rellenar (nombre, DNI, matrícula…); luego puedes retocarlos en «Colocar campos».</p>
+      ${M.cfg.docs.map(x=>{const n=Object.keys(x.campos||{}).length+Object.keys(x.form||{}).length;return`<div class="card" style="padding:10px"><div class="row" style="align-items:center">
+        <label style="flex:1 1 220px">Nombre<input data-m-nombre="${esc(x.id)}" value="${esc(x.nombre)}"></label>
+        <span class="muted" style="flex:1 1 160px">${esc(x.archivo.nombre)}<br>${n?`${n} campos colocados`:`<b style="color:var(--warn)">Sin campos colocados</b>`}${Object.keys(x.form||{}).length?" (formulario del PDF)":""}</span></div>
+        <div class="row"><button type="button" class="btn sm" data-m-ver="${esc(x.id)}">Ver</button>
+          <label class="btn sm" style="display:inline-flex">Cambiar modelo<input type="file" data-m-cambiar="${esc(x.id)}" accept="application/pdf,image/jpeg,image/png" hidden></label>
+          <button type="button" class="btn sm" data-m-auto="${esc(x.id)}" title="Volver a buscar los campos automáticamente">Detectar campos</button>
+          <button type="button" class="btn sm primary" data-m-campos="${esc(x.id)}">Colocar campos…</button>
+          <button type="button" class="btn sm" data-m-probar="${esc(x.id)}" ${coches.length?"":"disabled"}>Probar</button>
+          <span style="flex:1"></span><button type="button" class="btn sm peligro" data-m-quitar="${esc(x.id)}">Quitar</button></div></div>`}).join("")||`<div class="vacio">Aún no hay ningún modelo.</div>`}
+      <div class="row" style="align-items:center"><label class="btn primary" style="display:inline-flex">+ Añadir modelo<input type="file" data-m-add multiple accept="application/pdf,image/jpeg,image/png" hidden></label>
+        ${M.cfg.docs.length?`<label style="flex:1 1 240px;margin:0">Probar con la venta<select data-m-coche>${coches.map(x=>`<option value="${esc(x.matricula)}">${esc(x.matricula.startsWith("lote:")?"Sin matrícula":x.matricula)} · ${esc(x.titulo||"")}</option>`).join("")||`<option value="">No hay ventas todavía</option>`}</select></label>`:""}</div>
       <div class="row" style="justify-content:flex-end"><button class="btn" value="no">Cerrar</button></div>`};
-  f.onchange=async e=>{const t=e.target;if(t.dataset.mSub==null)return;const fi=t.files[0];t.value="";if(!fi)return;
-    if(fi.size>15e6){toast("Máximo 15 MB");return}
-    try{toast("Subiendo el modelo…",20000);const u=await HUELSAN.subir("documentos",fi);const ant=M.cfg.archivo;
-      // al cambiar el modelo se conservan los campos colocados: pueden no coincidir, por eso se avisa
-      M.cfg={...M.cfg,archivo:{ruta:u.id,nombre:fi.name,tipo:fi.type,size:fi.size,subido:new Date().toISOString()}};await S.db.doc("contratoscfg/mandato").set(M.cfg);
-      if(ant)await HUELSAN.borrarArchivo("documentos",ant.ruta).catch(()=>{});
-      toast(ant&&Object.keys(M.cfg.campos||{}).length?"Modelo cambiado: revisa la posición de los campos":"Modelo guardado",5000)}catch(err){toast("No se ha podido subir: "+err.message,6000)}
-    pintarC()};
+  const subir=async(fi,existente)=>{
+    if(fi.size>15e6){toast(fi.name+": máximo 15 MB");return}
+    toast("Subiendo "+fi.name+"…",20000);const u=await HUELSAN.subir("documentos",fi);
+    const archivo={ruta:u.id,nombre:fi.name,tipo:fi.type,size:fi.size,subido:new Date().toISOString()};
+    let doc=existente;
+    if(doc){const ant=doc.archivo;doc.archivo=archivo;if(ant)await HUELSAN.borrarArchivo("documentos",ant.ruta).catch(()=>{})}
+    else{doc={id:nid(),nombre:nombreDeArchivo(fi.name),archivo,campos:{},form:{}};M.cfg.docs.push(doc)}
+    await guardarCfg();
+    if(!existente||!Object.keys(doc.campos||{}).length&&!Object.keys(doc.form||{}).length){
+      try{toast("Buscando los campos…",20000);const r=await sugerir(doc);doc.campos=r.campos;doc.form=r.form;await guardarCfg();
+        toast(r.n?`${doc.nombre}: ${r.n} campos detectados. Revísalos en «Colocar campos».`:`${doc.nombre}: no he podido detectar campos (¿es una imagen?). Colócalos a mano.`,6000)}catch(e){toast("Modelo guardado; no se han podido detectar los campos: "+e.message,6000)}}
+    else toast("Modelo cambiado: revisa la posición de los campos",5000)};
+  f.onchange=async e=>{const t=e.target;
+    if(t.dataset.mNombre){const x=docModelo(t.dataset.mNombre);if(x){x.nombre=t.value.trim()||x.nombre;await guardarCfg()}return}
+    try{
+      if(t.dataset.mAdd!=null){const fs=[...t.files];t.value="";for(const fi of fs)await subir(fi,null);pintarC();return}
+      if(t.dataset.mCambiar){const fi=t.files[0],x=docModelo(t.dataset.mCambiar);t.value="";if(fi&&x)await subir(fi,x);pintarC();return}
+    }catch(err){toast("No se ha podido guardar: "+err.message,6000);pintarC()}};
   f.onclick=async e=>{const t=e.target;
-    if(t.closest("[data-m-ver]")){e.preventDefault();verArchivo(M.cfg.archivo.ruta,M.cfg.archivo.nombre);return}
-    if(t.closest("[data-m-campos]")){e.preventDefault();try{await editor(pintarC)}catch(err){toast(err.message||String(err),7000)}return}
-    if(t.closest("[data-m-probar]")){e.preventDefault();const k=f.querySelector("[data-m-coche]").value;if(k)await abrirMandato(k);return}};
+    const g=a=>{const el=t.closest(`[data-m-${a}]`);return el?el.dataset["m"+a[0].toUpperCase()+a.slice(1)]:null};
+    try{
+      let id;
+      if((id=g("ver"))){e.preventDefault();const x=docModelo(id);verArchivo(x.archivo.ruta,x.archivo.nombre);return}
+      if((id=g("campos"))){e.preventDefault();await editor(id,pintarC);return}
+      if((id=g("auto"))){e.preventDefault();const x=docModelo(id);toast("Buscando los campos…",20000);const r=await sugerir(x);
+        if(Object.keys(x.campos||{}).length&&!confirm(`Hay ${Object.keys(x.campos).length} campos colocados. ¿Sustituirlos por los detectados (${r.n})?`))return;
+        x.campos=r.campos;x.form=r.form;await guardarCfg();toast(r.n?`${r.n} campos detectados`:"No he detectado ningún campo",4000);pintarC();return}
+      if((id=g("probar"))){e.preventDefault();const k=f.querySelector("[data-m-coche]").value;if(k)await abrirMandato(k,id);return}
+      if((id=g("quitar"))){e.preventDefault();const x=docModelo(id);if(!confirm(`¿Quitar el modelo «${x.nombre}»? Se borra el archivo y sus campos.`))return;
+        await HUELSAN.borrarArchivo("documentos",x.archivo.ruta).catch(()=>{});M.cfg.docs=M.cfg.docs.filter(y=>y.id!==id);await guardarCfg();pintarC();return}
+    }catch(err){toast(err.message||String(err),7000)}};
   pintarC();d.returnValue="";d.showModal();d.onclose=()=>{f.onclick=null;f.onchange=null};
 }
 
 /* editor: se pincha sobre el documento dónde va cada campo */
-async function editor(volver){
-  await cargarPDFLib();const m=await bytesModelo();const f=$("#f-confirm"),d=$("#dlg-confirm");
+async function editor(docId,volver){
+  await cargarPDFLib();const doc=docModelo(docId);const m=await bytesModelo(doc);const f=$("#f-confirm");
   let pdf=null,n=1,pdim=A4,img=null;
   if(m.pdf){const lib=await pdfjs();pdf=await lib.getDocument({data:m.bytes.slice(),isEvalSupported:false}).promise;n=pdf.numPages}
   else{img=await createImageBitmap(new Blob([m.bytes],{type:m.bytes[0]===0x89?"image/png":"image/jpeg"}))}
-  const campos=JSON.parse(JSON.stringify(M.cfg.campos||{}));
+  const campos=JSON.parse(JSON.stringify(doc.campos||{}));
   let pag=0,sel=TODOS[0][0],tam=10,base=null;
   const render=async()=>{
     if(pdf){const pg=await pdf.getPage(pag+1);const v1=pg.getViewport({scale:1});pdim=[v1.width,v1.height];const vp=pg.getViewport({scale:1100/v1.width});
@@ -145,11 +231,12 @@ async function editor(volver){
     for(const [key,c] of Object.entries(campos)){if((c.p||0)!==pag)continue;const lab=(TODOS.find(t=>t[0]===key)||[0,key])[1];const px=c.x*cv.width,py=c.y*cv.height;
       x.fillStyle=key===sel?"#d6336c":"#1c63d6";x.font=`${Math.max(8,(c.s||10)*k)}px Helvetica,Arial,sans-serif`;x.fillText(lab,px,py);
       x.beginPath();x.arc(px,py,3.5,0,7);x.fill()}};
-  const pintarE=()=>{const nColocados=Object.keys(campos).length;
-    f.innerHTML=`<h2>Colocar campos</h2>
-      <p class="muted" style="margin:0">1) Elige un campo de la lista. 2) Pincha en el documento, donde debe empezar a escribirse (el punto es el inicio del texto, en la línea de base). Salta solo al siguiente campo. Los que no uses, déjalos sin colocar.</p>
+  const pintarE=()=>{const nCol=Object.keys(campos).length,delForm=Object.keys(doc.form||{}).length;
+    f.innerHTML=`<h2>Colocar campos · ${esc(doc.nombre)}</h2>
+      ${delForm?`<div class="aviso">Este PDF es un formulario rellenable: ${delForm} campos se rellenan solos. Aquí puedes añadir los que falten pinchando en el documento.</div>`:""}
+      <p class="muted" style="margin:0">1) Elige un campo de la lista. 2) Pincha en el documento, donde debe empezar a escribirse (el punto es el inicio del texto, en la línea de base). Salta solo al siguiente. Los que no uses, déjalos sin colocar. Los azules ya estaban detectados o colocados; el rosa es el que estás moviendo.</p>
       <div class="row" style="align-items:center">${n>1?`<button type="button" class="btn sm" data-e-pag="-1" ${pag===0?"disabled":""}>←</button><span>Página ${pag+1} de ${n}</span><button type="button" class="btn sm" data-e-pag="1" ${pag===n-1?"disabled":""}>→</button>`:""}
-        <label style="max-width:120px">Tamaño letra<input type="number" min="6" max="18" step="0.5" value="${tam}" data-e-tam></label><span class="muted">${nColocados} colocados</span></div>
+        <label style="max-width:120px">Tamaño letra<input type="number" min="6" max="18" step="0.5" value="${tam}" data-e-tam></label><span class="muted">${nCol} colocados</span></div>
       <div style="display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:10px;align-items:start">
         <div style="overflow:auto;max-height:62vh;border:1px solid var(--line,#ccc)"><canvas id="m-cv" style="width:100%;cursor:crosshair;display:block"></canvas></div>
         <div style="overflow:auto;max-height:62vh">${CAMPOS.map(([g,cs])=>`<b style="font-size:12px">${esc(g)}</b>${cs.map(([k,l])=>`<div class="row" style="gap:4px;margin:2px 0"><button type="button" class="btn sm ${sel===k?"primary":""}" style="flex:1;text-align:left;white-space:normal" data-e-sel="${k}">${campos[k]?"✓ ":""}${esc(l)}</button>${campos[k]?`<button type="button" class="btn sm" data-e-quitar="${k}" aria-label="Quitar" title="Quitar">✕</button>`:""}</div>`).join("")}`).join("")}</div></div>
@@ -162,7 +249,7 @@ async function editor(volver){
     const p=t.closest("[data-e-pag]");if(p){e.preventDefault();pag=Math.max(0,Math.min(n-1,pag+(+p.dataset.ePag)));await render();pintarE();return}
     const s=t.closest("[data-e-sel]");if(s){e.preventDefault();sel=s.dataset.eSel;if(campos[sel]&&(campos[sel].p||0)!==pag){pag=campos[sel].p||0;await render()}pintarE();return}
     const q=t.closest("[data-e-quitar]");if(q){e.preventDefault();delete campos[q.dataset.eQuitar];pintarE();return}
-    if(t.closest("[data-e-guardar]")){e.preventDefault();M.cfg={...M.cfg,campos};await S.db.doc("contratoscfg/mandato").set(M.cfg);toast("Campos guardados");volver();return}
+    if(t.closest("[data-e-guardar]")){e.preventDefault();doc.campos=campos;await guardarCfg();toast("Campos guardados");volver();return}
     if(t.closest("[data-e-volver]")){e.preventDefault();volver();return}};
   f.onchange=e=>{const t=e.target;if(t.dataset.eTam!=null){tam=+t.value||10;if(campos[sel])campos[sel].s=tam;dibujar()}};
   await render();pintarE();
@@ -196,13 +283,14 @@ async function abrirVenta(k){
   await cargarModelo();await cargarGestoria();
   let tipo=((await S.db.doc("gestoria/"+(cx.l?cx.l.id:cx.x.matricula)).get().then(s=>s.data&&s.data()).catch(()=>null))||{}).tipoComprador||G.tipoAuto(cx);
   const f=$("#f-confirm"),d=$("#dlg-confirm");
-  const marcados={factura:true,contrato:true,listado:true,mandato:true,permiso:true,ficha:true};
+  const marcados={};const marca=k=>marcados[k]!==false;
   const estado=()=>{const c=G.contexto(k),perm=G.docsTipo(c,TIPO_PERMISO),fic=G.docsTipo(c,TIPO_FICHA);
     return{c,perm,fic,items:[
       ["factura","Factura de venta",c.f?`Factura ${c.f.codigo}`:"",!!c.f,c.f?"":"Aún no hay factura de venta emitida."],
       ["contrato","Contrato de compraventa",c.c?"El contrato guardado, listo para firmar":"Se crea con los datos de la venta",true,""],
       ["listado","Listado de documentos necesarios","Lo que debe aportar el comprador y lo que se le entrega",true,""],
-      ["mandato","Solicitud y mandato","Modelo rellenado con los datos de la venta",!!M.cfg.archivo,M.cfg.archivo?"":"Falta subir el modelo en blanco.",M.cfg.archivo&&!Object.keys(M.cfg.campos||{}).length?"Aún no has colocado los campos: saldrá el modelo en blanco.":""],
+      ...M.cfg.docs.map(x=>{const nc=Object.keys(x.campos||{}).length+Object.keys(x.form||{}).length;return["tpl:"+x.id,x.nombre,"Modelo rellenado con los datos de la venta",true,"",nc?"":"Sin campos colocados: saldrá en blanco."]}),
+      ...(M.cfg.docs.length?[]:[["tpl:","Solicitudes y mandatos","",false,"Falta subir los modelos en blanco (DGT, gestoría…)."]]),
       ["permiso","Permiso de circulación (copia)",perm.length?`${perm.length} archivo${perm.length>1?"s":""}`:"",perm.length>0,perm.length?"":"Sube una copia del permiso."],
       ["ficha","Ficha técnica (copia)",fic.length?`${fic.length} archivo${fic.length>1?"s":""}`:"",fic.length>0,fic.length?"":"Sube una copia de la ficha técnica."]]}};
   const pintarV=()=>{const E=estado(),c=E.c;
@@ -211,9 +299,9 @@ async function abrirVenta(k){
         <label style="max-width:190px;flex:0 0 auto">Comprador<select data-v-tipo><option value="particular" ${tipo==="particular"?"selected":""}>Particular</option><option value="empresa" ${tipo==="empresa"?"selected":""}>Empresa</option></select></label></div>
       <p class="muted" style="margin:0">Se unen en un solo PDF, en este orden, para imprimirlo de una vez.</p>
       ${E.items.map(([key,tit,desc,ok,aviso,aviso2])=>`<div class="row" style="align-items:center;margin:2px 0">
-        <label class="row" style="flex-direction:row;flex:1 1 260px;gap:8px;color:var(--ink);font-weight:500;align-items:flex-start"><input type="checkbox" data-v-inc="${key}" ${marcados[key]&&ok?"checked":""} ${ok?"":"disabled"} style="width:auto;margin-top:3px"><span>${esc(tit)}<div class="muted" style="font-weight:400;font-size:12.5px">${esc(desc)}${aviso?` <b style="color:var(--bad)">${esc(aviso)}</b>`:""}${aviso2?` <span style="color:var(--warn)">${esc(aviso2)}</span>`:""}</div></span></label>
+        <label class="row" style="flex-direction:row;flex:1 1 260px;gap:8px;color:var(--ink);font-weight:500;align-items:flex-start"><input type="checkbox" data-v-inc="${key}" ${marca(key)&&ok?"checked":""} ${ok?"":"disabled"} style="width:auto;margin-top:3px"><span>${esc(tit)}<div class="muted" style="font-weight:400;font-size:12.5px">${esc(desc)}${aviso?` <b style="color:var(--bad)">${esc(aviso)}</b>`:""}${aviso2?` <span style="color:var(--warn)">${esc(aviso2)}</span>`:""}</div></span></label>
         ${key==="permiso"||key==="ficha"?`<label class="btn sm primary" style="display:inline-flex">Subir<input type="file" data-v-sub="${key==="permiso"?TIPO_PERMISO:TIPO_FICHA}" multiple hidden accept="application/pdf,image/*"></label>`:""}
-        ${key==="mandato"?`<button type="button" class="btn sm" data-v-modelo>${M.cfg.archivo?"Modelo y campos…":"Subir modelo…"}</button>`:""}
+        ${key.startsWith("tpl:")?`<button type="button" class="btn sm" data-v-modelo>${M.cfg.docs.length?"Modelos y campos…":"Subir modelos…"}</button>`:""}
         ${key==="contrato"?`<button type="button" class="btn sm" data-v-contrato>Editar contrato</button>`:""}</div>`).join("")}
       <div class="row" style="justify-content:flex-end;margin-top:6px"><button type="button" class="btn" data-v-desc>Descargar PDF</button><button type="button" class="btn primary" data-v-imp>Abrir para imprimir</button></div>
       <div class="row" style="justify-content:flex-end"><button class="btn" value="no">Cerrar</button></div>`};
@@ -222,11 +310,11 @@ async function abrirVenta(k){
     await cargarPDFLib();const E=estado(),c=E.c,sel=[...f.querySelectorAll("[data-v-inc]")].filter(i=>i.checked).map(i=>i.dataset.vInc);
     if(!sel.length)throw new Error("Marca al menos un documento");
     const partes=[];let n=0;
-    for(const key of ["factura","contrato","listado","mandato","permiso","ficha"]){if(!sel.includes(key))continue;toast(`Preparando ${++n}/${sel.length}…`,20000);
+    for(const key of E.items.map(i=>i[0])){if(!sel.includes(key))continue;toast(`Preparando ${++n}/${sel.length}…`,20000);
       if(key==="factura")partes.push({pdf:new Uint8Array(await (await pdfFactura(c.f)).output("arraybuffer"))});
       else if(key==="contrato")partes.push({pdf:new Uint8Array(await (await window.HuelsanContratos.generarContrato(contratoDe(c))).output("arraybuffer"))});
       else if(key==="listado")partes.push({pdf:new Uint8Array(listadoPDF(contratoDe(c),tipo,c).output("arraybuffer"))});
-      else if(key==="mandato")partes.push({pdf:await mandatoBytes(c,tipo)});
+      else if(key.startsWith("tpl:")){const dm=docModelo(key.slice(4));if(dm)partes.push({pdf:await modeloBytes(dm,c,tipo)})}
       else await partesDe(key==="permiso"?E.perm:E.fic,partes)}
     return unir(partes)};
   f.onchange=async e=>{const t=e.target;
