@@ -497,9 +497,9 @@ function vistaClientes(){
     <span class="row"><button class="btn" data-acc="importar-demandas">Importar desde «Clientes» de la app</button><button class="btn primary" data-acc="cliente-alta">+ Nuevo cliente</button></span></div>
   <label>Buscar<input type="search" data-cq value="${esc(S.cq||"")}" placeholder="Nombre, NIF, correo, teléfono, municipio…"></label>
   ${lista.length?`<div class="tw"><table><thead><tr><th>Cliente</th><th>NIF</th><th>Tipo</th><th>Contacto</th><th>Localidad</th><th class="num">Facturas</th><th></th></tr></thead><tbody>
-    ${lista.map(c=>`<tr><td><b>${esc(nombreCliente(c))}</b>${c.tipo==="empresa"&&c.contacto?`<div class="muted">${esc(c.contacto)}</div>`:""}</td><td>${esc(c.nif||"")}${c.nif&&!validarNIF(c.nif,c.pais)?` <span class="tag bad">revisar</span>`:""}</td>
+    ${lista.map(c=>`<tr><td><b>${esc(nombreCliente(c))}</b>${c.tipo==="empresa"&&(c.repNombre||c.contacto)?`<div class="muted">${esc(c.repNombre?"Administrador: "+[c.repNombre,c.repApellidos].filter(Boolean).join(" "):c.contacto)}</div>`:""}</td><td>${esc(c.nif||"")}${c.nif&&!validarNIF(c.nif,c.pais)?` <span class="tag bad">revisar</span>`:""}</td>
       <td>${c.tipo==="empresa"?"Empresa":"Particular"}</td><td>${esc(c.telefono||"")}<div class="muted">${esc(c.email||"")}</div></td><td>${esc([c.municipio,c.provincia].filter(Boolean).join(", "))}</td><td class="num">${nFact(c.id)}</td>
-      <td class="row" style="flex-wrap:nowrap"><button class="btn sm" data-cli-editar="${esc(c.id)}">Editar</button><button class="btn sm" data-cli-facturar="${esc(c.id)}">Facturar</button></td></tr>`).join("")}</tbody></table></div>`
+      <td><div class="row" style="flex-wrap:nowrap;justify-content:flex-end"><button class="btn sm" data-cli-editar="${esc(c.id)}">Editar</button><button class="btn sm" data-cli-facturar="${esc(c.id)}">Facturar</button></div></td></tr>`).join("")}</tbody></table></div>`
   :`<div class="vacio">${S.clientes.size?"Ningún cliente coincide.":"Aún no hay clientes. Añádelos aquí o al hacer una factura."}</div>`}`;
 }
 function abrirCliente(id,paraFactura){
@@ -508,8 +508,13 @@ function abrirCliente(id,paraFactura){
   const pintarF=()=>{const emp=c.tipo==="empresa";
     f.innerHTML=`<div class="row sp"><h2>${id?"Editar cliente":"Nuevo cliente"}</h2><div class="seg"><label><input type="radio" name="tipo" value="particular" ${!emp?"checked":""}> Particular</label><label><input type="radio" name="tipo" value="empresa" ${emp?"checked":""}> Empresa</label></div></div>
       ${emp?`<div class="g2"><label>Razón social<input name="razonSocial" value="${esc(c.razonSocial||"")}" required></label><label>CIF<input name="nif" value="${esc(c.nif||"")}" required></label></div>
-        <div class="g2"><label>Persona de contacto<input name="contacto" value="${esc(c.contacto||"")}"></label><label>Nombre comercial<input name="nombreComercial" value="${esc(c.nombreComercial||"")}"></label></div>`
-      :`<div class="g3"><label>Nombre<input name="nombre" value="${esc(c.nombre||"")}" required></label><label>Apellidos<input name="apellidos" value="${esc(c.apellidos||"")}" required></label><label>DNI / NIE<input name="nif" value="${esc(c.nif||"")}" required></label></div>`}
+        <div class="g2"><label>Persona de contacto<input name="contacto" value="${esc(c.contacto||"")}"></label><label>Nombre comercial<input name="nombreComercial" value="${esc(c.nombreComercial||"")}"></label></div>
+        <h3 style="margin:8px 0 0">Administrador o representante de la sociedad</h3>
+        <div class="g2"><label>Nombre<input name="repNombre" value="${esc(c.repNombre||"")}"></label><label>Apellidos<input name="repApellidos" value="${esc(c.repApellidos||"")}"></label></div>
+        <div class="g3"><label>DNI / NIE<input name="repDni" value="${esc(c.repDni||"")}"></label><label>Cargo<input name="repCargo" list="cli-cargos" value="${esc(c.repCargo||"Administrador único")}"></label><label>Fecha de nacimiento <small>opcional</small><input name="repFechaNac" type="date" value="${esc(c.repFechaNac||"")}"></label></div>
+        <datalist id="cli-cargos"><option value="Administrador único"><option value="Administrador solidario"><option value="Administrador mancomunado"><option value="Apoderado"><option value="Consejero delegado"></datalist>`
+      :`<div class="g3"><label>Nombre<input name="nombre" value="${esc(c.nombre||"")}" required></label><label>Apellidos<input name="apellidos" value="${esc(c.apellidos||"")}" required></label><label>DNI / NIE<input name="nif" value="${esc(c.nif||"")}" required></label></div>
+        <div class="g3"><label>Fecha de nacimiento <small>para Tráfico</small><input name="fechaNac" type="date" value="${esc(c.fechaNac||"")}"></label></div>`}
       <label>Dirección<input name="direccion" value="${esc(c.direccion||"")}" placeholder="Calle, número, piso"></label>
       <div class="g4"><label>C. P.<input name="cp" value="${esc(c.cp||"")}" inputmode="numeric"></label><label>Municipio<input name="municipio" value="${esc(c.municipio||"")}"></label><label>Provincia<input name="provincia" value="${esc(c.provincia||"")}"></label><label>País<input name="pais" value="${esc(c.pais||"España")}"></label></div>
       <div class="g3"><label>Teléfono<input name="telefono" type="tel" value="${esc(c.telefono||"")}"></label><label>Correo<input name="email" type="email" value="${esc(c.email||"")}"></label><label>IBAN <small>opcional</small><input name="iban" value="${esc(c.iban||"")}"></label></div>
@@ -525,6 +530,7 @@ function abrirCliente(id,paraFactura){
     if(d.returnValue!=="ok")return;
     const v=Object.fromEntries(new FormData(f));const datos={...c,...v,nif:nifLimpio(v.nif),actualizado:new Date().toISOString()};delete datos.id;
     if(!validarNIF(datos.nif,datos.pais)&&!confirm("El NIF/NIE/CIF no parece válido. ¿Guardar de todas formas?"))return abrirCliente(id,paraFactura);
+    if(datos.tipo==="empresa"&&datos.repDni){datos.repDni=nifLimpio(datos.repDni);if(!validarNIF(datos.repDni,"España")&&!confirm("El DNI/NIE del administrador no parece válido. ¿Guardar de todas formas?"))return abrirCliente(id,paraFactura)}
     const nuevoId=id||nid();if(!id)datos.creado=new Date().toISOString();
     await S.db.doc("clientes/"+nuevoId).set(datos);toast("Cliente guardado");
     if(paraFactura&&S.ed&&S.ed.estado==="borrador"){S.ed.clienteId=nuevoId;S.ed.cliente=snapCliente({...datos,id:nuevoId});S.edSucio=true;pintar()}

@@ -15,10 +15,11 @@ const GT=()=>window.HuelsanGestoria&&window.HuelsanGestoria._t;
 
 /* campos que se pueden colocar en el modelo */
 const CAMPOS=[
-  ["Comprador",[["comprador_nombre","Nombre y apellidos / razón social"],["comprador_nombre_pila","Solo el nombre (o razón social)"],["comprador_apellido1","Primer apellido"],["comprador_apellido2","Segundo apellido"],["comprador_apellidos","Apellidos (los dos)"],["comprador_tipo_via","Tipo de vía (Calle, Avenida…)"],["comprador_calle","Nombre de la vía"],["comprador_numero","Número de la vía"],["comprador_dni","DNI, NIE o CIF"],["comprador_domicilio","Domicilio (calle y número)"],["comprador_cp","Código postal"],["comprador_municipio","Municipio"],["comprador_provincia","Provincia"],["comprador_direccion","Domicilio completo (en una línea)"],["comprador_telefono","Teléfono"],["comprador_email","Correo electrónico"],["marca_particular","Marca «X» si es particular"],["marca_empresa","Marca «X» si es empresa"],["representante_nombre","Representante o administrador (empresa)"],["representante_dni","DNI del representante (empresa)"],["representante_cargo","Cargo del representante (empresa)"]]],
+  ["Comprador",[["comprador_nombre","Nombre y apellidos / razón social"],["comprador_nombre_pila","Solo el nombre (o razón social)"],["comprador_fecha_nac","Fecha de nacimiento (particular)"],["comprador_apellido1","Primer apellido"],["comprador_apellido2","Segundo apellido"],["comprador_apellidos","Apellidos (los dos)"],["comprador_tipo_via","Tipo de vía (Calle, Avenida…)"],["comprador_calle","Nombre de la vía"],["comprador_numero","Número de la vía"],["comprador_dni","DNI, NIE o CIF"],["comprador_domicilio","Domicilio (calle y número)"],["comprador_cp","Código postal"],["comprador_municipio","Municipio"],["comprador_provincia","Provincia"],["comprador_direccion","Domicilio completo (en una línea)"],["comprador_telefono","Teléfono"],["comprador_email","Correo electrónico"],["marca_particular","Marca «X» si es particular"],["marca_empresa","Marca «X» si es empresa"],["representante_nombre","Representante o administrador (empresa)"],["representante_dni","DNI del representante (empresa)"],["representante_cargo","Cargo del representante (empresa)"]]],
   ["Vendedor",[["vendedor_nombre","Razón social del vendedor"],["vendedor_nif","NIF del vendedor"],["vendedor_direccion","Domicilio del vendedor (una línea)"],["vendedor_rep_nombre","Representante de Huelsan"],["vendedor_rep_dni","DNI del representante de Huelsan"]]],
   ["Vehículo",[["vehiculo_matricula","Matrícula"],["vehiculo_bastidor","Bastidor (VIN)"],["vehiculo_marca","Marca"],["vehiculo_modelo","Modelo"],["vehiculo_marca_modelo","Marca y modelo"],["vehiculo_fecha_matric","Fecha de matriculación"],["vehiculo_km","Kilómetros"]]],
   ["Operación y firma",[["x_cambio_titularidad","Marca «Cambio de titularidad»"],["x_comprador_interesado","Marca «Interesado» (comprador)"],["x_vendedor_titular","Marca «Titular» (vendedor)"],["precio","Precio total"],["fecha_venta","Fecha de la venta"],["lugar","Lugar (municipio)"],["fecha_hoy","Fecha de hoy (dd/mm/aaaa)"],["dia_hoy","Día de hoy"],["mes_hoy","Mes de hoy (en letra)"],["anio_hoy","Año de hoy"],["gestoria_nombre","Nombre de la gestoría"]]]];
+const LUGAR_REP={francisco:"Huelva",gustavo:"Murcia"}; // dónde se vende y se firma según quién vende
 const TODOS=CAMPOS.flatMap(g=>g[1]);
 
 /* ---------- utilidades ---------- */
@@ -51,14 +52,17 @@ async function unir(partes){
 
 /* ---------- valores para rellenar ---------- */
 function valores(cx,tipo){
-  const e=S.emisor||{},cl=(cx.f||{}).cliente||{},cc=(cx.c||{}).comprador||{},emp=tipo==="empresa";
+  const e=S.emisor||{},live=(cx.f&&S.clientes&&S.clientes.get(cx.f.clienteId))||{},cl=Object.assign({},(cx.f||{}).cliente||{}),cc=Object.assign({},(cx.c||{}).comprador||{}),emp=tipo==="empresa";
+  if(emp){const m={nombre:live.repNombre,apellidos:live.repApellidos,dni:live.repDni,cargo:live.repCargo};for(const k in m)if(m[k])cc[k]=m[k]}
+  else{if(live.nombre)cc.nombre=live.nombre;if(live.apellidos)cc.apellidos=live.apellidos}
   const v=Object.assign({},(cx.f||{}).vehiculo||{},cx.c?Object.fromEntries(Object.entries(cx.c.vehiculo||{}).filter(([,x])=>x)):{});
-  const rep=cx.c&&cx.c.rep?cx.reps[cx.c.rep]:null,t=cx.f?(cx.f.totales||calcular(cx.f.lineas)):null;
+  const repId=cx.repId||(cx.c&&cx.c.rep)||"",rep=repId&&cx.reps?cx.reps[repId]:null,t=cx.f?(cx.f.totales||calcular(cx.f.lineas)):null;
   const dir=(a,cp,m,p)=>[a,[cp,m].filter(Boolean).join(" "),p].filter(Boolean).join(", ");
   const nombre=emp?(cl.nombre||cc.razonSocial||""):(cl.nombre||[cc.nombre,cc.apellidos].filter(Boolean).join(" "));
   const calle=cl.direccion||(emp?cc.domicilioEmpresa:cc.domicilio)||"",cp=cl.cp||cc.cp||"",mun=cl.municipio||cc.municipio||"",prov=cl.provincia||cc.provincia||"";
   const hoy=hoyISO().split("-");
   let pila=emp?nombre:(cc.nombre||""),apes=emp?"":(cc.apellidos||"");
+  const fnac=!emp&&live.fechaNac?fecha(live.fechaNac):"";
   if(!emp&&!pila&&nombre){const w=nombre.trim().split(/\s+/),k=w.length>=3?w.length-2:1;pila=w.slice(0,k).join(" ");apes=w.slice(k).join(" ")}
   const ap=apes.trim().split(/\s+/).filter(Boolean),ap1=ap[0]||"",ap2=ap.slice(1).join(" ");
   const via=String(calle).match(/^\s*(c\/|calle|cl\.?|avenida|avda\.?|av\.?|plaza|pza\.?|paseo|camino|carretera|ctra\.?|urbanizaci[oó]n|ronda|traves[ií]a|pol[ií]gono|barrio|travesia)\s+(.*)$/i);
@@ -77,7 +81,7 @@ function valores(cx,tipo){
     vendedor_rep_nombre:rep?rep.nombre||"":"",vendedor_rep_dni:rep?rep.dni||"":"",
     vehiculo_matricula:v.matricula||cx.mat||"",vehiculo_bastidor:v.bastidor||"",vehiculo_marca:v.marca||"",vehiculo_modelo:[v.modelo,v.version].filter(Boolean).join(" "),
     vehiculo_marca_modelo:[v.marca,v.modelo].filter(Boolean).join(" "),vehiculo_fecha_matric:v.fechaMatric?fecha(v.fechaMatric):"",vehiculo_km:v.km?miles(String(Math.round(+v.km))):"",
-    precio:precio?eur(precio):"",fecha_venta:fv?fecha(fv):"",lugar:(cx.c&&cx.c.ubicacion)||e.municipio||"",
+    precio:precio?eur(precio):"",fecha_venta:fv?fecha(fv):"",lugar:LUGAR_REP[repId]||(rep&&rep.lugar)||(cx.c&&cx.c.ubicacion)||e.municipio||"",comprador_fecha_nac:fnac,
     fecha_hoy:`${hoy[2]}/${hoy[1]}/${hoy[0]}`,dia_hoy:String(+hoy[2]),mes_hoy:MESES[+hoy[1]-1],anio_hoy:hoy[0],gestoria_nombre:(M.gestoria&&M.gestoria.nombre)||""};
 }
 
@@ -118,7 +122,7 @@ function reglaCampo(texto,sec){
   if(l==="fecha")return"fecha_hoy";
   return null}
 // nombre de un campo de formulario PDF → clave (misma idea, con nombres tipo «nombre_apellidos», «dni_comprador»…)
-const DGT={"matricula":"vehiculo_matricula","nifnie del tutor":null,"codigo iae impuesto de actividades economicas":null,"otrosrow1":null,"fecha nacimiento":null,"exencion itp":null,"codigo cet":null,"codigo cema":null,"bloque":null,"portal":null,"escalera":null,"planta":null,"puerta":null,"servicio al que se destina el vehiculo":null,"fecha matriculacion":"vehiculo_fecha_matric","tipo via":"comprador_tipo_via","nombre de la via":"comprador_calle","numero":"comprador_numero","km":null,"codigo postal":"comprador_cp","provincia":"comprador_provincia","municipio":"comprador_municipio","localidad":"comprador_municipio","correo electronico":"comprador_email","telefono":"comprador_telefono",
+const DGT={"matricula":"vehiculo_matricula","nifnie del tutor":null,"codigo iae impuesto de actividades economicas":null,"otrosrow1":null,"fecha nacimiento":"comprador_fecha_nac","exencion itp":null,"codigo cet":null,"codigo cema":null,"bloque":null,"portal":null,"escalera":null,"planta":null,"puerta":null,"servicio al que se destina el vehiculo":null,"fecha matriculacion":"vehiculo_fecha_matric","tipo via":"comprador_tipo_via","nombre de la via":"comprador_calle","numero":"comprador_numero","km":null,"codigo postal":"comprador_cp","provincia":"comprador_provincia","municipio":"comprador_municipio","localidad":"comprador_municipio","correo electronico":"comprador_email","telefono":"comprador_telefono",
   "nifniecif":"comprador_dni","nombrerazon social":"comprador_nombre_pila","apellido 1":"comprador_apellido1","apellido 2":"comprador_apellido2",
   "nifniecif_2":"vendedor_nif","nombrerazon social_2":"vendedor_nombre","en":"lugar","a":"dia_hoy","de":"mes_hoy","de_2":"anio_hoy",
   "tramite":"x_cambio_titularidad|cambio","datoscomprador":"x_comprador_interesado|interesado","datosvendedor":"x_vendedor_titular|0"};
@@ -134,8 +138,8 @@ async function sugerir(doc){
       if(tp==="PDFRadioGroup"){ // los botones de opción se marcan con una «X» en su casilla (más fiable que rellenarlos)
         const[k,opc]=k0.split("|");let ok=false;
         for(const w of fl.acroField.getWidgets()){let ov="";try{ov=w.getOnValue().decodeText()}catch(e){}if(opc&&ov!==opc)continue;
-          const r=w.getRectangle(),pi=Math.max(0,pages.findIndex(pg=>(pg.node.Annots()?pg.node.Annots().asArray():[]).some(a=>pd.context.lookup(a)===w.dict))),{width:W,height:H}=pages[pi].getSize();
-          if(!out.campos[k]){out.campos[k]={p:pi,x:Math.round((r.x+2.5)/W*1e4)/1e4,y:Math.round((H-r.y-1)/H*1e4)/1e4,s:10};out.n++;ok=true}break}
+          const r=w.getRectangle(),x0=Math.min(r.x,r.x+r.width),y0=Math.min(r.y,r.y+r.height),bw=Math.abs(r.width),bh=Math.abs(r.height),pi=Math.max(0,pages.findIndex(pg=>(pg.node.Annots()?pg.node.Annots().asArray():[]).some(a=>pd.context.lookup(a)===w.dict))),{width:W,height:H}=pages[pi].getSize();
+          if(!out.campos[k]){out.campos[k]={p:pi,x:Math.round((x0+(bw-6.7)/2)/W*1e4)/1e4,y:Math.round((H-y0-(bh-7)/2)/H*1e4)/1e4,s:10};out.n++;ok=true}break}
         if(!ok&&!Object.values(out.form).includes(k0)){out.form[fl.getName()]=k0;out.n++}
         continue}
       out.form[fl.getName()]=k0;out.n++}}catch(e){}
@@ -168,7 +172,7 @@ async function rellenarMandato(tplBytes,esPdfTpl,campos,vals,formMap){
         else if(tp==="PDFRadioGroup"){const o=fl.getOptions();fl.select(o.includes(opc)?opc:o[0])}
         else if(tp==="PDFDropdown"||tp==="PDFOptionList"){const o=fl.getOptions(),n=norm(txt),h=o.find(x=>norm(x)===n)||o.find(x=>norm(x).startsWith(n)||n.startsWith(norm(x)&&norm(x)));
           if(h)fl.select(h);else{fl.addOptions([txt]);fl.select(txt)}}}catch(e){}}
-    try{form.updateFieldAppearances(font);form.flatten()}catch(e){}}
+    try{for(const fl of form.getFields())if(/PDFTextField|PDFDropdown/.test(fl.constructor.name)){try{fl.acroField.setDefaultAppearance("/Helv 9 Tf 0 g")}catch(e){}try{fl.setFontSize(9)}catch(e){}}form.updateFieldAppearances(font);form.flatten()}catch(e){}}
   for(const [k,c] of Object.entries(campos||{})){const txt=limpia(vals[k]);if(!txt||!c)continue;const pg=pages[c.p||0];if(!pg)continue;const{width:W,height:H}=pg.getSize();
     pg.drawText(txt,{x:c.x*W,y:H-c.y*H,size:c.s||10,font,color:rgb(0,0,0)})}
   return doc.save();
@@ -181,7 +185,8 @@ async function abrirMandato(k,docId){
   const G=GT(),cx=G.contexto(k);if(!cx)return;await cargarGestoria();
   try{toast("Preparando los documentos…",15000);await cargarPDFLib();await cargarModelo();
     const lista=docId?M.cfg.docs.filter(x=>x.id===docId):M.cfg.docs;if(!lista.length)throw new Error("Falta subir los modelos en blanco (Datos fiscales → Solicitudes y mandatos)");
-    const tipo=((await S.db.doc("gestoria/"+(cx.l?cx.l.id:cx.x.matricula)).get()).data()||{}).tipoComprador||G.tipoAuto(cx);
+    const reg=(await S.db.doc("gestoria/"+(cx.l?cx.l.id:cx.x.matricula)).get()).data()||{};cx.repId=reg.repVende||"";
+    const tipo=reg.tipoComprador||G.tipoAuto(cx);
     const partes=[];for(const d of lista)partes.push({pdf:await modeloBytes(d,cx,tipo)});
     abrirPDF(await unir(partes),`${docId?lista[0].nombre:"Solicitudes y mandatos"} ${cx.mat||""}.pdf`);toast("Listo")}catch(e){toast(e.message,7000)}
 }
@@ -308,10 +313,11 @@ function contratoDe(cx){
 async function abrirVenta(k){
   const G=GT(),cx=G&&G.contexto(k);if(!cx){toast("No encuentro ese coche");return}
   await cargarModelo();await cargarGestoria();
-  let tipo=((await S.db.doc("gestoria/"+(cx.l?cx.l.id:cx.x.matricula)).get().then(s=>s.data&&s.data()).catch(()=>null))||{}).tipoComprador||G.tipoAuto(cx);
+  const regId="gestoria/"+(cx.l?cx.l.id:cx.x.matricula),reg0=(await S.db.doc(regId).get().then(s=>s.data&&s.data()).catch(()=>null))||{};
+  let tipo=reg0.tipoComprador||G.tipoAuto(cx),repVende=reg0.repVende||(cx.c&&cx.c.rep)||"";
   const f=$("#f-confirm"),d=$("#dlg-confirm");
   const marcados={};const marca=k=>marcados[k]!==false;
-  const estado=()=>{const c=G.contexto(k),perm=G.docsTipo(c,TIPO_PERMISO),fic=G.docsTipo(c,TIPO_FICHA);
+  const estado=()=>{const c=G.contexto(k);c.repId=repVende;const perm=G.docsTipo(c,TIPO_PERMISO),fic=G.docsTipo(c,TIPO_FICHA);
     return{c,perm,fic,items:[
       ["factura","Factura de venta",c.f?`Factura ${c.f.codigo}`:"",!!c.f,c.f?"":"Aún no hay factura de venta emitida."],
       ["contrato","Contrato de compraventa",c.c?"El contrato guardado, listo para firmar":"Se crea con los datos de la venta",true,""],
@@ -323,7 +329,8 @@ async function abrirVenta(k){
   const pintarV=()=>{const E=estado(),c=E.c;
     f.innerHTML=`<h2>Documentos de venta</h2>
       <div class="row" style="align-items:center"><span><b>${esc(c.x.titulo||"")}</b> ${c.mat?`<span class="mat">${esc(c.mat)}</span>`:""}</span>
-        <label style="max-width:190px;flex:0 0 auto">Comprador<select data-v-tipo><option value="particular" ${tipo==="particular"?"selected":""}>Particular</option><option value="empresa" ${tipo==="empresa"?"selected":""}>Empresa</option></select></label></div>
+        <label style="max-width:190px;flex:0 0 auto">Comprador<select data-v-tipo><option value="particular" ${tipo==="particular"?"selected":""}>Particular</option><option value="empresa" ${tipo==="empresa"?"selected":""}>Empresa</option></select></label>
+        <label style="max-width:190px;flex:0 0 auto">Vende (firma y lugar)<select data-v-rep><option value="">— Sin elegir —</option>${Object.entries((G.contexto(k).reps)||{}).filter(([,r])=>r&&r.nombre).map(([id,r])=>`<option value="${esc(id)}" ${repVende===id?"selected":""}>${esc(r.nombre.split(" ")[0])}${LUGAR_REP[id]?" · "+LUGAR_REP[id]:""}</option>`).join("")}</select></label></div>
       <p class="muted" style="margin:0">Se unen en un solo PDF, en este orden, para imprimirlo de una vez.</p>
       ${E.items.map(([key,tit,desc,ok,aviso,aviso2])=>`<div class="row" style="align-items:center;margin:2px 0">
         <label class="row" style="flex-direction:row;flex:1 1 260px;gap:8px;color:var(--ink);font-weight:500;align-items:flex-start"><input type="checkbox" data-v-inc="${key}" ${marca(key)&&ok?"checked":""} ${ok?"":"disabled"} style="width:auto;margin-top:3px"><span>${esc(tit)}<div class="muted" style="font-weight:400;font-size:12.5px">${esc(desc)}${aviso?` <b style="color:var(--bad)">${esc(aviso)}</b>`:""}${aviso2?` <span style="color:var(--warn)">${esc(aviso2)}</span>`:""}</div></span></label>
@@ -346,6 +353,7 @@ async function abrirVenta(k){
     return unir(partes)};
   f.onchange=async e=>{const t=e.target;
     if(t.dataset.vTipo!=null){tipo=t.value;pintarV();return}
+    if(t.dataset.vRep!=null){repVende=t.value;reg0.repVende=repVende||null;await S.db.doc(regId).set({...reg0,loteId:cx.l?cx.l.id:"",matricula:cx.mat});pintarV();return}
     if(t.dataset.vInc){marcados[t.dataset.vInc]=t.checked;return}
     if(t.dataset.vSub){const tp=t.dataset.vSub,fs=[...t.files];t.value="";if(!fs.length)return;const c=G.contexto(k);
       try{const archivos=[];for(const fi of fs){if(fi.size>15e6){toast(fi.name+": máximo 15 MB");continue}toast("Subiendo "+fi.name+"…",20000);const u=await HUELSAN.subir("documentos",fi);archivos.push({ruta:u.id,nombre:fi.name,tipo:fi.type,size:fi.size,subido:new Date().toISOString()})}

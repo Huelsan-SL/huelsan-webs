@@ -99,7 +99,8 @@ function desdeFactura(f,c){
   const cl=f.cliente||{};const emp=cl.tipo==="empresa"||/^[ABCDEFGHJNPQRSUVW]/.test(nifLimpio(cl.nif));
   if(cl.nombre){
     c.comprador.tipo=emp?"empresa":"particular";
-    if(emp)Object.assign(c.comprador,{razonSocial:cl.nombre,cif:cl.nif||"",domicilioEmpresa:[cl.direccion,[cl.cp,cl.municipio].filter(Boolean).join(" "),cl.provincia].filter(Boolean).join(", ")});
+    if(emp){const g=S.clientes.get(f.clienteId)||{};Object.assign(c.comprador,{razonSocial:cl.nombre,cif:cl.nif||"",domicilioEmpresa:[cl.direccion,[cl.cp,cl.municipio].filter(Boolean).join(" "),cl.provincia].filter(Boolean).join(", ")},
+      Object.fromEntries(Object.entries({nombre:g.repNombre,apellidos:g.repApellidos,dni:g.repDni,cargo:g.repCargo}).filter(([,x])=>x)))}
     else{const g=S.clientes.get(f.clienteId);
       Object.assign(c.comprador,{nombre:g&&g.nombre?g.nombre:cl.nombre,apellidos:g&&g.nombre?(g.apellidos||""):"",dni:cl.nif||"",domicilio:cl.direccion||"",cp:cl.cp||"",municipio:cl.municipio||"",provincia:cl.provincia||""})}
     Object.assign(c.comprador,{telefono:cl.telefono||c.comprador.telefono,email:cl.email||c.comprador.email});
