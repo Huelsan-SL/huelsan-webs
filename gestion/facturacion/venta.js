@@ -63,7 +63,7 @@ function valores(cx,tipo){
   const ap=apes.trim().split(/\s+/).filter(Boolean),ap1=ap[0]||"",ap2=ap.slice(1).join(" ");
   const via=String(calle).match(/^\s*(c\/|calle|cl\.?|avenida|avda\.?|av\.?|plaza|pza\.?|paseo|camino|carretera|ctra\.?|urbanizaci[oó]n|ronda|traves[ií]a|pol[ií]gono|barrio|travesia)\s+(.*)$/i);
   const tipoVia=via?({"c/":"Calle","cl":"Calle","cl.":"Calle","avda":"Avenida","avda.":"Avenida","av":"Avenida","av.":"Avenida","pza":"Plaza","pza.":"Plaza","ctra":"Carretera","ctra.":"Carretera"}[via[1].toLowerCase()]||via[1].replace(/^./,c=>c.toUpperCase())):"",resto=via?via[2]:calle;
-  const nm=String(resto).match(/^(.*?)[,\s]+(?:n[ºo°.]?\s*)?(\d+[A-Za-z]?)\b\s*(.*)$/),calleSola=(nm?nm[1]:resto).replace(/[,\s]+$/,""),numVia=nm?nm[2]:"";
+  const nm=String(resto).match(/^(.*?)[,\s]+(?:n[uú]mero|n[ºo°.]|num\.?)?\s*(\d+[A-Za-z]?)\b\s*(.*)$/i),calleSola=(nm?nm[1]:resto).replace(/[,\s]+$/,""),numVia=nm?nm[2]:"";
   const fv=(cx.f&&(cx.f.fechaOperacion||cx.f.fechaExpedicion))||(cx.c&&cx.c.fecha)||"";
   const precio=t?t.total:(cx.c&&cx.c.precio&&+cx.c.precio.total)||0;
   return{
