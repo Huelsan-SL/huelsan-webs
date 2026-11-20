@@ -74,7 +74,7 @@ function valores(cx,tipo){
   return{
     comprador_nombre:nombre,comprador_dni:emp?(cl.nif||cc.cif||""):(cl.nif||cc.dni||""),comprador_domicilio:calle,comprador_cp:cp,comprador_municipio:mun,comprador_provincia:prov,
     comprador_direccion:dir(calle,cp,mun,prov),comprador_telefono:cl.telefono||cc.telefono||"",comprador_email:cl.email||cc.email||"",
-    vehiculo_servicio:"A-00 Público Sin especificar",comprador_nombre_pila:pila,comprador_apellido1:ap1,comprador_apellido2:ap2,comprador_apellidos:apes,comprador_tipo_via:dg?dg.tv:tipoVia,comprador_calle:dg?dg.ca:calleSola,comprador_numero:dg?dg.nu:numVia,comprador_bloque:live.bloque||"",comprador_portal:live.portal||"",comprador_escalera:live.escalera||"",comprador_planta:live.planta||"",comprador_puerta:live.puerta||"",
+    vehiculo_servicio:"B-00 S. Particular Sin especificar",comprador_nombre_pila:pila,comprador_apellido1:ap1,comprador_apellido2:ap2,comprador_apellidos:apes,comprador_tipo_via:dg?dg.tv:tipoVia,comprador_calle:dg?dg.ca:calleSola,comprador_numero:dg?dg.nu:numVia,comprador_bloque:live.bloque||"",comprador_portal:live.portal||"",comprador_escalera:live.escalera||"",comprador_planta:live.planta||"",comprador_puerta:live.puerta||"",
     x_cambio_titularidad:"X",x_comprador_interesado:"X",x_vendedor_titular:"X",
     marca_particular:emp?"":"X",marca_empresa:emp?"X":"",
     representante_nombre:emp?[cc.nombre,cc.apellidos].filter(Boolean).join(" "):"",representante_dni:emp?(cc.dni||""):"",representante_cargo:emp?(cc.cargo||""):"",
@@ -93,7 +93,13 @@ async function cargarModelo(){
   if(Array.isArray(d.docs))M.cfg={docs:d.docs};
   else if(d.archivo)M.cfg={docs:[{id:"d1",nombre:"Solicitud y mandato",archivo:d.archivo,campos:d.campos||{},form:{}}]}; // formato anterior
   else M.cfg={docs:[]};
+  // al añadir campos nuevos a la detección, se completan solos en los modelos ya guardados (sin tocar los que ya estaban colocados)
+  let cambio=false;
+  for(const doc of M.cfg.docs){if((doc.v||1)>=DET_V)continue;
+    try{const r=await sugerir(doc);doc.campos=doc.campos||{};for(const [k,c] of Object.entries(r.campos))if(!doc.campos[k]&&!doc.campos[k.split("#")[0]])doc.campos[k]=c;doc.v=DET_V;cambio=true}catch(e){}}
+  if(cambio)try{await guardarCfg()}catch(e){}
   return M.cfg}
+const DET_V=2;
 const guardarCfg=()=>S.db.doc("contratoscfg/mandato").set({docs:M.cfg.docs});
 const docModelo=id=>M.cfg.docs.find(x=>x.id===id);
 async function bytesModelo(doc){const a=doc.archivo;const b=await HUELSAN.bajar("documentos",a.ruta);return{bytes:await bytesDe(b),pdf:esPdf(a)}}
@@ -262,7 +268,7 @@ async function abrirConfig(){
     else{doc={id:nid(),nombre:nombreDeArchivo(fi.name),archivo,campos:{},form:{}};M.cfg.docs.push(doc)}
     await guardarCfg();
     if(!existente||!Object.keys(doc.campos||{}).length&&!Object.keys(doc.form||{}).length){
-      try{toast("Buscando los campos…",20000);const r=await sugerir(doc);doc.campos=r.campos;doc.form=r.form;await guardarCfg();
+      try{toast("Buscando los campos…",20000);const r=await sugerir(doc);doc.campos=r.campos;doc.form=r.form;doc.v=DET_V;await guardarCfg();
         toast(r.n?`${doc.nombre}: ${r.n} campos detectados. Revísalos en «Colocar campos».`:`${doc.nombre}: no he podido detectar campos (¿es una imagen?). Colócalos a mano.`,6000)}catch(e){toast("Modelo guardado; no se han podido detectar los campos: "+e.message,6000)}}
     else toast("Modelo cambiado: revisa la posición de los campos",5000)};
   f.onchange=async e=>{const t=e.target;
@@ -279,7 +285,7 @@ async function abrirConfig(){
       if((id=g("campos"))){e.preventDefault();await editor(id,pintarC);return}
       if((id=g("auto"))){e.preventDefault();const x=docModelo(id);toast("Buscando los campos…",20000);const r=await sugerir(x);
         if(Object.keys(x.campos||{}).length&&!confirm(`Hay ${Object.keys(x.campos).length} campos colocados. ¿Sustituirlos por los detectados (${r.n})?`))return;
-        x.campos=r.campos;x.form=r.form;await guardarCfg();toast(r.n?`${r.n} campos detectados`:"No he detectado ningún campo",4000);pintarC();return}
+        x.campos=r.campos;x.form=r.form;x.v=DET_V;await guardarCfg();toast(r.n?`${r.n} campos detectados`:"No he detectado ningún campo",4000);pintarC();return}
       if((id=g("probar"))){e.preventDefault();const k=f.querySelector("[data-m-coche]").value;if(k)await abrirMandato(k,id);return}
       if((id=g("quitar"))){e.preventDefault();const x=docModelo(id);if(!confirm(`¿Quitar el modelo «${x.nombre}»? Se borra el archivo y sus campos.`))return;
         await HUELSAN.borrarArchivo("documentos",x.archivo.ruta).catch(()=>{});M.cfg.docs=M.cfg.docs.filter(y=>y.id!==id);await guardarCfg();pintarC();return}
