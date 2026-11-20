@@ -312,7 +312,7 @@ function vistaEditor(){
     :`<button class="btn primary" data-acc="pdf">Descargar PDF</button>
       ${!f.anulada?`<button class="btn" data-acc="entregada">${f.entregada?"Marcar como no entregada":"Marcar como entregada"}</button>`:""}
       ${!f.anulada&&f.estado==="emitida"?`<button class="btn" data-acc="rectificar">Rectificar…</button><button class="btn peligro" data-acc="anular">Anular…</button>`:""}
-      ${!rect&&!f.anulada&&f.vehiculo&&f.vehiculo.matricula?`<button class="btn" data-gest="${esc(normMat(f.vehiculo.matricula))}" title="Documentación y datos para el cambio de nombre">Cambio de nombre · gestoría</button>`:""}
+      ${!rect&&!f.anulada&&f.vehiculo&&f.vehiculo.matricula?`<button class="btn" data-venta="${esc(normMat(f.vehiculo.matricula))}" title="Factura, contrato, listado, solicitud y mandato y copias para imprimir">Documentos de venta</button><button class="btn" data-gest="${esc(normMat(f.vehiculo.matricula))}" title="Documentación y datos para el cambio de nombre">Cambio de nombre · gestoría</button>`:""}
       <button class="btn" data-acc="duplicar">Duplicar como borrador</button>
       <span style="flex:1"></span>${ultima&&!f.entregada&&!(f.rectificadaPor||[]).length?`<button class="btn peligro" data-acc="deshacer">Deshacer emisión</button>`:""}
       ${S.edSucio?`<button class="btn" data-acc="guardar-notas">Guardar notas</button>`:""}`}
@@ -938,7 +938,7 @@ function vistaMatriculas(){
 function detalleMatricula(x){
   const l=x.lote;
   return`<div class="row sp"><div class="row"><button class="btn sm" data-acc="mat-volver">← Todas</button><h1>${x.matricula.startsWith("lote:")?"Sin matrícula":`<span class="mat" style="font-size:18px">${esc(x.matricula)}</span>`} ${esc(x.titulo)}</h1></div>
-    <span class="row"><button class="btn" data-acc="mat-gasto">+ Subir factura de compra o gasto</button>${l&&l.estado!=="vendido"&&!x.facturas.length?`<button class="btn primary" data-acc="mat-facturar">Crear factura de venta</button>`:""}${l&&(l.estado==="vendido"||x.facturas.length)?`<button class="btn ${x.facturas.length?"primary":""}" data-gest="${esc(x.matricula)}" title="Documentación y datos para el cambio de nombre">Cambio de nombre · gestoría</button>`:""}</span></div>
+    <span class="row"><button class="btn" data-acc="mat-gasto">+ Subir factura de compra o gasto</button>${l&&l.estado!=="vendido"&&!x.facturas.length?`<button class="btn primary" data-acc="mat-facturar">Crear factura de venta</button>`:""}${l&&(l.estado==="vendido"||x.facturas.length)?`<button class="btn" data-venta="${esc(x.matricula)}" title="Factura, contrato, listado, solicitud y mandato y copias para imprimir">Documentos de venta</button><button class="btn ${x.facturas.length?"primary":""}" data-gest="${esc(x.matricula)}" title="Documentación y datos para el cambio de nombre">Cambio de nombre · gestoría</button>`:""}</span></div>
   <div class="kpis"><div class="kpi"><b>${eur(x.compra)}</b><span>compra</span></div><div class="kpi"><b>${eur(x.gastos)}</b><span>gastos (sin IVA deducible)</span></div><div class="kpi"><b>${eur(x.iva)}</b><span>IVA soportado (se recupera)</span></div><div class="kpi"><b>${x.ventas?eur(x.ventas):"—"}</b><span>venta (sin IVA general)</span></div>
     <div class="kpi"><b>${x.ventas?eur(x.margen):"—"}</b><span>margen bruto</span></div><div class="kpi"><b>${x.ivaRebu?eur(x.ivaRebu):"—"}</b><span>IVA del REBU</span></div><div class="kpi"><b>${x.ventas?eur(x.margenNeto):"—"}</b><span>margen neto</span></div></div>
   ${l?`<p class="muted" style="margin:0">${esc([l.vin?"Bastidor "+l.vin:"",l.anio,l.km?miles(String(Math.round(l.km)))+" km":"",l.combustible,l.iva?"Compra en "+l.iva:""].filter(Boolean).join(" · "))}</p>`:""}
@@ -1044,6 +1044,7 @@ function vistaEmisor(){
     <label>Pie de factura (protección de datos)<textarea name="textoPie" rows="3">${esc(e.textoPie||TXT_RGPD)}</textarea></label>
     <div class="row"><button class="btn primary" data-acc="guardar-emisor">Guardar datos fiscales</button><span class="muted">${e.actualizado?"Última actualización: "+new Date(e.actualizado).toLocaleString("es-ES",{dateStyle:"short",timeStyle:"short"}):""}</span></div>
   </form>
+  <div class="card"><h3>Solicitud y mandato</h3><p style="margin:0">Modelo en blanco, el mismo para todas las ventas, que se rellena solo con los datos de cada una.</p><div class="row"><button class="btn primary" data-mandato-cfg>Modelo y campos…</button></div></div>
   <div class="card"><h3>Numeración</h3><p style="margin:0">Serie ordinaria <b>AAAA-0001</b> y rectificativas <b>RAAAA-0001</b>. Empiezan en 0001 cada 1 de enero. El número lo pone la base de datos al emitir, nunca a mano.</p>
     <div class="row">${[...S.cont.entries()].filter(([k])=>k.startsWith("contador/")).map(([k,v])=>`<span class="tag acc">${esc(k.replace("contador/","Serie "))}: última ${esc(fCodigo(k.includes("/R")?"R":"F",k.slice(-4),v.ultimo||0))} (${fecha(v.ultimaFecha)})</span>`).join(" ")||`<span class="muted">Aún no se ha emitido ninguna factura.</span>`}</div></div>`;
 }

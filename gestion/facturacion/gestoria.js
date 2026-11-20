@@ -30,7 +30,7 @@ function grupos(cx,tipo){
   const veh={titulo:"Documentación del vehículo",items:[
     {key:"permiso",label:"Permiso de circulación",archivos:docsTipo(cx,TIPOS.permiso),sube:TIPOS.permiso},
     {key:"ficha",label:"Ficha técnica (tarjeta ITV)",archivos:docsTipo(cx,TIPOS.ficha),sube:TIPOS.ficha}]};
-  const mandato={titulo:"Solicitud y mandato",items:[{key:"mandato",label:"Solicitud y mandato firmados",archivos:docsTipo(cx,TIPOS.mandato),sube:TIPOS.mandato,hint:"Aún sin plantilla: sube aquí el que firme el comprador."}]};
+  const mandato={titulo:"Solicitud y mandato",items:[{key:"mandato",label:"Solicitud y mandato firmados",archivos:docsTipo(cx,TIPOS.mandato),sube:TIPOS.mandato,genera:true,hint:"Genera el modelo rellenado para imprimirlo y firmarlo; sube aquí el firmado."}]};
   const factura={key:"factura",label:cx.f?`Factura ${cx.f.codigo}`:"Factura de venta",archivos:cx.f?[{nombre:`Factura ${cx.f.codigo}.pdf`,gen:"factura"}]:[],hint:cx.f?"Se genera sola al crear el paquete.":"Falta emitir la factura de venta (pestaña Facturas)."};
   if(tipo==="empresa")return[veh,
     {titulo:"Factura",items:[factura]},
@@ -100,6 +100,7 @@ async function abrir(k){
           <span class="tag ${i.archivos.length?"ok":"bad"}">${i.archivos.length?"✓":"Falta"}</span><span style="flex:1 1 200px">${esc(i.label)}${i.hint?`<div class="muted" style="font-size:12px">${esc(i.hint)}</div>`:""}</span>
           ${i.archivos.map(a=>a.gen?`<span class="tag">PDF automático</span>`:`<button type="button" class="btn sm" data-g-ver="${esc(a.ruta)}" data-nombre="${esc(a.nombre||"archivo")}">${esc((a.nombre||"archivo").length>24?(a.nombre||"").slice(0,22)+"…":a.nombre||"archivo")}</button>${a.docId?`<button type="button" class="btn sm" data-g-del="${esc(a.docId)}" aria-label="Eliminar" title="Eliminar">✕</button>`:""}`).join(" ")}
           ${i.sube?`<label class="btn sm primary" style="display:inline-flex">Subir<input type="file" data-g-sub="${esc(i.sube)}" multiple hidden accept="application/pdf,image/*"></label>`:""}
+          ${i.genera?`<button type="button" class="btn sm" data-g-mandato>Generar para firmar</button>`:""}
           ${i.contrato?`<button type="button" class="btn sm" data-g-contrato>${c.c?"Abrir contrato":"Crear contrato"}</button>`:""}</div>`).join("")}</div>`).join("")}
       <details><summary>Datos que se envían</summary><pre style="white-space:pre-wrap;font-size:12.5px;margin:6px 0 0">${esc(datosTxt(c,G.tipo))}</pre></details>
       ${G.reg.enviado?`<div class="aviso ok">Enviado a la gestoría el ${fecha(G.reg.enviado)}${G.reg.completado?` · Cambio de nombre hecho el ${fecha(G.reg.completado)}`:""}.</div>`:""}
@@ -123,6 +124,7 @@ async function abrir(k){
     const del=t.closest("[data-g-del]");if(del){e.preventDefault();await borrarDocumento(del.dataset.gDel);setTimeout(pintarD,700);return}
     if(t.closest("[data-g-contrato]")){e.preventDefault();d.close();S.tab="contratos";pintarTabs&&pintarTabs();const C=window.HuelsanContratos||{};
       if(c.c&&C.abrir)C.abrir(c.c);else if(c.f&&C.abrirDesdeFactura)C.abrirDesdeFactura(c.f);else if(c.l&&C.abrirDesdeLote)C.abrirDesdeLote(c.l);return}
+    if(t.closest("[data-g-mandato]")){e.preventDefault();if(window.HuelsanVenta)window.HuelsanVenta.abrirMandato(G.k);return}
     if(t.closest("[data-g-copiar]")){e.preventDefault();const m=mensaje(c,G.tipo,grupos(c,G.tipo));try{await navigator.clipboard.writeText(m);toast("Mensaje copiado")}catch(err){window.prompt("Copia el mensaje",m)}return}
     if(t.closest("[data-g-mail]")){e.preventDefault();const m=mensaje(c,G.tipo,grupos(c,G.tipo));
       location.href=`mailto:${encodeURIComponent(G.cfg.email||"")}?subject=${encodeURIComponent("Cambio de nombre "+(c.mat||c.x.titulo||""))}&body=${encodeURIComponent(m.slice(0,1800))}`;toast("Se abre tu correo: adjunta el ZIP del paquete",5000);return}
@@ -149,5 +151,5 @@ async function paquete(cx,tipo){
 }
 
 document.addEventListener("click",e=>{const b=e.target.closest("[data-gest]");if(!b)return;e.preventDefault();e.stopPropagation();abrir(b.dataset.gest).catch(err=>toast(err.message||String(err),6000))},true);
-window.HuelsanGestoria={abrir,_t:{contexto,grupos,datosTxt,mensaje,tipoAuto,faltan}};
+window.HuelsanGestoria={abrir,_t:{contexto,grupos,datosTxt,mensaje,tipoAuto,faltan,docsTipo}};
 })();

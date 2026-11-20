@@ -521,5 +521,6 @@ async function descargarContrato(c){
   doc.save("Contrato"+(c.numero?"-"+c.numero:"")+(quien?"-"+quien:"")+(c.vehiculo&&c.vehiculo.matricula?"-"+c.vehiculo.matricula:"")+".pdf");
   if(doc.__principal>2)toast("El contrato ocupa más de 2 páginas: acorta las observaciones o los defectos.",6000);
 }
-window.HuelsanContratos={generarContrato,desdeFactura,contratoVacio,enLetra,docsDelContrato,mensajeDocs,lista:()=>[...CT.lista.values()],reps:()=>CT.reps,abrir,abrirDesdeFactura,abrirDesdeLote};
+const desdeLote=l=>{const c=contratoVacio();cocheEnContrato(c,l);if(c.ubicacion)c.entrega.lugar=c.ubicacion;return c};
+window.HuelsanContratos={DOCS,desdeLote,generarContrato,desdeFactura,contratoVacio,enLetra,docsDelContrato,mensajeDocs,lista:()=>[...CT.lista.values()],reps:()=>CT.reps,abrir,abrirDesdeFactura,abrirDesdeLote};
 })();
