@@ -141,7 +141,7 @@ def build(d, out):
         rep_txt = ("representada por D. <font color='#9a9a9a'>______________________________</font> ([&nbsp;&nbsp;&nbsp;] Francisco José Álvarez González &nbsp; [&nbsp;&nbsp;&nbsp;] Gustavo Fornell Lacida), "
                    "con DNI/NIE <font color='#9a9a9a'>______________</font>")
     S.append(Paragraph(
-        f"<b>DE UNA PARTE (EL VENDEDOR):</b> <b>{emp['nombre']}</b> (nombre comercial <i>Huelsan Automoción</i>), con CIF <b>{emp['cif']}</b> y domicilio en {emp['domicilio']}, {rep_txt}, en adelante «HUELSAN».",
+        f"<b>DE UNA PARTE (EL VENDEDOR):</b> <b>{emp['nombre']}</b> (nombre comercial Huelsan Automoción), con CIF <b>{emp['cif']}</b> y domicilio en {emp['domicilio']}, {rep_txt}, en adelante «HUELSAN».",
         ST['body']))
     S.append(Spacer(1, 4))
     nom = comp.get('nombre'); dni = comp.get('dni'); dire = comp.get('direccion')
@@ -158,13 +158,13 @@ def build(d, out):
     S.append(Paragraph('Ambas partes se reconocen capacidad legal suficiente para obligarse y', ST['body']))
 
     S.append(Paragraph('EXPONEN', ST['h2']))
-    S.append(Paragraph('<b>I.</b> Que HUELSAN se dedica a la compraventa de vehículos de ocasión y es quien comercializa el vehículo descrito a continuación.', ST['body']))
-    S.append(Paragraph('<b>II.</b> Que el COMPRADOR desea adquirir dicho vehículo y que HUELSAN accede a reservárselo mediante la entrega de una señal, con arreglo a las siguientes', ST['body']))
+    S.append(Paragraph('<b>I.</b> Que HUELSAN SL se dedica a la compraventa de vehículos de ocasión y es quien comercializa el vehículo descrito a continuación.', ST['body']))
+    S.append(Paragraph('<b>II.</b> Que el COMPRADOR desea adquirir dicho vehículo y que HUELSAN SL accede a reservárselo mediante la entrega de una señal, con arreglo a las siguientes', ST['body']))
 
     S.append(Paragraph('CLÁUSULAS', ST['h2']))
 
     # ---------------- VEHÍCULO / DATOS CLAVE (resumen)
-    S.append(Paragraph('<b>PRIMERA. Objeto y vehículo reservado.</b> HUELSAN reserva al COMPRADOR el siguiente vehículo y se compromete a no ofrecerlo ni venderlo a terceros mientras esta reserva esté vigente:', ST['clau']))
+    S.append(Paragraph('<b>PRIMERA. Objeto y vehículo reservado.</b> HUELSAN SL reserva al COMPRADOR el siguiente vehículo y se compromete a no ofrecerlo ni venderlo a terceros mientras esta reserva esté vigente:', ST['clau']))
     vrows = [
         [F('Marca / modelo / versión', v['descripcion'])[0], F('Matrícula', v['matricula'])[0], F('Color', v.get('color'))[0]],
         [F('Marca / modelo / versión', v['descripcion'])[1], F('Matrícula', v['matricula'])[1], F('Color', v.get('color'))[1]],
@@ -186,11 +186,12 @@ def build(d, out):
                colWidths=[cw / 3] * 3)
     pt.setStyle(TableStyle([('BOX', (0, 0), (-1, -1), 1, CHAMPAN), ('LINEAFTER', (0, 0), (1, -1), 0.25, CHAMPAN_L), ('BACKGROUND', (1, 0), (1, -1), colors.HexColor('#f4eee3')),
                             ('TOPPADDING', (0, 0), (-1, -1), 4), ('BOTTOMPADDING', (0, 0), (-1, -1), 4), ('LEFTPADDING', (0, 0), (-1, -1), 8)]))
-    S.append(Paragraph('<b>SEGUNDA. Precio.</b> El precio total de venta del vehículo es el siguiente, con los impuestos que correspondan incluidos (IVA o régimen especial de bienes usados, según el vehículo). Los gastos de cambio de titularidad y demás conceptos se detallarán en el contrato de compraventa.', ST['clau']))
+    S.append(Paragraph('Los <b>kilómetros indicados son estimados</b>: pueden variar por la recogida del vehículo, su desplazamiento para servicio o los trabajos de preparación previos a la entrega. Esta variación <b>no superará en ningún caso los 1.000 km</b> respecto de los indicados.', ST['clau']))
+    S.append(Paragraph('<b>SEGUNDA. Precio.</b> El precio total de venta del vehículo es el siguiente, con los impuestos que correspondan incluidos (IVA o régimen especial de bienes usados, según el vehículo). <b>El precio incluye los gastos de cambio de titularidad</b> del vehículo a nombre del COMPRADOR. Los demás extremos se detallarán en el contrato de compraventa.', ST['clau']))
     S.append(KeepTogether([pt])); S.append(Spacer(1, 5))
 
-    S.append(Paragraph('<b>TERCERA. Señal.</b> El COMPRADOR entrega en este acto a HUELSAN el <b>10 % del precio</b> en concepto de señal, que se descuenta del precio al formalizarse la compraventa. El pago se hace por transferencia o tarjeta; el pago en efectivo solo se admite hasta el límite que fija la ley. HUELSAN entrega al COMPRADOR justificante de la cantidad recibida, identificando el vehículo (ver «Recibí» al final). El resto del precio se abonará al firmar el contrato de compraventa y antes de la entrega.', ST['clau']))
-    S.append(Paragraph('<b>CUARTA. Plazo de disponibilidad.</b> HUELSAN pondrá el vehículo a disposición del COMPRADOR para su revisión y para formalizar la compraventa en un plazo máximo de <b>21 días naturales</b> desde la fecha de este contrato, y se lo comunicará por teléfono, WhatsApp o correo. Si el vehículo todavía debe adquirirse en subasta, la reserva queda condicionada a que HUELSAN lo consiga (cláusula sexta, c). Desde el aviso de disponibilidad, el COMPRADOR dispone de <b>7 días naturales</b> para revisarlo, firmar el contrato de compraventa y pagar el resto del precio.', ST['clau']))
+    S.append(Paragraph('<b>TERCERA. Señal.</b> El COMPRADOR entrega en este acto a HUELSAN SL el <b>10 % del precio</b> en concepto de señal, que se descuenta del precio al formalizarse la compraventa. El pago se hace por transferencia o tarjeta; el pago en efectivo solo se admite hasta el límite que fija la ley. HUELSAN SL entrega al COMPRADOR justificante de la cantidad recibida, identificando el vehículo (ver «Recibí» al final). El resto del precio se abonará al firmar el contrato de compraventa y antes de la entrega.', ST['clau']))
+    S.append(Paragraph('<b>CUARTA. Plazo de disponibilidad.</b> HUELSAN SL pondrá el vehículo a disposición del COMPRADOR para su revisión y para formalizar la compraventa en un plazo máximo de <b>21 días naturales</b> desde la fecha de este contrato, y se lo comunicará por teléfono, WhatsApp o correo. Si el vehículo todavía debe adquirirse en subasta, la reserva queda condicionada a que HUELSAN SL lo consiga (cláusula sexta, c). Desde el aviso de disponibilidad, el COMPRADOR dispone de <b>7 días naturales</b> para revisarlo, firmar el contrato de compraventa y pagar el resto del precio. Este plazo de 7 días <b>podrá ampliarse si las partes lo acuerdan previamente</b> (por escrito, incluido correo o WhatsApp).', ST['clau']))
 
     # --- estado del vehículo
     sin_peritaje = not d.get('peritaje')
@@ -198,7 +199,7 @@ def build(d, out):
     if sin_peritaje and sin_mant:
         estado = ('<b>QUINTA. Estado del vehículo.</b> Este vehículo <b>no dispone de informe de peritaje ni de historial de mantenimiento</b>, circunstancia que el COMPRADOR conoce y acepta. '
                   + ('Los únicos daños o defectos declarados por el vendedor original en la ficha de venta son los que figuran en el Anexo I. ' if d.get('danos_ficha') else 'La ficha de venta no declara daños ni defectos. ')
-                  + 'En el Anexo II se incluyen las fotografías del anuncio. HUELSAN entregará el vehículo en el estado en que consta en esta reserva, sin otros daños ni averías.')
+                  + 'En el Anexo II se incluyen las fotografías del anuncio. HUELSAN SL entregará el vehículo en el estado en que consta en esta reserva, sin otros daños ni averías.')
     else:
         partes = []
         if not sin_peritaje: partes.append('el informe de peritaje de un perito independiente')
@@ -208,19 +209,19 @@ def build(d, out):
         if sin_mant: faltan = ' El vehículo <b>no dispone de historial de mantenimiento</b>.'
         estado = (f'<b>QUINTA. Estado del vehículo.</b> El estado del vehículo es el que reflejan {" y ".join(partes)} (Anexo I) y las fotografías (Anexo II), que forman parte de este contrato.{faltan} '
                   'El peritaje es de un tercero y se entrega a título informativo; incluye la reserva habitual de golpes ocultos o reparaciones anteriores no visibles sin desmontajes. '
-                  'HUELSAN entregará el vehículo en el estado en que consta en esta reserva, sin otros daños ni averías.')
+                  'HUELSAN SL entregará el vehículo en el estado en que consta en esta reserva, sin otros daños ni averías.')
     S.append(Paragraph(estado, ST['clau']))
 
-    S.append(Paragraph('<b>SEXTA. Devolución íntegra de la señal.</b> HUELSAN devolverá al COMPRADOR la señal completa, en un máximo de 14 días naturales y por el mismo medio de pago, si el COMPRADOR lo solicita por escrito (correo o WhatsApp) en alguno de estos casos: '
+    S.append(Paragraph('<b>SEXTA. Devolución íntegra de la señal.</b> HUELSAN SL devolverá al COMPRADOR la señal completa, en un máximo de 14 días naturales y por el mismo medio de pago, si el COMPRADOR lo solicita por escrito (correo o WhatsApp) en alguno de estos casos: '
                        '<b>a)</b> el vehículo presenta una avería o daños que no constaban en esta reserva (Anexos I y II); '
                        '<b>b)</b> el vehículo no está disponible para su entrega en el plazo de 21 días de la cláusula cuarta; '
-                       '<b>c)</b> HUELSAN no consigue adquirir el vehículo en la subasta; en este caso, <b>a elección del COMPRADOR</b>, la señal se devuelve íntegra o se traspasa a otro vehículo de HUELSAN; '
-                       '<b>d)</b> HUELSAN no puede entregar el vehículo por cualquier otra causa que no dependa del COMPRADOR (venta a un tercero, cargas o circunstancias no declaradas). '
-                       'En el caso a), si el COMPRADOR lo prefiere, puede seguir adelante con la compraventa una vez reparado el vehículo a cargo de HUELSAN.', ST['clau']))
-    S.append(Paragraph('<b>SÉPTIMA. Desistimiento voluntario y financiación.</b> Si el COMPRADOR desiste por su propia voluntad, o no formaliza la compraventa en el plazo de la cláusula cuarta, o no obtiene la financiación que pretendía o no dispone de los fondos, <b>la señal no se devuelve</b>: compensa a HUELSAN por haber retirado el vehículo de la venta. '
-                       'No obstante, si HUELSAN vende esta unidad a un tercero dentro de los <b>30 días naturales</b> siguientes a la fecha de este contrato, la señal se conserva a favor del COMPRADOR y puede aplicarla al precio de <b>otro vehículo de HUELSAN</b> que adquiera.', ST['clau']))
-    S.append(Paragraph('<b>OCTAVA. Derechos del consumidor.</b> Lo pactado se entiende sin perjuicio de los derechos que la normativa de consumidores (Real Decreto Legislativo 1/2007) reconoce al COMPRADOR cuando tenga la condición de consumidor y que son irrenunciables, incluida la garantía legal en la compraventa, que se detallará en el contrato de compraventa. Si este contrato se firma a distancia o fuera del establecimiento, se aplican los derechos de desistimiento que la ley prevé en esos casos. HUELSAN dispone de hojas de reclamaciones.', ST['clau']))
-    S.append(Paragraph('<b>NOVENA. Protección de datos.</b> Los datos del COMPRADOR se tratan por HUELSAN SL (responsable) para gestionar esta reserva y la posterior compraventa, y para cumplir sus obligaciones legales. No se ceden a terceros salvo obligación legal o gestoría y garantía necesarias para la operación. El COMPRADOR puede ejercer sus derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad escribiendo a HUELSAN.', ST['clau']))
+                       '<b>c)</b> HUELSAN SL no consigue adquirir el vehículo en la subasta; en este caso, <b>a elección del COMPRADOR</b>, la señal se devuelve íntegra o se traspasa a otro vehículo de HUELSAN SL; '
+                       '<b>d)</b> HUELSAN SL no puede entregar el vehículo por cualquier otra causa que no dependa del COMPRADOR (venta a un tercero, cargas o circunstancias no declaradas). '
+                       'En el caso a), si el COMPRADOR lo prefiere, puede seguir adelante con la compraventa una vez reparado el vehículo a cargo de HUELSAN SL.', ST['clau']))
+    S.append(Paragraph('<b>SÉPTIMA. Desistimiento voluntario y financiación.</b> Si el COMPRADOR desiste por su propia voluntad, o no formaliza la compraventa en el plazo de la cláusula cuarta, o no obtiene la financiación que pretendía o no dispone de los fondos, <b>la señal no se devuelve</b>: compensa a HUELSAN SL por haber retirado el vehículo de la venta. '
+                       'No obstante, si HUELSAN SL vende esta unidad a un tercero dentro de los <b>30 días naturales</b> siguientes a la fecha de este contrato, la señal se conserva a favor del COMPRADOR y puede aplicarla al precio de <b>otro vehículo de HUELSAN SL</b> que adquiera.', ST['clau']))
+    S.append(Paragraph('<b>OCTAVA. Derechos del consumidor.</b> Lo pactado se entiende sin perjuicio de los derechos que la normativa de consumidores (Real Decreto Legislativo 1/2007) reconoce al COMPRADOR cuando tenga la condición de consumidor y que son irrenunciables, incluida la garantía legal en la compraventa, que se detallará en el contrato de compraventa. Si este contrato se firma a distancia o fuera del establecimiento, se aplican los derechos de desistimiento que la ley prevé en esos casos. HUELSAN SL dispone de hojas de reclamaciones.', ST['clau']))
+    S.append(Paragraph('<b>NOVENA. Protección de datos.</b> Los datos del COMPRADOR se tratan por HUELSAN SL (responsable) para gestionar esta reserva y la posterior compraventa, y para cumplir sus obligaciones legales. No se ceden a terceros salvo obligación legal o gestoría y garantía necesarias para la operación. El COMPRADOR puede ejercer sus derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad escribiendo a HUELSAN SL.', ST['clau']))
     S.append(Paragraph('<b>DÉCIMA. Ley y jurisdicción.</b> Este contrato se rige por la ley española. Si el COMPRADOR es consumidor, los conflictos se someten a los juzgados de su domicilio; si es empresa o profesional, a los juzgados de Murcia.', ST['clau']))
     S.append(Paragraph('<b>ANEXOS.</b> Forman parte de este contrato el Anexo I (estado del vehículo)' + (' y el Anexo II (fotografías)' if d.get('fotos') else '') + '.', ST['clau']))
     S.append(Spacer(1, 4))
@@ -239,7 +240,7 @@ def build(d, out):
                   ['', '']], colWidths=[cw / 2, cw / 2], rowHeights=[None, 26 * mm])
     firm.setStyle(TableStyle([('BOX', (0, 0), (0, 1), 0.5, CHAMPAN), ('BOX', (1, 0), (1, 1), 0.5, CHAMPAN), ('LEFTPADDING', (0, 0), (-1, -1), 6), ('TOPPADDING', (0, 0), (-1, 0), 4)]))
     S.append(firm); S.append(Spacer(1, 6))
-    S.append(Paragraph('<b>RECIBÍ</b> la cantidad de ' + (sn if senal else '<font color="#9a9a9a">______________ €</font>') + f' en concepto de señal del 10 % por la reserva del vehículo <b>{mat}</b>.  Fecha: <font color="#9a9a9a">____ / ____ / ________</font>  Firma de HUELSAN: <font color="#9a9a9a">______________________</font>', ST['body']))
+    S.append(Paragraph('<b>RECIBÍ</b> la cantidad de ' + (sn if senal else '<font color="#9a9a9a">______________ €</font>') + f' en concepto de señal del 10 % por la reserva del vehículo <b>{mat}</b>.  Fecha: <font color="#9a9a9a">____ / ____ / ________</font>  Firma de HUELSAN SL: <font color="#9a9a9a">______________________</font>', ST['body']))
 
     # ---------------- ANEXO I
     S.append(PageBreak())
@@ -249,9 +250,9 @@ def build(d, out):
     per = d.get('peritaje')
     if per:
         S.append(Paragraph('1. DATOS DEL PERITAJE', ST['h2']))
-        pr_rows = [[F('Perito / empresa', per['perito'])[0], F('Fecha de tasación', per['fecha'])[0], F('Lugar', per['lugar'])[0], F('Km en la tasación', per['km'])[0]],
-                   [F('Perito / empresa', per['perito'])[1], F('Fecha de tasación', per['fecha'])[1], F('Lugar', per['lugar'])[1], F('Km en la tasación', per['km'])[1]]]
-        t = Table(pr_rows, colWidths=[cw * .38, cw * .2, cw * .22, cw * .2])
+        pr_rows = [[F('Empresa peritadora', per['perito'])[0], F('Fecha de tasación', per['fecha'])[0], F('Km en la tasación', per['km'])[0]],
+                   [F('Empresa peritadora', per['perito'])[1], F('Fecha de tasación', per['fecha'])[1], F('Km en la tasación', per['km'])[1]]]
+        t = Table(pr_rows, colWidths=[cw * .5, cw * .25, cw * .25])
         t.setStyle(TableStyle([('BOX', (0, 0), (-1, -1), 0.6, CHAMPAN), ('TOPPADDING', (0, 0), (-1, -1), 1.5), ('BOTTOMPADDING', (0, 0), (-1, -1), 1.5), ('LEFTPADDING', (0, 0), (-1, -1), 6)]))
         S.append(t); S.append(Spacer(1, 5))
         S.append(Paragraph('Daños, defectos y elementos que constan en el informe:', ST['body'])); S.append(Spacer(1, 2))
@@ -284,7 +285,6 @@ def build(d, out):
                                ('BOX', (0, 0), (-1, -1), 0.6, CHAMPAN), ('LINEBELOW', (0, 0), (-1, -2), 0.2, colors.HexColor('#e2dbcc')), ('VALIGN', (0, 0), (-1, -1), 'TOP'),
                                ('TOPPADDING', (0, 0), (-1, -1), 2), ('BOTTOMPADDING', (0, 0), (-1, -1), 2.4), ('LEFTPADDING', (0, 0), (-1, -1), 5)]))
         S.append(t); S.append(Spacer(1, 3))
-        S.append(Paragraph(mant.get('nota', ''), ST['small']))
     else:
         S.append(Paragraph('Este vehículo <b>no dispone de historial de mantenimiento</b>.', ST['body']))
 

@@ -22,7 +22,7 @@ function parsePeritaje(rows){
   const txt=rows.map(r=>r.join(" ")).join("\n");
   const g=re=>{const m=txt.match(re);return m?m[1].trim():""};
   const km=g(/\bKM:\s*([\d.]+)/);
-  const datos={perito:(rows[0]||[""])[0],matricula:g(/MATRICULA:\s*([A-Z0-9]+)/i),fecha:g(/FECHA TASACI[ÓO]N:\s*([\d/]+)/i),lugar:g(/LUGAR TASACI[ÓO]N:\s*([^\n]+)/i),
+  const datos={perito:(rows[0]||[""])[0],matricula:g(/MATRICULA:\s*([A-Z0-9]+)/i),fecha:g(/FECHA TASACI[ÓO]N:\s*([\d/]+)/i),
     km:km?km.replace(/\B(?=(\d{3})+(?!\d))/g,".")+" km":"",bastidor:g(/BASTIDOR\s*:?\s*([A-Z0-9]{11,17})/i),modelo:g(/MODELO:\s*([^\n]+?)(?:\s+FECHA|\n|$)/i),color:g(/COLOR:\s*([^\n]+?)(?:\s+LUGAR|\n|$)/i)};
   const danos=[];let dentro=false;
   for(const r of rows){const t=r.join(" ");
@@ -95,37 +95,38 @@ async function pdfReserva(R){
 
   h2("REUNIDOS");
   const repTxt=VEN.nombre?`representada por **${VEN.nombre}**, con DNI/NIE **${VEN.dni||blanco(14)}**`:`representada por D. ${blanco(24)}, con DNI/NIE ${blanco(14)}`;
-  rico(`**DE UNA PARTE (EL VENDEDOR):** **${E.nombre}** (nombre comercial *Huelsan Automoción*), con CIF **${E.cif}** y domicilio en ${E.domicilio}, ${repTxt}, en adelante «HUELSAN».`.replace(/\*Huelsan Automoción\*/,"Huelsan Automoción"),{});
+  rico(`**DE UNA PARTE (EL VENDEDOR):** **${E.nombre}** (nombre comercial Huelsan Automoción), con CIF **${E.cif}** y domicilio en ${E.domicilio}, ${repTxt}, en adelante «HUELSAN SL».`.replace(/\*Huelsan Automoción\*/,"Huelsan Automoción"),{});
   rico("**DE OTRA PARTE (EL COMPRADOR):**",{after:1});
   fila([{l:"Nombre y apellidos / razón social",v:C.nombre,w:1.7},{l:"DNI / NIE / CIF",v:C.dni,w:1}]);
   fila([{l:"Domicilio (calle, nº, CP, localidad)",v:C.direccion,w:1.7},{l:"Teléfono / correo",v:[C.telefono,C.email].filter(Boolean).join(" · "),w:1}]);
   rico("Ambas partes se reconocen capacidad legal suficiente para obligarse y",{});
   h2("EXPONEN");
-  rico("**I.** Que HUELSAN se dedica a la compraventa de vehículos de ocasión y es quien comercializa el vehículo descrito a continuación.",{after:1});
-  rico("**II.** Que el COMPRADOR desea adquirir dicho vehículo y que HUELSAN accede a reservárselo mediante la entrega de una señal, con arreglo a las siguientes",{});
+  rico("**I.** Que HUELSAN SL se dedica a la compraventa de vehículos de ocasión y es quien comercializa el vehículo descrito a continuación.",{after:1});
+  rico("**II.** Que el COMPRADOR desea adquirir dicho vehículo y que HUELSAN SL accede a reservárselo mediante la entrega de una señal, con arreglo a las siguientes",{});
   h2("CLÁUSULAS");
 
-  rico("**PRIMERA. Objeto y vehículo reservado.** HUELSAN reserva al COMPRADOR el siguiente vehículo y se compromete a no ofrecerlo ni venderlo a terceros mientras esta reserva esté vigente:");
+  rico("**PRIMERA. Objeto y vehículo reservado.** HUELSAN SL reserva al COMPRADOR el siguiente vehículo y se compromete a no ofrecerlo ni venderlo a terceros mientras esta reserva esté vigente:");
   fila([{l:"Marca / modelo / versión",v:V.descripcion,w:2.2},{l:"Matrícula",v:V.matricula,w:1},{l:"Color",v:V.color,w:1}]);
   fila([{l:"Nº de bastidor (VIN)",v:V.bastidor,w:2.2},{l:"Kilómetros",v:V.km,w:1},{l:"Combustible / cambio",v:V.combustible,w:1}]);
   y+=1.5;
-  rico("**SEGUNDA. Precio.** El precio total de venta del vehículo es el siguiente, con los impuestos que correspondan incluidos (IVA o régimen especial de bienes usados, según el vehículo). Los gastos de cambio de titularidad y demás conceptos se detallarán en el contrato de compraventa.");
+  rico("Los **kilómetros indicados son estimados**: pueden variar por la recogida del vehículo, su desplazamiento para servicio o los trabajos de preparación previos a la entrega. Esta variación **no superará en ningún caso los 1.000 km** respecto de los indicados.");
+  rico("**SEGUNDA. Precio.** El precio total de venta del vehículo es el siguiente, con los impuestos que correspondan incluidos (IVA o régimen especial de bienes usados, según el vehículo). **El precio incluye los gastos de cambio de titularidad** del vehículo a nombre del COMPRADOR. Los demás extremos se detallarán en el contrato de compraventa.");
   sitio(15);{const w3=AW/3;doc.setDrawColor(...CH);doc.setLineWidth(.5);doc.rect(M,y,AW,14);doc.setFillColor(244,238,227);doc.rect(M+w3,y,w3,14,"F");doc.rect(M+w3,y,w3,14);
     const cab=[["Precio total de venta","impuestos incluidos"],["Señal (10 %)","se paga hoy"],["Resto a pagar","al formalizar la compraventa"]];
     const val=[precio?eurS(precio):blanco(12)+" €",precio?eurS(senal):blanco(12)+" €",precio?eurS(precio-senal):blanco(12)+" €"];
     cab.forEach((c,i)=>{const x=M+i*w3+3;font(0,8.6);doc.text(c[0],x,y+4);font(0,6.8,CHD);doc.text(c[1],x,y+7);font(1,12.5,i===1?CHD:INK);doc.text(val[i],x,y+12.2)});y+=17}
-  rico("**TERCERA. Señal.** El COMPRADOR entrega en este acto a HUELSAN el **10 % del precio** en concepto de señal, que se descuenta del precio al formalizarse la compraventa. El pago se hace por transferencia o tarjeta; el pago en efectivo solo se admite hasta el límite que fija la ley. HUELSAN entrega al COMPRADOR justificante de la cantidad recibida, identificando el vehículo (ver «Recibí» al final). El resto del precio se abonará al firmar el contrato de compraventa y antes de la entrega.");
-  rico("**CUARTA. Plazo de disponibilidad.** HUELSAN pondrá el vehículo a disposición del COMPRADOR para su revisión y para formalizar la compraventa en un plazo máximo de **21 días naturales** desde la fecha de este contrato, y se lo comunicará por teléfono, WhatsApp o correo. Si el vehículo todavía debe adquirirse en subasta, la reserva queda condicionada a que HUELSAN lo consiga (cláusula sexta, c). Desde el aviso de disponibilidad, el COMPRADOR dispone de **7 días naturales** para revisarlo, firmar el contrato de compraventa y pagar el resto del precio.");
+  rico("**TERCERA. Señal.** El COMPRADOR entrega en este acto a HUELSAN SL el **10 % del precio** en concepto de señal, que se descuenta del precio al formalizarse la compraventa. El pago se hace por transferencia o tarjeta; el pago en efectivo solo se admite hasta el límite que fija la ley. HUELSAN SL entrega al COMPRADOR justificante de la cantidad recibida, identificando el vehículo (ver «Recibí» al final). El resto del precio se abonará al firmar el contrato de compraventa y antes de la entrega.");
+  rico("**CUARTA. Plazo de disponibilidad.** HUELSAN SL pondrá el vehículo a disposición del COMPRADOR para su revisión y para formalizar la compraventa en un plazo máximo de **21 días naturales** desde la fecha de este contrato, y se lo comunicará por teléfono, WhatsApp o correo. Si el vehículo todavía debe adquirirse en subasta, la reserva queda condicionada a que HUELSAN SL lo consiga (cláusula sexta, c). Desde el aviso de disponibilidad, el COMPRADOR dispone de **7 días naturales** para revisarlo, firmar el contrato de compraventa y pagar el resto del precio. Este plazo de 7 días **podrá ampliarse si las partes lo acuerdan previamente** (por escrito, incluido correo o WhatsApp).");
   const per=R.peritaje,man=R.mantenimiento;
   let estado;
-  if(!per&&!man)estado="**QUINTA. Estado del vehículo.** Este vehículo **no dispone de informe de peritaje ni de historial de mantenimiento**, circunstancia que el COMPRADOR conoce y acepta. "+((R.danosFicha||[]).length?"Los únicos daños o defectos declarados en la ficha de venta son los que figuran en el Anexo I. ":"La ficha de venta no declara daños ni defectos. ")+(R.fotos&&R.fotos.length?"En el Anexo II se incluyen las fotografías del anuncio. ":"")+"HUELSAN entregará el vehículo en el estado en que consta en esta reserva, sin otros daños ni averías.";
+  if(!per&&!man)estado="**QUINTA. Estado del vehículo.** Este vehículo **no dispone de informe de peritaje ni de historial de mantenimiento**, circunstancia que el COMPRADOR conoce y acepta. "+((R.danosFicha||[]).length?"Los únicos daños o defectos declarados en la ficha de venta son los que figuran en el Anexo I. ":"La ficha de venta no declara daños ni defectos. ")+(R.fotos&&R.fotos.length?"En el Anexo II se incluyen las fotografías del anuncio. ":"")+"HUELSAN SL entregará el vehículo en el estado en que consta en esta reserva, sin otros daños ni averías.";
   else{const partes=[];if(per)partes.push("el informe de peritaje de un perito independiente");if(man)partes.push("el historial de mantenimiento");
-    estado=`**QUINTA. Estado del vehículo.** El estado del vehículo es el que reflejan ${partes.join(" y ")} (Anexo I)${R.fotos&&R.fotos.length?" y las fotografías (Anexo II)":""}, que forman parte de este contrato.`+(!per?" El vehículo **no dispone de informe de peritaje**.":"")+(!man?" El vehículo **no dispone de historial de mantenimiento**.":"")+(per?" El peritaje es de un tercero y se entrega a título informativo; incluye la reserva habitual de golpes ocultos o reparaciones anteriores no visibles sin desmontajes.":"")+" HUELSAN entregará el vehículo en el estado en que consta en esta reserva, sin otros daños ni averías."}
+    estado=`**QUINTA. Estado del vehículo.** El estado del vehículo es el que reflejan ${partes.join(" y ")} (Anexo I)${R.fotos&&R.fotos.length?" y las fotografías (Anexo II)":""}, que forman parte de este contrato.`+(!per?" El vehículo **no dispone de informe de peritaje**.":"")+(!man?" El vehículo **no dispone de historial de mantenimiento**.":"")+(per?" El peritaje es de un tercero y se entrega a título informativo; incluye la reserva habitual de golpes ocultos o reparaciones anteriores no visibles sin desmontajes.":"")+" HUELSAN SL entregará el vehículo en el estado en que consta en esta reserva, sin otros daños ni averías."}
   rico(estado);
-  rico("**SEXTA. Devolución íntegra de la señal.** HUELSAN devolverá al COMPRADOR la señal completa, en un máximo de 14 días naturales y por el mismo medio de pago, si el COMPRADOR lo solicita por escrito (correo o WhatsApp) en alguno de estos casos: **a)** el vehículo presenta una avería o daños que no constaban en esta reserva (Anexos); **b)** el vehículo no está disponible para su entrega en el plazo de 21 días de la cláusula cuarta; **c)** HUELSAN no consigue adquirir el vehículo en la subasta; en este caso, **a elección del COMPRADOR**, la señal se devuelve íntegra o se traspasa a otro vehículo de HUELSAN; **d)** HUELSAN no puede entregar el vehículo por cualquier otra causa que no dependa del COMPRADOR (venta a un tercero, cargas o circunstancias no declaradas). En el caso a), si el COMPRADOR lo prefiere, puede seguir adelante con la compraventa una vez reparado el vehículo a cargo de HUELSAN.");
-  rico("**SÉPTIMA. Desistimiento voluntario y financiación.** Si el COMPRADOR desiste por su propia voluntad, o no formaliza la compraventa en el plazo de la cláusula cuarta, o no obtiene la financiación que pretendía o no dispone de los fondos, **la señal no se devuelve**: compensa a HUELSAN por haber retirado el vehículo de la venta. No obstante, si HUELSAN vende esta unidad a un tercero dentro de los **30 días naturales** siguientes a la fecha de este contrato, la señal se conserva a favor del COMPRADOR y puede aplicarla al precio de **otro vehículo de HUELSAN** que adquiera.");
-  rico("**OCTAVA. Derechos del consumidor.** Lo pactado se entiende sin perjuicio de los derechos que la normativa de consumidores (Real Decreto Legislativo 1/2007) reconoce al COMPRADOR cuando tenga la condición de consumidor y que son irrenunciables, incluida la garantía legal en la compraventa, que se detallará en el contrato de compraventa. Si este contrato se firma a distancia o fuera del establecimiento, se aplican los derechos de desistimiento que la ley prevé en esos casos. HUELSAN dispone de hojas de reclamaciones.");
-  rico("**NOVENA. Protección de datos.** Los datos del COMPRADOR se tratan por HUELSAN SL (responsable) para gestionar esta reserva y la posterior compraventa, y para cumplir sus obligaciones legales. No se ceden a terceros salvo obligación legal o gestoría y garantía necesarias para la operación. El COMPRADOR puede ejercer sus derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad escribiendo a HUELSAN.");
+  rico("**SEXTA. Devolución íntegra de la señal.** HUELSAN SL devolverá al COMPRADOR la señal completa, en un máximo de 14 días naturales y por el mismo medio de pago, si el COMPRADOR lo solicita por escrito (correo o WhatsApp) en alguno de estos casos: **a)** el vehículo presenta una avería o daños que no constaban en esta reserva (Anexos), o sus kilómetros superan en más de 1.000 km los indicados; **b)** el vehículo no está disponible para su entrega en el plazo de 21 días de la cláusula cuarta; **c)** HUELSAN SL no consigue adquirir el vehículo en la subasta; en este caso, **a elección del COMPRADOR**, la señal se devuelve íntegra o se traspasa a otro vehículo de HUELSAN SL; **d)** HUELSAN SL no puede entregar el vehículo por cualquier otra causa que no dependa del COMPRADOR (venta a un tercero, cargas o circunstancias no declaradas). En el caso a), si el COMPRADOR lo prefiere, puede seguir adelante con la compraventa una vez reparado el vehículo a cargo de HUELSAN SL.");
+  rico("**SÉPTIMA. Desistimiento voluntario y financiación.** Si el COMPRADOR desiste por su propia voluntad, o no formaliza la compraventa en el plazo de la cláusula cuarta, o no obtiene la financiación que pretendía o no dispone de los fondos, **la señal no se devuelve**: compensa a HUELSAN SL por haber retirado el vehículo de la venta. No obstante, si HUELSAN SL vende esta unidad a un tercero dentro de los **30 días naturales** siguientes a la fecha de este contrato, la señal se conserva a favor del COMPRADOR y puede aplicarla al precio de **otro vehículo de HUELSAN SL** que adquiera.");
+  rico("**OCTAVA. Derechos del consumidor.** Lo pactado se entiende sin perjuicio de los derechos que la normativa de consumidores (Real Decreto Legislativo 1/2007) reconoce al COMPRADOR cuando tenga la condición de consumidor y que son irrenunciables, incluida la garantía legal en la compraventa, que se detallará en el contrato de compraventa. Si este contrato se firma a distancia o fuera del establecimiento, se aplican los derechos de desistimiento que la ley prevé en esos casos. HUELSAN SL dispone de hojas de reclamaciones.");
+  rico("**NOVENA. Protección de datos.** Los datos del COMPRADOR se tratan por HUELSAN SL (responsable) para gestionar esta reserva y la posterior compraventa, y para cumplir sus obligaciones legales. No se ceden a terceros salvo obligación legal o gestoría y garantía necesarias para la operación. El COMPRADOR puede ejercer sus derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad escribiendo a HUELSAN SL.");
   rico("**DÉCIMA. Ley y jurisdicción.** Este contrato se rige por la ley española. Si el COMPRADOR es consumidor, los conflictos se someten a los juzgados de su domicilio; si es empresa o profesional, a los juzgados de Murcia.");
   rico("**ANEXOS.** Forman parte de este contrato el Anexo I (estado del vehículo)"+(R.fotos&&R.fotos.length?" y el Anexo II (fotografías)":"")+".",{after:3});
 
@@ -140,7 +141,7 @@ async function pdfReserva(R){
   if(VEN.nombre){font(0,7.8);doc.text(VEN.nombre,M+3,y+13.6)}else{font(0,7.8);doc.text("[   ] F. J. Álvarez   [   ] G. Fornell",M+3,y+13.6)}
   font(1,8.6);doc.text("EL COMPRADOR",M+hw+7,y+5);font(0,8.6);doc.text(C.nombre||blanco(22),M+hw+7,y+9.4);font(0,7.8);doc.text("DNI "+(C.dni||blanco(14)),M+hw+7,y+13.6);
   y+=44;
-  rico(`**RECIBÍ** la cantidad de ${precio?eurS(senal):blanco(14)+" €"} en concepto de señal del 10 % por la reserva del vehículo **${V.matricula||""}**. Fecha: ${blanco(4)} / ${blanco(4)} / ${blanco(8)}  Firma de HUELSAN: ${blanco(20)}`);
+  rico(`**RECIBÍ** la cantidad de ${precio?eurS(senal):blanco(14)+" €"} en concepto de señal del 10 % por la reserva del vehículo **${V.matricula||""}**. Fecha: ${blanco(4)} / ${blanco(4)} / ${blanco(8)}  Firma de HUELSAN SL: ${blanco(20)}`);
 
   /* ---- Anexo I */
   nueva();font(1,15);doc.text("ANEXO I · ESTADO DEL VEHÍCULO",M,y+5);y+=8;font(0,8.4,GR);doc.text([V.descripcion,V.matricula,V.bastidor?"Bastidor "+V.bastidor:""].filter(Boolean).join(" · "),M,y+2.4);y+=6;
@@ -152,16 +153,15 @@ async function pdfReserva(R){
       font(0,8.4);ls.forEach((l,i)=>doc.text(l,cx[i]+2,y+3.6));doc.setDrawColor(226,219,204);doc.setLineWidth(.15);doc.line(M,y+h,M+AW,y+h);y+=h});
     doc.setDrawColor(...CH);doc.setLineWidth(.3);y+=2};
   if(per){h2("1. DATOS DEL PERITAJE");
-    fila([{l:"Perito / empresa",v:per.datos.perito,w:2},{l:"Fecha de tasación",v:per.datos.fecha,w:1},{l:"Lugar",v:per.datos.lugar,w:1},{l:"Km en la tasación",v:per.datos.km,w:1}]);
+    fila([{l:"Empresa peritadora",v:per.datos.perito,w:2},{l:"Fecha de tasación",v:per.datos.fecha,w:1},{l:"Km en la tasación",v:per.datos.km,w:1}]);
     rico("Daños, defectos y elementos que constan en el informe:",{after:1});
     tabla(["PIEZA / ELEMENTO","NIVEL","DESCRIPCIÓN"],per.danos,[.36,.2,.44]);
-    rico("Fuente: informe pericial de "+(per.datos.perito||"perito independiente")+(per.datos.fecha?" (tasación del "+per.datos.fecha+(per.datos.lugar?", "+per.datos.lugar:"")+")":"")+". El informe queda con reserva de golpes ocultos o reparaciones anteriores no visibles sin desmontajes.",{s:7.8,lead:3.7,col:GR})}
+    rico("Informe pericial de "+(per.datos.perito||"perito independiente")+(per.datos.fecha?" (tasación del "+per.datos.fecha+")":"")+". El informe queda con reserva de golpes ocultos o reparaciones anteriores no visibles sin desmontajes.",{s:7.8,lead:3.7,col:GR})}
   else{h2("1. PERITAJE");rico("Este vehículo **no dispone de informe de peritaje**.");
     h2("DAÑOS O DEFECTOS DECLARADOS EN LA FICHA DE VENTA");
     if((R.danosFicha||[]).length)R.danosFicha.forEach(t=>rico("• "+t,{after:.4}));else rico("La ficha de venta no declara daños ni defectos.")}
   h2("2. HISTORIAL DE MANTENIMIENTO");
-  if(man){tabla(["FECHA","KILÓMETROS","INTERVENCIONES REGISTRADAS"],man.entradas,[.15,.15,.7]);
-    rico("Fuente: historial de mantenimiento de BCA. Los kilómetros son los de cada intervención.",{s:7.8,lead:3.7,col:GR})}
+  if(man){tabla(["FECHA","KILÓMETROS","INTERVENCIONES REGISTRADAS"],man.entradas,[.15,.15,.7]);}
   else rico("Este vehículo **no dispone de historial de mantenimiento**.");
 
   /* ---- Anexo II: fotos, 12 por página (3×4) */
@@ -212,7 +212,7 @@ async function leerPdf(file,fotos){
   const lib=await pdfjs();const doc=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false}).promise;
   let filas=[];const imgs=[];const vistos=new Set();
   for(let p=1;p<=doc.numPages;p++){const page=await doc.getPage(p);
-    if(p===1||!fotos)filas=filas.concat(await filasDePagina(page));
+    filas=filas.concat(await filasDePagina(page));
     if(fotos){const ops=await page.getOperatorList();
       for(let i=0;i<ops.fnArray.length;i++){if(ops.fnArray[i]!==lib.OPS.paintImageXObject)continue;const nom=ops.argsArray[i][0];if(vistos.has(p+nom))continue;vistos.add(p+nom);
         try{const o=await new Promise((ok,ko)=>{const tm=setTimeout(()=>ko(new Error("t")),8000);page.objs.get(nom,v=>{clearTimeout(tm);ok(v)})});
@@ -243,10 +243,32 @@ async function fotosDelAnuncio(l,aviso){
 
 const REPS_FB={francisco:{nombre:"Francisco José Álvarez González",dni:""},gustavo:{nombre:"Gustavo Fornell Lacida",dni:""}};
 const repsOk=()=>{const r=(root.HuelsanContratos&&HuelsanContratos.reps())||{};return{francisco:r.francisco||REPS_FB.francisco,gustavo:r.gustavo||REPS_FB.gustavo}};
+/* Lee un PDF (de BCA o subido a mano) y lo guarda como peritaje o historial. tipo: "per" | "man" | null (se reconoce por el contenido) */
+async function usarPdf(blob,tipo,v,msg){
+  const r0=await leerPdf(blob,false);const txt=r0.filas.map(f=>f.join(" ")).join("\n");
+  if(!tipo)tipo=/CONDICIONES DE VALORACI|TASADOR|\bNIVEL\b/i.test(txt)?"per":/Historial de mantenimiento|Kil[óo]metros/i.test(txt)&&/Descripci[óo]n/i.test(txt)?"man":null;
+  if(tipo==="per"){const x=parsePeritaje(r0.filas);if(!(x.danos.length||x.datos.matricula))return false;const r=await leerPdf(blob,true);ST.per=x;ST.fotosPdf=r.imgs;
+    const mal=x.datos.matricula&&v.matricula&&x.datos.matricula.replace(/\W/g,"")!==v.matricula.replace(/\W/g,"");
+    msg(`Peritaje leído: ${x.danos.length} puntos y ${r.imgs.length} fotos.${mal?" ¡Ojo! La matrícula del peritaje ("+x.datos.matricula+") no coincide con la del coche.":""}`);return true}
+  if(tipo==="man"){const x=parseHistorial(r0.filas);if(!x.entradas.length)return false;ST.man=x;msg(`Historial leído: ${x.entradas.length} fechas de intervención.`);return true}
+  return false}
+/* Coge solo los documentos de la ficha de BCA (necesita la extensión de Huelsan v1.3 y la sesión de BCA iniciada) */
+async function traerDeBca(l,v,msg){
+  const el=q("#rs-bca");const say=t=>{if(el)el.textContent=t};
+  if(!l.url){return}
+  if(!document.documentElement.dataset.huelsanExt){say("No puedo coger los documentos de BCA: falta la extensión de Huelsan en este navegador. Adjunta el peritaje y el historial a mano.");return}
+  ST.cargando=true;
+  try{const r=await extPedir("docs-bca",{url:l.url});const docs=r.docs||[];let nPer=0,nMan=0;
+    for(const d of docs){try{if(await usarPdf(b64Blob(d.base64,"application/pdf"),null,v,()=>{})){}}catch(e){console.warn("Documento de BCA no leído",d.nombre,e)}}
+    nPer=ST.per?1:0;nMan=ST.man?1:0;
+    say(`Ficha de BCA: ${docs.length} documento${docs.length===1?"":"s"} PDF encontrados · peritaje ${nPer?"✓ cogido":"no encontrado"} · historial ${nMan?"✓ cogido":"no encontrado"}.${nPer&&nMan?"":" Lo que falte, adjúntalo a mano o marca que el coche no lo tiene."}`);
+    if(ST.per)msg(`Peritaje leído de BCA: ${ST.per.danos.length} puntos y ${ST.fotosPdf.length} fotos.`)}
+  catch(e){say("No se han podido coger los documentos de BCA ("+(e.message||e)+"). ¿Tienes la sesión de BCA abierta? Adjúntalos a mano.")}
+  finally{ST.cargando=false}}
 const val=n=>((q("#rs-"+n)||{}).value||"").trim();
 function opciones(arr,sel){return arr.map(([k,t])=>`<option value="${esc(k)}" ${k===sel?"selected":""}>${esc(t)}</option>`).join("")}
 function abrir(l){
-  ST.lote=l;ST.per=null;ST.man=null;ST.fotosPdf=[];ST.msg="";
+  ST.lote=l;ST.per=null;ST.man=null;ST.fotosPdf=[];ST.msg="";ST.cargando=false;
   let dlg=q("#dlg-reserva");if(!dlg){dlg=document.createElement("dialog");dlg.id="dlg-reserva";document.body.appendChild(dlg)}
   const reps=repsOk();const rf=reps.francisco,rg=reps.gustavo;
   const v=root.HuelsanContratos?HuelsanContratos.desdeLote(l).vehiculo:{};
@@ -268,8 +290,10 @@ function abrir(l){
     <div class="g2"><label>Dirección (si la hay)<input id="rs-dir" placeholder="Calle, nº, CP, localidad"></label><label>Teléfono / correo<input id="rs-con" placeholder="Opcional"></label></div>
     <label class="row" style="flex-direction:row;gap:8px;align-items:center"><input type="checkbox" id="rs-blanco" style="width:auto"> Dejar los datos del comprador en blanco (se rellenan a mano; no se crea cliente)</label>
     <h3>3. Peritaje, historial y fotos</h3>
-    <div class="g2"><label>Ficha de peritaje (PDF del anuncio de BCA)<input id="rs-per" type="file" accept="application/pdf"></label><label>Historial de mantenimiento (PDF)<input id="rs-man" type="file" accept="application/pdf"></label></div>
-    <div class="muted">Si el coche no tiene peritaje o historial, déjalo vacío: el contrato lo hace constar y usa las fotos del anuncio (${(l.fotoIds||[]).length+(l.fotos||[]).length} disponibles). Daños de la ficha de venta (solo si los declara, uno por línea):</div>
+    <div class="muted" id="rs-bca">${l.url?"Buscando el peritaje y el historial en la ficha de BCA…":"Este coche no tiene ficha de BCA: adjunta los documentos a mano."}</div>
+    <div class="g2"><label>Peritaje (PDF) <small>si no se ha cogido solo</small><input id="rs-per" type="file" accept="application/pdf"></label><label>Historial de mantenimiento (PDF) <small>si no se ha cogido solo</small><input id="rs-man" type="file" accept="application/pdf"></label></div>
+    <div class="g2"><label class="row" style="flex-direction:row;gap:8px;align-items:center"><input type="checkbox" id="rs-noper" style="width:auto"> Este coche NO tiene peritaje</label><label class="row" style="flex-direction:row;gap:8px;align-items:center"><input type="checkbox" id="rs-noman" style="width:auto"> Este coche NO tiene historial de mantenimiento</label></div>
+    <div class="muted">No se puede crear el contrato hasta que cada documento esté adjunto o marques que el coche no lo tiene (entonces el contrato lo hace constar y usa las fotos del anuncio: ${(l.fotoIds||[]).length+(l.fotos||[]).length} disponibles). Daños de la ficha de venta (solo si no hay peritaje y los declara, uno por línea):</div>
     <textarea id="rs-danos" rows="2" placeholder="Solo si no hay peritaje y la ficha de venta declara daños"></textarea>
     <div class="note" id="rs-msg" role="status"></div>
     <div class="bar"><button class="btn primary" id="rs-crear" value="x">Crear contrato (PDF)</button><span class="muted">Se descarga el PDF y, si el comprador es nuevo, se guarda como cliente.</span></div></form>`;
@@ -284,15 +308,15 @@ function enlazar(dlg,l,v,desc){
     if(t.id==="rs-lugar")q("#rs-otro-l").hidden=t.value!=="__otro";
     if(t.id==="rs-cli"){const c=S.clientes.get(t.value);if(c){q("#rs-nom").value=nombreCliente(c);q("#rs-dni-c").value=c.nif||"";q("#rs-dir").value=[c.direccion,c.cp,c.municipio].filter(Boolean).join(", ");q("#rs-con").value=[c.telefono,c.email].filter(Boolean).join(" · ")}}
     if(t.id==="rs-per"||t.id==="rs-man"){const f=t.files[0];const per=t.id==="rs-per";if(!f){ST[per?"per":"man"]=null;if(per)ST.fotosPdf=[];return}
-      msg("Leyendo "+f.name+"…");try{const r=await leerPdf(f,per);
-        if(per){const x=parsePeritaje(r.filas);ST.per=x.danos.length||x.datos.matricula?x:null;ST.fotosPdf=r.imgs;
-          msg(ST.per?`Peritaje leído: ${x.danos.length} puntos de daños/elementos y ${r.imgs.length} fotos.${x.datos.matricula&&v.matricula&&x.datos.matricula.replace(/\W/g,"")!==v.matricula.replace(/\W/g,"")?" ¡Ojo! La matrícula del peritaje ("+x.datos.matricula+") no coincide con la del coche.":""}`:"No he podido leer ese PDF como ficha de peritaje.")}
-        else{const x=parseHistorial(r.filas);ST.man=x.entradas.length?x:null;msg(ST.man?`Historial leído: ${x.entradas.length} fechas de intervención.`:"No he podido leer ese PDF como historial de mantenimiento.")}}
+      msg("Leyendo "+f.name+"…");try{const ok=await usarPdf(f,per?"per":"man",v,msg);if(!ok)msg("No he podido leer ese PDF como "+(per?"ficha de peritaje.":"historial de mantenimiento."))}
       catch(err){msg("No se ha podido leer el PDF: "+(err.message||err))}}
   });
   q("#f-reserva").addEventListener("submit",async e=>{
     if(e.submitter&&e.submitter.id!=="rs-crear")return;e.preventDefault();if(ST.busy)return;
     const precio=+val("precio");if(!precio){msg("Escribe el precio de venta.");return}
+    if(ST.cargando){msg("Espera un momento: se están leyendo los documentos de BCA.");return}
+    if(!ST.per&&!q("#rs-noper").checked){msg("Falta el peritaje: se coge solo de la ficha de BCA o adjúntalo. Si el coche no lo tiene, marca «NO tiene peritaje».");return}
+    if(!ST.man&&!q("#rs-noman").checked){msg("Falta el historial de mantenimiento: se coge solo de la ficha de BCA o adjúntalo. Si el coche no lo tiene, marca «NO tiene historial».");return}
     const kv=val("vend");if(!kv){msg("Elige quién vende (Francisco o Gustavo).");return}
     let lugar=val("lugar");if(lugar==="__otro")lugar=val("otro");
     const blanco=q("#rs-blanco").checked;
@@ -311,26 +335,45 @@ function enlazar(dlg,l,v,desc){
       const doc=await pdfReserva(R);
       const nombre=`Reserva-${(R.vehiculo.matricula||"coche").replace(/\W+/g,"")}${comp.nombre?"-"+comp.nombre.replace(/[^\wÀ-ÿ ]+/g,"").trim().replace(/\s+/g,"-"):""}.pdf`;
       doc.save(nombre);
+      let pdfRef=null;try{const bl=doc.output("blob");const up=await HUELSAN.subir("documentos",new Blob([bl],{type:"application/pdf"}));pdfRef={ruta:up.id,nombre,size:bl.size}}catch(e){console.warn("PDF no guardado",e);toast("El PDF se ha descargado pero no se ha podido guardar en Contratos",6000)}
       /* alta de cliente y registro de la reserva */
       let clienteId=val("cli");
       if(!blanco&&!clienteId&&comp.nombre&&comp.dni){clienteId=nid();const p=comp.nombre.split(/\s+/);
         await S.db.doc("clientes/"+clienteId).set({tipo:/^[ABCDEFGHJNPQRSUVW]\d/.test(nifLimpio(comp.dni))?"empresa":"particular",nombre:p[0],apellidos:p.slice(1).join(" "),razonSocial:/^[ABCDEFGHJNPQRSUVW]\d/.test(nifLimpio(comp.dni))?comp.nombre:"",
           nif:nifLimpio(comp.dni),direccion:comp.direccion||"",telefono:"",email:"",pais:"España",notas:"Alta desde un contrato de reserva ("+R.vehiculo.matricula+")",creado:new Date().toISOString()});toast("Cliente nuevo guardado")}
       const rid=nid();await S.db.doc("reservas/"+rid).set({loteId:l.id,matricula:R.vehiculo.matricula,clienteId:clienteId||"",comprador:comp.nombre||"",vendedor:kv,lugar,precio,senal:Math.round(precio*10)/100,
-        conPeritaje:!!ST.per,conHistorial:!!ST.man,fotos:fotos.length,creada:new Date().toISOString()});
+        conPeritaje:!!ST.per,conHistorial:!!ST.man,fotos:fotos.length,vehiculo:R.vehiculo.descripcion||"",pdf:pdfRef,creada:new Date().toISOString()});
       msg("Contrato creado y descargado ("+doc.getNumberOfPages()+" páginas).");
     }catch(err){console.error(err);msg("No se ha podido crear el contrato: "+(err.message||err))}
     finally{ST.busy=false;btn.disabled=false;btn.textContent="Crear contrato (PDF)"}});
-  pintaResumen()}
+  pintaResumen();traerDeBca(l,v,msg)}
+
+/* ---------- Contratos → Reservas (lista en la pestaña Contratos) ---------- */
+const RES=new Map();
+function seccion(){
+  const ls=[...RES.values()].sort((a,b)=>String(b.creada||"").localeCompare(String(a.creada||"")));
+  const f=d=>d?new Date(d).toLocaleDateString("es-ES"):"—";
+  return`<div class="card"><h3>Contratos de reserva <span class="muted">(${ls.length})</span></h3>
+    <p class="muted" style="margin:0">Se crean desde la ficha del coche (botón «Contrato de reserva», coches Interesantes). Aquí queda guardado el PDF de cada uno.</p>
+    ${ls.length?`<div class="tw"><table><thead><tr><th>Fecha</th><th>Comprador</th><th>Vehículo</th><th>Precio</th><th>Señal 10 %</th><th>Peritaje</th><th></th></tr></thead><tbody>
+    ${ls.map(r=>`<tr><td>${f(r.creada)}</td><td>${esc(r.comprador||"— en blanco —")}</td><td>${esc(r.vehiculo||"")} ${r.matricula?`<span class="mat">${esc(r.matricula)}</span>`:""}</td><td>${eurS(+r.precio||0)}</td><td>${eurS(+r.senal||0)}</td><td>${r.conPeritaje?"Sí":"No"}${r.conHistorial?" · historial":""}</td>
+      <td class="row">${r.pdf?`<button class="btn sm" data-rs-ver="${esc(r.id)}">Descargar PDF</button>`:`<span class="muted">sin PDF guardado</span>`}<button class="btn sm peligro" data-rs-del="${esc(r.id)}">Borrar</button></td></tr>`).join("")}</tbody></table></div>`
+    :`<div class="vacio">Aún no hay contratos de reserva.</div>`}</div>`}
+document.addEventListener("click",async e=>{const t=e.target.closest&&e.target.closest("[data-rs-ver],[data-rs-del]");if(!t)return;e.preventDefault();
+  try{if(t.dataset.rsVer){const r=RES.get(t.dataset.rsVer);if(!r||!r.pdf)return;descargarBlob(await HUELSAN.bajar("documentos",r.pdf.ruta),r.pdf.nombre||"reserva.pdf")}
+  else{const r=RES.get(t.dataset.rsDel);if(!r)return;if(!confirm("¿Borrar este contrato de reserva? Se elimina también su PDF guardado."))return;
+    if(r.pdf)await HUELSAN.borrarArchivo("documentos",r.pdf.ruta).catch(()=>{});await S.db.doc("reservas/"+r.id).delete();toast("Reserva borrada")}}
+  catch(err){toast(err.message||String(err),6000)}});
 
 (async function esperar(){
   if(typeof document==="undefined")return;
   if(typeof S==="undefined"||!S.db||!S.lotes){setTimeout(esperar,200);return}
+  S.db.collection("reservas").onSnapshot(sn=>{RES.clear();sn.docs.forEach(d=>RES.set(d.id,{...d.data(),id:d.id}));if(root.HuelsanContratos&&HuelsanContratos.repintarLista)HuelsanContratos.repintarLista()},e=>console.error(e));
   try{const sn=await S.db.doc("config/ubicaciones").get();const d=sn&&sn.exists&&sn.data&&sn.data();if(d&&Array.isArray(d.lista))ST.ubics=d.lista.filter(x=>typeof x==="string"&&x.trim())}catch(e){}
   if(!ST.ubics.length)ST.ubics=["Murcia","Huelva"];
   const id=new URLSearchParams(location.search).get("reservaLote");if(!id)return;
   (function intento(n){const l=S.lotes.find(x=>x.id===id);if(!l){if(n<40)setTimeout(()=>intento(n+1),250);return}abrir(l)})(0)})();
 
-root.HuelsanReserva={abrir,parsePeritaje,parseHistorial,pdfReserva};
+root.HuelsanReserva={seccion,abrir,parsePeritaje,parseHistorial,pdfReserva};
 if(typeof module!=="undefined")module.exports=root.HuelsanReserva;
 })(typeof window!=="undefined"?window:globalThis);

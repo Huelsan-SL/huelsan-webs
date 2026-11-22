@@ -9,6 +9,9 @@ for n,f in [('Pop',G+'Poppins-Regular.ttf'),('PopM',G+'Poppins-Medium.ttf'),('Po
 pdfmetrics.registerFontFamily('Car',normal='Car',bold='CarB',italic='CarI',boldItalic='CarBI')
 GRAFITO=colors.HexColor('#1B1D20'); CHAMPAN=colors.HexColor('#B8976A'); CHAMPAN_D=colors.HexColor('#8C6E44')
 CHAMPAN_L=colors.HexColor('#CDB084'); ROTO=colors.HexColor('#F0EFED')
+import os
+if os.environ.get('HUELSAN_PAL')=='web':  # colores de huelsanautomocion.com: azul marino y dorado
+    GRAFITO=colors.HexColor('#0E2A47'); CHAMPAN=colors.HexColor('#C29B57'); CHAMPAN_D=colors.HexColor('#8F6C2E'); CHAMPAN_L=colors.HexColor('#DDBE86'); ROTO=colors.HexColor('#F3F6F9')
 def eur(x):
     s=f"{x:,.2f}".replace(',','X').replace('.',',').replace('X','.')
     return s+' €'

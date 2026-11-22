@@ -102,6 +102,26 @@ chrome.runtime.onMessage.addListener((m, sender, responder) => {
         let bin = ""; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
         return { ok: true, tipo: r.headers.get("content-type") || "image/jpeg", base64: btoa(bin) };
       }
+      case "docs-bca": {
+        // Documentos PDF de la ficha de un lote de BCA (peritaje, historial de mantenimiento…), con la sesión del usuario
+        const u = new URL(String(m.url || ""), "https://es.bca-europe.com"); if (u.origin !== "https://es.bca-europe.com") throw new Error("URL no válida");
+        const h = await (await fetch(u.href, { credentials: "include" })).text();
+        const cand = new Map();
+        for (const x of h.matchAll(/(?:href|src|data-[a-z-]*url|data-href)\s*=\s*["']([^"']+)["']/gi)) {
+          let a = x[1].replace(/&amp;/g, "&"); if (/VehicleImage/i.test(a) || /\.(?:png|jpe?g|gif|svg|css|js|ico|woff2?)(?:\?|$)/i.test(a)) continue;
+          if (/DocType=|\.pdf|\/Document|Download|Report|Informe|Peritaj|Valoraci|Tasaci|Service|Mantenim|Historial/i.test(a)) { try { a = new URL(a, u.href).href } catch (e) { continue } if (/^https:\/\/(es\.bca-europe\.com|www1\.bcaimage\.com)\//.test(a)) cand.set(a, 1); }
+        }
+        const docs = [];
+        for (const a of [...cand.keys()].slice(0, 12)) {
+          try {
+            const r = await fetch(a, { credentials: "include" }); if (!r.ok) continue;
+            const bytes = new Uint8Array(await r.arrayBuffer()); if (bytes.length < 200 || String.fromCharCode(...bytes.subarray(0, 4)) !== "%PDF") continue;
+            let bin = ""; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+            docs.push({ nombre: a.slice(-60), base64: btoa(bin) });
+          } catch (e) { }
+        }
+        return { ok: true, docs, candidatos: cand.size };
+      }
       case "miniatura": {
         const r = await fetch(m.src); if (!r.ok) throw new Error("img " + r.status);
         const bm = await createImageBitmap(await r.blob()); const W = 220, H = Math.round(bm.height * W / bm.width);

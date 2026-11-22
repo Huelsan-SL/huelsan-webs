@@ -153,6 +153,7 @@ function vistaLista(){
     ${ls.map(c=>`<tr data-ct-abrir="${esc(c.id)}" style="cursor:pointer"><td>${esc(c.numero||"—")}</td><td>${fecha(c.fecha)}</td><td>${esc(nombreComprador(c)||"—")}</td>
       <td>${esc([c.vehiculo.marca,c.vehiculo.modelo].filter(Boolean).join(" ")||"—")} ${c.vehiculo.matricula?`<span class="mat">${esc(c.vehiculo.matricula)}</span>`:""}</td><td>${esc(c.ubicacion||"—")}</td><td>${esc(c.facturaCodigo||(c.facturaId?"Borrador":"—"))}</td><td>${((c.firmado||{}).archivos||[]).length?`<span class="tag ok">Firmado</span>`:`<span class="tag">Pendiente</span>`}</td></tr>`).join("")}</tbody></table></div>`
     :`<div class="vacio">Aún no hay contratos. Crea uno en blanco o desde una factura (también con el botón «Contrato de compraventa» dentro de cada factura).</div>`}
+  ${window.HuelsanReserva&&HuelsanReserva.seccion?HuelsanReserva.seccion():""}
   <div class="card"><h3>Representantes de Huelsan (firman por la empresa)</h3>
     ${["francisco","gustavo"].map(k=>`<div class="g3"><label>Nombre y apellidos<input data-rep="${k}.nombre" value="${esc((r[k]||{}).nombre||"")}"></label><label>DNI / NIE<input data-rep="${k}.dni" value="${esc((r[k]||{}).dni||"")}"></label><label>Cargo <small>administrador, apoderado…</small><input data-rep="${k}.cargo" value="${esc((r[k]||{}).cargo||"")}"></label></div>
       <div class="row sp"><span class="muted">Copia del DNI de ${esc(((r[k]||{}).nombre||k).split(" ")[0])} (anverso y reverso):</span><label class="btn sm" style="display:inline-flex;color:var(--ink)">Subir foto o PDF<input type="file" data-ct-file="rep:${k}" accept="image/*,application/pdf" multiple hidden></label></div>${listaArch((r[k]||{}).dniArchivos,"rep:"+k)}
@@ -543,5 +544,5 @@ async function descargarContrato(c){
   if(doc.__principal>2)toast("El contrato ocupa más de 2 páginas: acorta las observaciones o los defectos.",6000);
 }
 const desdeLote=l=>{const c=contratoVacio();cocheEnContrato(c,l);if(c.ubicacion)c.entrega.lugar=c.ubicacion;return c};
-window.HuelsanContratos={firmaRep,DOCS,desdeLote,generarContrato,desdeFactura,contratoVacio,enLetra,docsDelContrato,mensajeDocs,lista:()=>[...CT.lista.values()],reps:()=>CT.reps,abrir,abrirDesdeFactura,abrirDesdeLote};
+window.HuelsanContratos={repintarLista:()=>{if(S.tab==="contratos"&&!CT.ed)pintar()},firmaRep,DOCS,desdeLote,generarContrato,desdeFactura,contratoVacio,enLetra,docsDelContrato,mensajeDocs,lista:()=>[...CT.lista.values()],reps:()=>CT.reps,abrir,abrirDesdeFactura,abrirDesdeLote};
 })();
