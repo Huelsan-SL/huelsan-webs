@@ -120,7 +120,7 @@ const regimenTexto=g=>{if(g.sinFactura)return"Efectivo sin factura";const r=[...
     S.db=await window.claude.use("db");
     const vigilar=(col,mapa,cb)=>S.db.collection(col).onSnapshot(sn=>{mapa.clear();sn.docs.forEach(d=>mapa.set(d.id,{...d.data(),id:d.id}));cb&&cb();pintarSiProcede(col)},e=>console.error(e));
     vigilar("facturas",S.facturas);vigilar("clientes",S.clientes);vigilar("gastos",S.gastos);vigilar("docscoche",S.docsCoche);vigilar("proveedores",S.proveedores);
-    S.db.doc("config/impuestos").onSnapshot(sn=>{const d=sn&&sn.exists&&sn.data&&sn.data();const t=d&&+d.tipoIS;S.tipoIS=t>=0&&t<=100?t:25;pintarSiProcede("config")},()=>{});
+    S.db.doc("config/impuestos").onSnapshot(sn=>{const d=sn&&sn.exists&&sn.data&&sn.data();const t=d&&d.tipoIS!=null&&d.tipoIS!==""?Number(d.tipoIS):NaN;S.tipoIS=Number.isFinite(t)&&t>=0&&t<=100?t:25;pintarSiProcede("config")},()=>{});
     S.db.collection("facturacion").onSnapshot(sn=>{S.cont.clear();let em=null;sn.docs.forEach(d=>{if(d.id==="emisor")em=d.data();else S.cont.set(d.id,d.data())});
       if(em)S.emisor=em;else if(!S.emisorCargado)prellenarEmisor();S.emisorCargado=true;pintarSiProcede("facturacion")});
     await cargarLotes();
