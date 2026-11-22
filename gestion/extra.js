@@ -497,6 +497,8 @@ function collageHtml(l){const n=fotosParaCollage(l).length,c=X.collage&&X.collag
   return`<h3>Collages para enviar al cliente</h3>
     <div class="muted" style="font-size:12.5px">${n} foto${n>1?"s":""} → ${nCol} collage${nCol>1?"s":""} de 4 fotos + 1 imagen final en negro con los datos del coche. Se descargan o se comparten directamente, sin enlaces.</div>
     <div class="row"><button class="btn primary sm" id="xc-hacer" ${X.colBusy?"disabled":""}>${X.colBusy?"Preparando…":c?"Volver a generar":"Crear collages"}</button>
+      ${l.estado==="interesante"?`<a class="btn sm" href="facturacion/?reservaLote=${encodeURIComponent(l.id)}" style="text-decoration:none" title="Contrato de reserva con señal del 10 %">Contrato de reserva</a>`:""}
+      <select id="xc-folleto-v" aria-label="Tipo de folleto" style="max-width:190px"><option value="con-peritaje-e-historial">Folleto: con peritaje e historial</option><option value="con-peritaje">Folleto: con peritaje</option><option value="sin-peritaje">Folleto: sin peritaje</option></select><a class="btn sm" id="xc-folleto" href="folletos-encargo/Folleto-por-encargo-con-peritaje-e-historial.pdf" target="_blank" rel="noopener" style="text-decoration:none">Folleto por encargo</a>
       ${c&&c.items.length?`<button class="btn sm" id="xc-zip">Descargar todo</button>${navigator.canShare&&c.items[0]&&navigator.canShare({files:[c.items[0].file]})?`<button class="btn sm" id="xc-compartir">Compartir…</button>`:""}`:""}</div>
     ${X.colMsg&&X.colMsg.lote===l.id?`<div class="note" role="status">${esc(X.colMsg.t)}</div>`:""}
     ${c?`<div class="xfotos">${c.items.map((it,i)=>`<a class="xfoto on" href="${esc(it.url)}" download="${esc(it.nombre)}" title="Descargar ${esc(it.nombre)}"><img src="${esc(it.url)}" alt="Collage ${i+1}"><span class="src">${it.final?"Datos":"Collage "+(i+1)}</span></a>`).join("")}</div>`:""}`}
@@ -546,6 +548,7 @@ async function crearCollages(l){
     X.collage={lote:l.id,items};X.colMsg={lote:l.id,t:`Listo: ${items.length-1} collage${items.length>2?"s":""} + imagen de datos.${fallos?` ${fallos} foto${fallos>1?"s":""} no se ha${fallos>1?"n":""} podido leer.`:""}`}}
   catch(err){X.colMsg={lote:l.id,t:"No se han podido crear: "+(err.message||err)}}
   finally{X.colBusy=false;renderDrawer()}}
+document.addEventListener("change",e=>{if(e.target.id==="xc-folleto-v"){const a=document.getElementById("xc-folleto");a&&(a.href="folletos-encargo/Folleto-por-encargo-"+e.target.value+".pdf")}});
 document.addEventListener("click",async e=>{const t=e.target;if(!t.closest("#xcollage"))return;const l=S.open&&S.lots.get(S.open);if(!l)return;
   if(t.closest("#xc-hacer")){e.stopPropagation();crearCollages(l);return}
   const c=X.collage&&X.collage.lote===l.id?X.collage:null;if(!c)return;
