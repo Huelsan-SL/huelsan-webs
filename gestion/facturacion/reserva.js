@@ -359,7 +359,7 @@ function seccion(){
     ${ls.map(r=>`<tr><td>${f(r.creada)}</td><td>${esc(r.comprador||"— en blanco —")}</td><td>${esc(r.vehiculo||"")} ${r.matricula?`<span class="mat">${esc(r.matricula)}</span>`:""}</td><td>${eurS(+r.precio||0)}</td><td>${eurS(+r.senal||0)}</td><td>${r.conPeritaje?"Sí":"No"}${r.conHistorial?" · historial":""}</td>
       <td class="row">${r.pdf?`<button class="btn sm" data-rs-ver="${esc(r.id)}">Descargar PDF</button>`:`<span class="muted">sin PDF guardado</span>`}<button class="btn sm peligro" data-rs-del="${esc(r.id)}">Borrar</button></td></tr>`).join("")}</tbody></table></div>`
     :`<div class="vacio">Aún no hay contratos de reserva.</div>`}</div>`}
-document.addEventListener("click",async e=>{const t=e.target.closest&&e.target.closest("[data-rs-ver],[data-rs-del]");if(!t)return;e.preventDefault();
+if(typeof document!=="undefined")document.addEventListener("click",async e=>{const t=e.target.closest&&e.target.closest("[data-rs-ver],[data-rs-del]");if(!t)return;e.preventDefault();
   try{if(t.dataset.rsVer){const r=RES.get(t.dataset.rsVer);if(!r||!r.pdf)return;descargarBlob(await HUELSAN.bajar("documentos",r.pdf.ruta),r.pdf.nombre||"reserva.pdf")}
   else{const r=RES.get(t.dataset.rsDel);if(!r)return;if(!confirm("¿Borrar este contrato de reserva? Se elimina también su PDF guardado."))return;
     if(r.pdf)await HUELSAN.borrarArchivo("documentos",r.pdf.ruta).catch(()=>{});await S.db.doc("reservas/"+r.id).delete();toast("Reserva borrada")}}
