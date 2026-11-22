@@ -253,17 +253,19 @@ async function usarPdf(blob,tipo,v,msg){
   if(tipo==="man"){const x=parseHistorial(r0.filas);if(!x.entradas.length)return false;ST.man=x;msg(`Historial leído: ${x.entradas.length} fechas de intervención.`);return true}
   return false}
 /* Coge solo los documentos de la ficha de BCA (necesita la extensión de Huelsan v1.3 y la sesión de BCA iniciada) */
+function mostrarBotones(si){const b=q("#rs-bca-btns");if(b)b.hidden=!si}
 async function traerDeBca(l,v,msg){
   const el=q("#rs-bca");const say=t=>{if(el)el.textContent=t};
   if(!l.url){return}
   if(!document.documentElement.dataset.huelsanExt){say("No puedo coger los documentos de BCA: falta la extensión de Huelsan en este navegador. Adjunta el peritaje y el historial a mano.");return}
-  ST.cargando=true;
+  ST.cargando=true;const bot=q("#rs-bca-btn");if(bot)bot.hidden=true;
   try{const r=await extPedir("docs-bca",{url:l.url});const docs=r.docs||[];let nPer=0,nMan=0;
+    if(r.sinSesion){say("No hay sesión iniciada en BCA. Pulsa «Iniciar sesión en BCA», entra con tu usuario en la ventana que se abre y vuelve aquí a pulsar «Reintentar».");mostrarBotones(true);return}
     for(const d of docs){try{if(await usarPdf(b64Blob(d.base64,"application/pdf"),null,v,()=>{})){}}catch(e){console.warn("Documento de BCA no leído",d.nombre,e)}}
     nPer=ST.per?1:0;nMan=ST.man?1:0;
-    say(`Ficha de BCA: ${docs.length} documento${docs.length===1?"":"s"} PDF encontrados · peritaje ${nPer?"✓ cogido":"no encontrado"} · historial ${nMan?"✓ cogido":"no encontrado"}.${nPer&&nMan?"":" Lo que falte, adjúntalo a mano o marca que el coche no lo tiene."}`);
+    say(`Ficha de BCA: ${docs.length} documento${docs.length===1?"":"s"} PDF encontrados · peritaje ${nPer?"✓ cogido":"no encontrado"} · historial ${nMan?"✓ cogido":"no encontrado"}.${nPer&&nMan?"":" Lo que falte, adjúntalo a mano o marca que el coche no lo tiene."}`);mostrarBotones(!(nPer&&nMan));
     if(ST.per)msg(`Peritaje leído de BCA: ${ST.per.danos.length} puntos y ${ST.fotosPdf.length} fotos.`)}
-  catch(e){say("No se han podido coger los documentos de BCA ("+(e.message||e)+"). ¿Tienes la sesión de BCA abierta? Adjúntalos a mano.")}
+  catch(e){say("No se han podido coger los documentos de BCA ("+(e.message||e)+"). Inicia sesión en BCA y reintenta, o adjúntalos a mano.");mostrarBotones(true)}
   finally{ST.cargando=false}}
 const val=n=>((q("#rs-"+n)||{}).value||"").trim();
 function opciones(arr,sel){return arr.map(([k,t])=>`<option value="${esc(k)}" ${k===sel?"selected":""}>${esc(t)}</option>`).join("")}
@@ -291,6 +293,7 @@ function abrir(l){
     <label class="row" style="flex-direction:row;gap:8px;align-items:center"><input type="checkbox" id="rs-blanco" style="width:auto"> Dejar los datos del comprador en blanco (se rellenan a mano; no se crea cliente)</label>
     <h3>3. Peritaje, historial y fotos</h3>
     <div class="muted" id="rs-bca">${l.url?"Buscando el peritaje y el historial en la ficha de BCA…":"Este coche no tiene ficha de BCA: adjunta los documentos a mano."}</div>
+    <div class="row" id="rs-bca-btns" hidden><button type="button" class="btn sm" id="rs-bca-login">Iniciar sesión en BCA</button><button type="button" class="btn sm primary" id="rs-bca-retry">Reintentar</button></div>
     <div class="g2"><label>Peritaje (PDF) <small>si no se ha cogido solo</small><input id="rs-per" type="file" accept="application/pdf"></label><label>Historial de mantenimiento (PDF) <small>si no se ha cogido solo</small><input id="rs-man" type="file" accept="application/pdf"></label></div>
     <div class="g2"><label class="row" style="flex-direction:row;gap:8px;align-items:center"><input type="checkbox" id="rs-noper" style="width:auto"> Este coche NO tiene peritaje</label><label class="row" style="flex-direction:row;gap:8px;align-items:center"><input type="checkbox" id="rs-noman" style="width:auto"> Este coche NO tiene historial de mantenimiento</label></div>
     <div class="muted">No se puede crear el contrato hasta que cada documento esté adjunto o marques que el coche no lo tiene (entonces el contrato lo hace constar y usa las fotos del anuncio: ${(l.fotoIds||[]).length+(l.fotos||[]).length} disponibles). Daños de la ficha de venta (solo si no hay peritaje y los declara, uno por línea):</div>
@@ -346,6 +349,9 @@ function enlazar(dlg,l,v,desc){
       msg("Contrato creado y descargado ("+doc.getNumberOfPages()+" páginas).");
     }catch(err){console.error(err);msg("No se ha podido crear el contrato: "+(err.message||err))}
     finally{ST.busy=false;btn.disabled=false;btn.textContent="Crear contrato (PDF)"}});
+  dlg.addEventListener("click",async e=>{const t=e.target;
+    if(t.id==="rs-bca-login"){try{await extPedir("abrir-bca",{});q("#rs-bca").textContent="Ventana de BCA abierta: inicia sesión allí y, cuando termines, pulsa «Reintentar»."}catch(err){q("#rs-bca").textContent="No se ha podido abrir BCA con la extensión: "+(err.message||err)}}
+    if(t.id==="rs-bca-retry"){q("#rs-bca").textContent="Buscando el peritaje y el historial en la ficha de BCA…";mostrarBotones(false);await traerDeBca(l,v,msg)}});
   pintaResumen();traerDeBca(l,v,msg)}
 
 /* ---------- Contratos → Reservas (lista en la pestaña Contratos) ---------- */

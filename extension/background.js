@@ -50,6 +50,16 @@ async function iniciar(origen) {
   await ajuste("recogida/actual", { estado: "solicitada", solicitada: new Date().toISOString(), mensaje: "Abriendo BCA…" }).catch(() => {});
   return { ok: true, msg: "Recogida lanzada: se ha abierto BCA en una ventana." };
 }
+async function sesionBCAok() {
+  try {
+    const O = "https://es.bca-europe.com";
+    const cal = await fetch(O + "/buyer/facetedSearch/GetSaleCalendarViewModel?page=1&bq=salecountry_exact:ES&cultureCode=es", { method: "POST", credentials: "include" }).then(x => x.json());
+    const sale = (cal.SaleCalendarViewModel || []).flatMap(g => g.Values)[0];
+    if (!sale) return true;
+    const v = await fetch(O + "/buyer/facetedsearch/GetViewModel?bq=saleid_exact:" + sale.SaleId + "&saleHeader=true&cultureCode=es&sort=LotNumber&page=1", { method: "POST", credentials: "include" }).then(x => x.json());
+    return !v.IsUserAnonymous;
+  } catch (e) { return true; } // si no se puede comprobar, se intenta igualmente
+}
 async function abrirBCA() {
   const w = await chrome.windows.create({ url: BCA_URL, type: "popup", width: 1150, height: 820, focused: true });
   return { ok: true, msg: "BCA abierto. Inicia sesión en esa ventana." };
@@ -105,6 +115,7 @@ chrome.runtime.onMessage.addListener((m, sender, responder) => {
       case "docs-bca": {
         // Documentos PDF de la ficha de un lote de BCA (peritaje, historial de mantenimiento…), con la sesión del usuario
         const u = new URL(String(m.url || ""), "https://es.bca-europe.com"); if (u.origin !== "https://es.bca-europe.com") throw new Error("URL no válida");
+        if (!(await sesionBCAok())) return { ok: true, sinSesion: true, docs: [] };
         const h = await (await fetch(u.href, { credentials: "include" })).text();
         const cand = new Map();
         for (const x of h.matchAll(/(?:href|src|data-[a-z-]*url|data-href)\s*=\s*["']([^"']+)["']/gi)) {
