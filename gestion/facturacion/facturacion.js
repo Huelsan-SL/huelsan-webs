@@ -28,7 +28,7 @@ const TXT_GARANTIA="Vehículo de ocasión con garantía legal de 1 año desde la
 const TXT_RGPD="Sus datos se tratan para gestionar la venta y cumplir obligaciones legales (fiscales y de Tráfico). Puede ejercer sus derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad escribiendo a nuestro correo.";
 
 /* ---------- estado ---------- */
-const S={db:null,tab:"facturas",emisor:{},facturas:new Map(),clientes:new Map(),gastos:new Map(),docsCoche:new Map(),proveedores:new Map(),cont:new Map(),lotes:[],
+const S={db:null,tipoIS:25,tab:"facturas",emisor:{},facturas:new Map(),clientes:new Map(),gastos:new Map(),docsCoche:new Map(),proveedores:new Map(),cont:new Map(),lotes:[],
   ed:null,edSucio:false,filtro:{anio:String(new Date().getFullYear()),estado:"",q:""},gfiltro:{anio:String(new Date().getFullYear()),cat:"",q:""},mat:null,res:{anio:String(new Date().getFullYear())}};
 
 /* ---------- NIF / NIE / CIF ---------- */
@@ -120,6 +120,7 @@ const regimenTexto=g=>{if(g.sinFactura)return"Efectivo sin factura";const r=[...
     S.db=await window.claude.use("db");
     const vigilar=(col,mapa,cb)=>S.db.collection(col).onSnapshot(sn=>{mapa.clear();sn.docs.forEach(d=>mapa.set(d.id,{...d.data(),id:d.id}));cb&&cb();pintarSiProcede(col)},e=>console.error(e));
     vigilar("facturas",S.facturas);vigilar("clientes",S.clientes);vigilar("gastos",S.gastos);vigilar("docscoche",S.docsCoche);vigilar("proveedores",S.proveedores);
+    S.db.doc("config/impuestos").onSnapshot(sn=>{const d=sn&&sn.exists&&sn.data&&sn.data();const t=d&&+d.tipoIS;S.tipoIS=t>=0&&t<=100?t:25;pintarSiProcede("config")},()=>{});
     S.db.collection("facturacion").onSnapshot(sn=>{S.cont.clear();let em=null;sn.docs.forEach(d=>{if(d.id==="emisor")em=d.data();else S.cont.set(d.id,d.data())});
       if(em)S.emisor=em;else if(!S.emisorCargado)prellenarEmisor();S.emisorCargado=true;pintarSiProcede("facturacion")});
     await cargarLotes();
@@ -930,22 +931,28 @@ function porMatricula(){
   for(const f of emitidas()){const k=normMat(f.vehiculo&&f.vehiculo.matricula);if(!k)continue;const x=get(k);if(!x.titulo)x.titulo=[f.vehiculo.marca,f.vehiculo.modelo].filter(Boolean).join(" ");
     const e=efecto(f);x.ventaRebu+=e.rebu;x.ventaBase+=e.base;x.ventaCuota+=e.cuota;x.ventas+=e.rebu+e.base;x.facturas.push(f)}
   for(const x of m.values()){x.coste=r2(x.compra+x.gastos);x.margen=r2(x.ventas-x.coste);
-    const mr=r2(x.ventaRebu-x.compraRebu);x.ivaRebu=x.ventaRebu>0&&mr>0?r2(mr*21/121):0;x.margenNeto=r2(x.margen-x.ivaRebu)}
+    const mr=r2(x.ventaRebu-x.compraRebu);x.ivaRebu=x.ventaRebu>0&&mr>0?r2(mr*21/121):0;x.margenNeto=r2(x.margen-x.ivaRebu);x.isEst=x.ventas&&x.margenNeto>0?r2(x.margenNeto*(S.tipoIS||0)/100):0;x.netoIS=r2(x.margenNeto-x.isEst)}
   return[...m.values()];
 }
+const isTotal=lista=>{const b=r2(lista.filter(x=>x.ventas).reduce((a,x)=>a+x.margenNeto,0));return b>0?r2(b*(S.tipoIS||0)/100):0};
+$("#vista").addEventListener("change",async e=>{const t=e.target;if(t.dataset&&t.dataset.tipois!=null){
+  const v=+String(t.value).replace(",",".");if(!(v>=0&&v<=100)){toast("El tipo de IS debe estar entre 0 y 100");pintar();return}
+  S.tipoIS=v;pintar();try{await S.db.doc("config/impuestos").set({tipoIS:v,actualizadoPor:HUELSAN.email&&HUELSAN.email()});toast("Tipo de IS guardado: "+v+" %")}catch(err){toast("No se ha podido guardar: "+err.message,6000)}}});
 function vistaMatriculas(){
   const lista=porMatricula();const q=normMat(S.mq||""),qt=String(S.mq||"").toLowerCase();
   if(S.mat){const x=lista.find(y=>y.matricula===S.mat);if(x)return detalleMatricula(x);S.mat=null}
   const fil=lista.filter(x=>!q||x.matricula.includes(q)||x.titulo.toLowerCase().includes(qt)).sort((a,b)=>(b.facturas.length?1:0)-(a.facturas.length?1:0)||b.coste-a.coste);
   const T=k=>r2(fil.reduce((s,x)=>s+x[k],0));
-  return`<div><h1>Contabilidad por matrícula</h1><p class="muted" style="margin:4px 0 0">Cada coche con su compra, sus gastos y su venta. Los gastos con IVA deducible cuentan por su base (el IVA se recupera); los de REBU, sin IVA o en efectivo sin factura, por el total. El margen neto descuenta el IVA del REBU (21/121 del margen de las ventas en REBU). Son cifras orientativas: la liquidación la confirma la gestoría.</p></div>
-  <label>Buscar<input type="search" data-mq value="${esc(S.mq||"")}" placeholder="Matrícula, marca o modelo"></label>
-  <div class="kpis"><div class="kpi"><b>${eur(T("coste"))}</b><span>compras + gastos</span></div><div class="kpi"><b>${eur(T("ventas"))}</b><span>ventas (sin IVA general)</span></div><div class="kpi"><b>${eur(T("margen"))}</b><span>margen bruto</span></div><div class="kpi"><b>${eur(T("margenNeto"))}</b><span>margen tras IVA del REBU</span></div></div>
-  ${fil.length?`<div class="tw"><table><thead><tr><th>Matrícula</th><th>Vehículo</th><th>Estado</th><th class="num">Compra</th><th class="num">Gastos</th><th class="num">Venta</th><th class="num">Margen</th><th class="num">IVA REBU</th><th class="num">Margen neto</th><th>Documentos</th></tr></thead><tbody>
+  return`<div><h1>Contabilidad por matrícula</h1><p class="muted" style="margin:4px 0 0">Cada coche con su compra, sus gastos y su venta. Los gastos con IVA deducible cuentan por su base (el IVA se recupera); los de REBU, sin IVA o en efectivo sin factura, por el total. El margen neto descuenta el IVA del REBU (21/121 del margen de las ventas en REBU). El IS estimado es el margen neto × el tipo indicado (no se aplica a coches con pérdida; el total se calcula sobre el resultado conjunto de los coches vendidos). Son cifras orientativas: la liquidación la confirma la gestoría.</p></div>
+  <div class="row" style="gap:12px;align-items:flex-end"><label style="flex:1">Buscar<input type="search" data-mq value="${esc(S.mq||"")}" placeholder="Matrícula, marca o modelo"></label>
+  <label style="width:150px">Tipo de IS estimado (%)<input type="number" min="0" max="100" step="0.5" data-tipois value="${esc(S.tipoIS)}"></label></div>
+  <div class="kpis"><div class="kpi"><b>${eur(T("coste"))}</b><span>compras + gastos</span></div><div class="kpi"><b>${eur(T("ventas"))}</b><span>ventas (sin IVA general)</span></div><div class="kpi"><b>${eur(T("margen"))}</b><span>margen bruto</span></div><div class="kpi"><b>${eur(T("margenNeto"))}</b><span>margen tras IVA del REBU</span></div>
+    <div class="kpi"><b>${eur(isTotal(fil))}</b><span>IS estimado (${S.tipoIS} %, coches vendidos)</span></div></div>
+  ${fil.length?`<div class="tw"><table><thead><tr><th>Matrícula</th><th>Vehículo</th><th>Estado</th><th class="num">Compra</th><th class="num">Gastos</th><th class="num">Venta</th><th class="num">Margen</th><th class="num">IVA REBU</th><th class="num">Margen neto</th><th class="num">IS est.</th><th class="num">Neto tras IS</th><th>Documentos</th></tr></thead><tbody>
     ${fil.map(x=>`<tr data-mat="${esc(x.matricula)}" style="cursor:pointer"><td>${x.matricula.startsWith("lote:")?"—":`<span class="mat">${esc(x.matricula)}</span>`}</td><td>${esc(x.titulo)}</td>
       <td>${x.lote?esc(({comprado:"Comprado",stock:"Stock",vendido:"Vendido"})[x.lote.estado]||x.lote.estado):x.facturas.length?"Vendido":"—"}</td>
       <td class="num">${eur(x.compra)}</td><td class="num">${eur(x.gastos)}</td><td class="num">${x.ventas?eur(x.ventas):"—"}</td>
-      <td class="num" style="color:${x.ventas?(x.margen>=0?"var(--ok)":"var(--bad)"):"inherit"}">${x.ventas?eur(x.margen):"—"}</td><td class="num">${x.ivaRebu?eur(x.ivaRebu):"—"}</td><td class="num"><b>${x.ventas?eur(x.margenNeto):"—"}</b></td>
+      <td class="num" style="color:${x.ventas?(x.margen>=0?"var(--ok)":"var(--bad)"):"inherit"}">${x.ventas?eur(x.margen):"—"}</td><td class="num">${x.ivaRebu?eur(x.ivaRebu):"—"}</td><td class="num"><b>${x.ventas?eur(x.margenNeto):"—"}</b></td><td class="num">${x.ventas?eur(x.isEst):"—"}</td><td class="num"><b>${x.ventas?eur(x.netoIS):"—"}</b></td>
       <td>${x.facturas.length?`<span class="tag ok">${x.facturas.length} venta</span> `:""}${x.docs.length?`<span class="tag acc">${x.docs.length} gasto${x.docs.length>1?"s":""}</span>`:""}${docsTotales(x)?` <span class="tag">${docsTotales(x)} doc${docsTotales(x)>1?"s":""}</span>`:""}${!x.docs.some(g=>g.categoria==="Compra del vehículo")&&x.compra?` <span class="tag warn">sin factura de compra</span>`:""}${x.appSinFactura.length?` <span class="tag bad">${x.appSinFactura.length} sin factura</span>`:""}</td></tr>`).join("")}
   </tbody></table></div>`:`<div class="vacio">Aún no hay coches comprados, gastos ni ventas.</div>`}`;
 }
@@ -954,7 +961,8 @@ function detalleMatricula(x){
   return`<div class="row sp"><div class="row"><button class="btn sm" data-acc="mat-volver">← Todas</button><h1>${x.matricula.startsWith("lote:")?"Sin matrícula":`<span class="mat" style="font-size:18px">${esc(x.matricula)}</span>`} ${esc(x.titulo)}</h1></div>
     <span class="row"><button class="btn" data-acc="mat-gasto">+ Subir factura de compra o gasto</button>${l&&l.estado!=="vendido"&&!x.facturas.length?`<button class="btn primary" data-acc="mat-facturar">Crear factura de venta</button>`:""}${l&&(l.estado==="vendido"||x.facturas.length)?`<button class="btn" data-venta="${esc(x.matricula)}" title="Factura, contrato, listado, solicitud y mandato y copias para imprimir">Documentos de venta</button><button class="btn ${x.facturas.length?"primary":""}" data-gest="${esc(x.matricula)}" title="Documentación y datos para el cambio de nombre">Cambio de nombre · gestoría</button>`:""}</span></div>
   <div class="kpis"><div class="kpi"><b>${eur(x.compra)}</b><span>compra</span></div><div class="kpi"><b>${eur(x.gastos)}</b><span>gastos (sin IVA deducible)</span></div><div class="kpi"><b>${eur(x.iva)}</b><span>IVA soportado (se recupera)</span></div><div class="kpi"><b>${x.ventas?eur(x.ventas):"—"}</b><span>venta (sin IVA general)</span></div>
-    <div class="kpi"><b>${x.ventas?eur(x.margen):"—"}</b><span>margen bruto</span></div><div class="kpi"><b>${x.ivaRebu?eur(x.ivaRebu):"—"}</b><span>IVA del REBU</span></div><div class="kpi"><b>${x.ventas?eur(x.margenNeto):"—"}</b><span>margen neto</span></div></div>
+    <div class="kpi"><b>${x.ventas?eur(x.margen):"—"}</b><span>margen bruto</span></div><div class="kpi"><b>${x.ivaRebu?eur(x.ivaRebu):"—"}</b><span>IVA del REBU</span></div><div class="kpi"><b>${x.ventas?eur(x.margenNeto):"—"}</b><span>margen neto</span></div>
+    <div class="kpi"><b>${x.ventas?eur(x.isEst):"—"}</b><span>IS estimado (${S.tipoIS} %)</span></div><div class="kpi"><b>${x.ventas?eur(x.netoIS):"—"}</b><span>neto tras IS</span></div></div>
   ${l?`<p class="muted" style="margin:0">${esc([l.vin?"Bastidor "+l.vin:"",l.anio,l.km?miles(String(Math.round(l.km)))+" km":"",l.combustible,l.iva?"Compra en "+l.iva:""].filter(Boolean).join(" · "))}</p>`:""}
   ${x.appSinFactura.length?`<div class="card" style="border-color:var(--bad)"><h3 style="color:var(--bad)">Gastos anotados en la ficha sin factura (${eur(x.gastosApp)})</h3>
     <p class="muted" style="margin:0">Cada gasto necesita su factura. Súbela (se leen el IVA y la base) o márcalo como pago en efectivo sin factura.</p>
