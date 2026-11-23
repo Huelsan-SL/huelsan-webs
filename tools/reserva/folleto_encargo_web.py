@@ -16,6 +16,7 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.enums import TA_LEFT
 from reportlab.platypus import Paragraph
 from common import *
+VERDE=colors.HexColor('#1E9E52'); VERDE_L=colors.HexColor('#4CD38A')
 
 W, H = A4
 M = 16 * mm
@@ -107,7 +108,7 @@ def pagina1(c, peritaje, historial):
     sc = maxw / STOCK_HI
     by = y - 25 * mm
     c.setFillColor(CHAMPAN_L); c.setFont('PopM', 9); c.drawString(bx + 8 * mm, by + 9.5 * mm, 'POR ENCARGO')
-    rrect(c, bx + 8 * mm, by, PRECIO * sc, 7.5 * mm, 2, fill=CHAMPAN)
+    rrect(c, bx + 8 * mm, by, PRECIO * sc, 7.5 * mm, 2, fill=VERDE_L)
     c.setFillColor(colors.white); c.setFont('PopB', 15); c.drawString(bx + 8 * mm + PRECIO * sc + 4 * mm, by + 1.6 * mm, f'{n0(PRECIO)} €')
     by2 = by - 22 * mm
     c.setFillColor(colors.HexColor('#A3B1C2')); c.setFont('PopM', 9); c.drawString(bx + 8 * mm, by2 + 9.5 * mm, 'EN STOCK')
@@ -115,8 +116,8 @@ def pagina1(c, peritaje, historial):
     c.setFillColor(colors.HexColor('#6C86A4')); c.rect(bx + 8 * mm + STOCK_LO * sc, by2, (STOCK_HI - STOCK_LO) * sc, 7.5 * mm, stroke=0, fill=1)
     c.setFillColor(colors.HexColor('#D3DCE6')); c.setFont('PopB', 11.5); c.drawString(bx + 8 * mm + STOCK_HI * sc + 4 * mm, by2 + 1.9 * mm, f'{n0(STOCK_LO)} – {n0(STOCK_HI)} €')
     ay = y - bh + 4 * mm
-    rrect(c, bx + 8 * mm, ay, bw - 16 * mm, 15 * mm, 3, fill=CHAMPAN)
-    c.setFillColor(GRAFITO); c.setFont('PopB', 10); track(c, bx + 13 * mm, ay + 8.6 * mm, 2.2, 'AHORRO')
+    rrect(c, bx + 8 * mm, ay, bw - 16 * mm, 15 * mm, 3, fill=VERDE)
+    c.setFillColor(colors.white); c.setFont('PopB', 10); track(c, bx + 13 * mm, ay + 8.6 * mm, 2.2, 'AHORRO')
     c.setFont('PopB', 19); c.drawString(bx + 13 * mm + 28 * mm, ay + 4.6 * mm, f'entre {n0(AH_LO)} € y {n0(AH_HI)} €')
     y -= bh + 8 * mm
 
@@ -133,7 +134,7 @@ def pagina1(c, peritaje, historial):
     for i, (n, tt, tx) in enumerate(razones):
         cx = M + (i % 2) * (gw + 6 * mm); cy = y - (i // 2) * (gh + 4 * mm)
         rrect(c, cx, cy - gh, gw, gh, 4, fill=colors.HexColor('#143659'), stroke=colors.HexColor('#2B4D72'), lw=0.6)
-        c.setFillColor(CHAMPAN); c.setFont('PopB', 20); c.drawString(cx + 5 * mm, cy - 11 * mm, n)
+        c.setFillColor(VERDE_L); c.setFont('PopB', 20); c.drawString(cx + 5 * mm, cy - 11 * mm, n)
         P(c, tt, cx + 15 * mm, cy - 6.2 * mm, gw - 18 * mm, 'PopB', 10.5, 13, colors.white)
         P(c, tx, cx + 15 * mm, cy - 14 * mm, gw - 20 * mm, 'Car', 9.6, 11.8, colors.HexColor('#d7d9dc'))
     c.setFillColor(colors.HexColor('#6C86A4')); c.setFont('Car', 7.2)
@@ -179,7 +180,7 @@ def pagina2(c, peritaje, historial):
     for i, (tt, tx) in enumerate(items):
         cx = M + (i % 2) * (gw + 6 * mm); cy = y - (i // 2) * (gh + 3 * mm)
         rrect(c, cx, cy - gh, gw, gh, 4, fill=colors.white, stroke=CHAMPAN_L, lw=0.7)
-        c.setFillColor(CHAMPAN); c.circle(cx + 6 * mm, cy - 6 * mm, 2.1 * mm, stroke=0, fill=1)
+        c.setFillColor(VERDE); c.circle(cx + 6 * mm, cy - 6 * mm, 2.1 * mm, stroke=0, fill=1)
         P(c, tt, cx + 11.5 * mm, cy - 3.6 * mm, gw - 14 * mm, 'PopB', 9.6, 12, GRAFITO)
         P(c, tx, cx + 11.5 * mm, cy - 9 * mm, gw - 14 * mm, 'Car', 9.2, 10.8, colors.HexColor('#2B4D72'))
     y -= 2 * (gh + 3 * mm) + 3 * mm
@@ -193,13 +194,13 @@ def pagina2(c, peritaje, historial):
     for i, (tt, tx) in enumerate(pasos):
         sx = M + i * (sw + 4 * mm)
         rrect(c, sx, y - sh, sw, sh, 4, fill=GRAFITO)
-        c.setFillColor(CHAMPAN); c.setFont('PopB', 20); c.drawString(sx + 4 * mm, y - 10 * mm, str(i + 1))
+        c.setFillColor(VERDE_L); c.setFont('PopB', 20); c.drawString(sx + 4 * mm, y - 10 * mm, str(i + 1))
         P(c, tt, sx + 4 * mm, y - 12 * mm, sw - 6 * mm, 'PopB', 9.6, 11.5, colors.white)
         P(c, tx, sx + 4 * mm, y - 18 * mm, sw - 8 * mm, 'Car', 8.8, 10.4, colors.HexColor('#d7d9dc'))
     y -= sh + 6 * mm
 
     bh = 40 * mm
-    rrect(c, M, y - bh, W - 2 * M, bh, 5, fill=colors.white, stroke=CHAMPAN, lw=1.4)
+    rrect(c, M, y - bh, W - 2 * M, bh, 5, fill=colors.white, stroke=VERDE, lw=1.4)
     c.setFillColor(CHAMPAN_D); c.setFont('PopB', 12.5); c.drawString(M + 6 * mm, y - 8.5 * mm, 'Tu señal, protegida')
     P(c, sup(7), M + 6 * mm + 42 * mm, y - 5.4 * mm, 8 * mm, 'Car', 10, 11, CHAMPAN_D)
     P(c, 'Te devolvemos <b>el 10 % íntegro</b> si:', M + 6 * mm, y - 11.5 * mm, 90 * mm, 'Car', 10.4, 12.5, GRAFITO)
@@ -207,19 +208,19 @@ def pagina2(c, peritaje, historial):
           'No conseguimos el coche en la subasta (o lo traspasas a otro).', 'No podemos entregártelo por causa ajena a ti.']
     yy = y - 18 * mm
     for b in bl:
-        c.setFillColor(CHAMPAN); c.circle(M + 8 * mm, yy - 1.3 * mm, 1 * mm, stroke=0, fill=1)
+        c.setFillColor(VERDE); c.circle(M + 8 * mm, yy - 1.3 * mm, 1 * mm, stroke=0, fill=1)
         P(c, b, M + 12 * mm, yy + 1.4 * mm, 108 * mm, 'Car', 9.6, 11.4, GRAFITO); yy -= 5.3 * mm
     sx = W - M - 31 * mm; sy = y - bh / 2
     c.setFillColor(GRAFITO); c.circle(sx, sy, 14.5 * mm, stroke=0, fill=1)
-    c.setStrokeColor(CHAMPAN); c.setLineWidth(1); c.circle(sx, sy, 12.4 * mm, stroke=1, fill=0)
-    c.setFillColor(CHAMPAN); c.setFont('PopB', 21); c.drawCentredString(sx, sy - 1 * mm, '1 año')
+    c.setStrokeColor(VERDE); c.setLineWidth(1); c.circle(sx, sy, 12.4 * mm, stroke=1, fill=0)
+    c.setFillColor(VERDE); c.setFont('PopB', 21); c.drawCentredString(sx, sy - 1 * mm, '1 año')
     c.setFillColor(colors.white); c.setFont('PopM', 6.6); c.drawCentredString(sx, sy - 5.6 * mm, 'DE GARANTÍA')
     c.setFont('Car', 7); c.drawCentredString(sx, sy + 6.2 * mm, 'Incluido')
     y -= bh + 5 * mm
 
     ch = 17 * mm
-    rrect(c, M, y - ch, W - 2 * M, ch, 4, fill=CHAMPAN)
-    c.setFillColor(GRAFITO); c.setFont('PopB', 13); c.drawString(M + 6 * mm, y - 7.2 * mm, 'Dinos qué coche buscas.')
+    rrect(c, M, y - ch, W - 2 * M, ch, 4, fill=VERDE)
+    c.setFillColor(colors.white); c.setFont('PopB', 13); c.drawString(M + 6 * mm, y - 7.2 * mm, 'Dinos qué coche buscas.')
     c.setFont('Car', 10.2); c.drawString(M + 6 * mm, y - 12.8 * mm, 'Lo encontramos, te lo enseñamos con todo detalle y decides tú.')
     c.setFont('PopB', 11.5)
     wx = W - M - 6 * mm - c.stringWidth(WEB, 'PopB', 11.5)
