@@ -15,10 +15,13 @@ const GT=()=>window.HuelsanGestoria&&window.HuelsanGestoria._t;
 
 /* campos que se pueden colocar en el modelo */
 const CAMPOS=[
-  ["Comprador",[["comprador_nombre","Nombre y apellidos / razón social"],["comprador_nombre_pila","Solo el nombre (o razón social)"],["comprador_fecha_nac","Fecha de nacimiento (particular)"],["comprador_apellido1","Primer apellido"],["comprador_apellido2","Segundo apellido"],["comprador_apellidos","Apellidos (los dos)"],["comprador_tipo_via","Tipo de vía (Calle, Avenida…)"],["comprador_calle","Nombre de la vía"],["comprador_numero","Número de la vía"],["comprador_bloque","Bloque"],["comprador_portal","Portal"],["comprador_escalera","Escalera"],["comprador_planta","Planta"],["comprador_puerta","Puerta"],["comprador_dni","DNI, NIE o CIF"],["comprador_domicilio","Domicilio (calle y número)"],["comprador_cp","Código postal"],["comprador_municipio","Municipio"],["comprador_provincia","Provincia"],["comprador_direccion","Domicilio completo (en una línea)"],["comprador_telefono","Teléfono"],["comprador_email","Correo electrónico"],["marca_particular","Marca «X» si es particular"],["marca_empresa","Marca «X» si es empresa"],["representante_nombre","Representante o administrador (empresa)"],["representante_dni","DNI del representante (empresa)"],["representante_cargo","Cargo del representante (empresa)"]]],
+  ["Comprador",[["comprador_nombre","Nombre y apellidos / razón social"],["comprador_nombre_pila","Solo el nombre (o razón social)"],["comprador_fecha_nac","Fecha de nacimiento (particular)"],["comprador_apellido1","Primer apellido"],["comprador_apellido2","Segundo apellido"],["comprador_apellidos","Apellidos (los dos)"],["comprador_tipo_via","Tipo de vía (Calle, Avenida…)"],["comprador_calle","Nombre de la vía"],["comprador_numero","Número de la vía"],["comprador_bloque","Bloque"],["comprador_portal","Portal"],["comprador_escalera","Escalera"],["comprador_planta","Planta"],["comprador_puerta","Puerta"],["comprador_dni","DNI, NIE o CIF"],["comprador_domicilio","Domicilio (calle y número)"],["comprador_cp","Código postal"],["comprador_municipio","Municipio"],["comprador_provincia","Provincia"],["comprador_direccion","Domicilio completo (en una línea)"],["comprador_telefono","Teléfono"],["comprador_email","Correo electrónico"],["marca_particular","Marca «X» si es particular"],["marca_empresa","Marca «X» si es empresa"],["representante_nombre","Representante o administrador (empresa)"],["representante_dni","DNI del representante (empresa)"],["representante_cargo","Cargo del representante (empresa)"],["comprador_via","Vía con su tipo, sin número (Calle Mayor)"]]],
+  ["Mandante (el que firma el mandato)",[["mandante_nombre","Nombre y apellidos (particular, o administrador si es empresa)"],["mandante_dni","DNI / NIE del que firma"],["mandante_empresa","En representación de (razón social, solo empresa)"],["mandante_empresa_cif","CIF de la empresa (solo empresa)"],["asunto1","Asunto del mandato, línea 1"],["asunto2","Asunto del mandato, línea 2"]]],
+  ["Escrituras de la sociedad (certificado sustitutivo)",[["escr_fecha","Fecha de la escritura"],["escr_colegio","Colegio Notarial de"],["escr_notario","Notario (nombre)"],["escr_protocolo","Número de protocolo"],["escr_rm","Registro Mercantil de"],["escr_tomo","Tomo"],["escr_folio","Folio"],["escr_hoja","Hoja"],["escr_fecha_insc","Fecha de inscripción"],["x_poderes_amplios","Marca «poderes amplios y bastantes»"],["gestoria_jefatura","Jefatura Provincial de Tráfico de"]]],
   ["Vendedor",[["vendedor_nombre","Razón social del vendedor"],["vendedor_nif","NIF del vendedor"],["vendedor_direccion","Domicilio del vendedor (una línea)"],["vendedor_rep_nombre","Representante de Huelsan"],["vendedor_rep_dni","DNI del representante de Huelsan"]]],
   ["Vehículo",[["vehiculo_matricula","Matrícula"],["vehiculo_servicio","Servicio al que se destina (DGT)"],["vehiculo_bastidor","Bastidor (VIN)"],["vehiculo_marca","Marca"],["vehiculo_modelo","Modelo"],["vehiculo_marca_modelo","Marca y modelo"],["vehiculo_fecha_matric","Fecha de matriculación"],["vehiculo_km","Kilómetros"]]],
   ["Operación y firma",[["firma_vendedor","Firma del vendedor (imagen)"],["x_cambio_titularidad","Marca «Cambio de titularidad»"],["x_comprador_interesado","Marca «Interesado» (comprador)"],["x_vendedor_titular","Marca «Titular» (vendedor)"],["precio","Precio total"],["fecha_venta","Fecha de la venta"],["lugar","Lugar (municipio)"],["fecha_hoy","Fecha de hoy (dd/mm/aaaa)"],["dia_hoy","Día de hoy"],["mes_hoy","Mes de hoy (en letra)"],["anio_hoy","Año de hoy"],["gestoria_nombre","Nombre de la gestoría"]]]];
+const JEFATURA_DEF="Huelva"; // Jefatura de Tráfico donde tramita la gestoría (despacho en Huelva); se cambia en el diálogo de la gestoría
 const LUGAR_REP={francisco:"Huelva",gustavo:"Murcia"}; // dónde se vende y se firma según quién vende
 const TODOS=CAMPOS.flatMap(g=>g[1]);
 
@@ -72,6 +75,14 @@ function valores(cx,tipo){
   const fv=(cx.f&&(cx.f.fechaOperacion||cx.f.fechaExpedicion))||(cx.c&&cx.c.fecha)||"";
   const precio=t?t.total:(cx.c&&cx.c.precio&&+cx.c.precio.total)||0;
   return{
+    comprador_via:dg?[dg.tv,dg.ca].filter(Boolean).join(" "):[tipoVia,calleSola].filter(Boolean).join(" "),
+    mandante_nombre:emp?[cc.nombre,cc.apellidos].filter(Boolean).join(" "):nombre,mandante_dni:emp?(cc.dni||""):(cl.nif||cc.dni||""),
+    mandante_empresa:emp?nombre:"",mandante_empresa_cif:emp?(cl.nif||cc.cif||""):"",
+    asunto1:"TRANSFERENCIA (CAMBIO DE TITULARIDAD) DEL VEHICULO"+((v.matricula||cx.mat)?" MATRICULA "+(v.matricula||cx.mat):""),
+    asunto2:[[v.marca,v.modelo].filter(Boolean).join(" "),v.bastidor?"BASTIDOR "+v.bastidor:""].filter(Boolean).join(" · ").toUpperCase(),
+    escr_fecha:live.escrFecha?fecha(live.escrFecha):"",escr_colegio:live.escrColegio||"",escr_notario:live.escrNotario||"",escr_protocolo:live.escrProtocolo||"",
+    escr_rm:live.rmRegistro||"",escr_tomo:live.rmTomo||"",escr_folio:live.rmFolio||"",escr_hoja:live.rmHoja||"",escr_fecha_insc:live.rmFecha?fecha(live.rmFecha):"",
+    x_poderes_amplios:"X",gestoria_jefatura:(M.gestoria&&M.gestoria.jefatura)||JEFATURA_DEF,
     comprador_nombre:nombre,comprador_dni:emp?(cl.nif||cc.cif||""):(cl.nif||cc.dni||""),comprador_domicilio:calle,comprador_cp:cp,comprador_municipio:mun,comprador_provincia:prov,
     comprador_direccion:dir(calle,cp,mun,prov),comprador_telefono:cl.telefono||cc.telefono||"",comprador_email:cl.email||cc.email||"",
     vehiculo_servicio:"B-00 S. Particular Sin especificar",comprador_nombre_pila:pila,comprador_apellido1:ap1,comprador_apellido2:ap2,comprador_apellidos:apes,comprador_tipo_via:dg?dg.tv:tipoVia,comprador_calle:dg?dg.ca:calleSola,comprador_numero:dg?dg.nu:numVia,comprador_bloque:live.bloque||"",comprador_portal:live.portal||"",comprador_escalera:live.escalera||"",comprador_planta:live.planta||"",comprador_puerta:live.puerta||"",
@@ -88,11 +99,26 @@ function valores(cx,tipo){
 
 /* ---------- modelos en blanco (solicitud DGT, mandato de la gestoría, etc.) ---------- */
 // contratoscfg/mandato = {docs:[{id,nombre,archivo:{ruta,nombre,tipo,size},campos:{clave:{p,x,y,s}},form:{nombreCampoPDF:clave}}]}
+const INCLUIDOS=[ // modelos que envió la gestoría, guardados en la app (gestion/facturacion/modelos/): se añaden solos la primera vez
+  {plantilla:"gest-mandato",rol:"mandato",nombre:"Orden de mandato (gestoría)",url:"facturacion/modelos/orden-mandato-especifica.pdf"},
+  {plantilla:"gest-certificado",rol:"certificado",nombre:"Certificado sustitutivo de escrituras y poderes",url:"facturacion/modelos/certificado-sustitutivo-escrituras-poderes.pdf"}];
+async function incluirModelos(){
+  const nuevos=INCLUIDOS.filter(m=>!(M.cfg.quitadas||[]).includes(m.plantilla)&&!M.cfg.docs.some(d=>d.plantilla===m.plantilla||d.rol===m.rol));
+  for(const m of nuevos){try{
+    const r=await fetch(BASE+m.url,{cache:"no-cache"});if(!r.ok)throw new Error("HTTP "+r.status);
+    const fi=new File([await r.blob()],m.url.split("/").pop(),{type:"application/pdf"}),u=await HUELSAN.subir("documentos",fi);
+    const doc={id:nid(),nombre:m.nombre,plantilla:m.plantilla,rol:m.rol,archivo:{ruta:u.id,nombre:fi.name,tipo:"application/pdf",size:fi.size,subido:new Date().toISOString()},campos:{},form:{}};
+    const det=await sugerir(doc);doc.campos=det.campos;doc.form=det.form;doc.v=DET_V;M.cfg.docs.push(doc);await guardarCfg();
+  }catch(e){console.warn("No se ha podido añadir el modelo «"+m.nombre+"»",e)}}}
 async function cargarModelo(){
+  if(M.cargando)return M.cargando;
+  try{return await(M.cargando=cargarModelo0())}finally{M.cargando=null}}
+async function cargarModelo0(){
   const sn=await S.db.doc("contratoscfg/mandato").get();const d=sn&&sn.exists?sn.data():{};
-  if(Array.isArray(d.docs))M.cfg={docs:d.docs};
-  else if(d.archivo)M.cfg={docs:[{id:"d1",nombre:"Solicitud y mandato",archivo:d.archivo,campos:d.campos||{},form:{}}]}; // formato anterior
-  else M.cfg={docs:[]};
+  if(Array.isArray(d.docs))M.cfg={docs:d.docs,quitadas:d.quitadas||[]};
+  else if(d.archivo)M.cfg={docs:[{id:"d1",nombre:"Solicitud y mandato",archivo:d.archivo,campos:d.campos||{},form:{}}],quitadas:[]}; // formato anterior
+  else M.cfg={docs:[],quitadas:[]};
+  await cargarPDFLib();await incluirModelos();
   // al añadir campos nuevos a la detección, se completan solos en los modelos ya guardados (sin tocar los que ya estaban colocados)
   let cambio=false;
   for(const doc of M.cfg.docs){if((doc.v||1)>=DET_V)continue;
@@ -100,7 +126,7 @@ async function cargarModelo(){
   if(cambio)try{await guardarCfg()}catch(e){}
   return M.cfg}
 const DET_V=2;
-const guardarCfg=()=>S.db.doc("contratoscfg/mandato").set({docs:M.cfg.docs});
+const guardarCfg=()=>S.db.doc("contratoscfg/mandato").set({docs:M.cfg.docs,quitadas:M.cfg.quitadas||[]});
 const docModelo=id=>M.cfg.docs.find(x=>x.id===id);
 async function bytesModelo(doc){const a=doc.archivo;const b=await HUELSAN.bajar("documentos",a.ruta);return{bytes:await bytesDe(b),pdf:esPdf(a)}}
 
@@ -136,6 +162,12 @@ const DGT={"matricula":"vehiculo_matricula","nifnie del tutor":null,"codigo iae 
 function reglaForm(nombre){const ex=DGT[norm(nombre)];if(ex!==undefined)return ex;const l=norm(nombre).replace(/[_\-.\[\]0-9]+/g," ").trim();
   const sec=/vendedor|transmitente|cedente/.test(l)?"vendedor":/mandatario|gestor/.test(l)?"gestor":"comprador";
   return reglaCampo(l,sec)||(/(^|\s)(dni|nif|nie|cif)(\s|$)/.test(l)?(sec==="vendedor"?"vendedor_nif":"comprador_dni"):null)}
+/* Modelos de la gestoría (Colegio de Gestores de Sevilla): se reconocen por los nombres de sus campos y se mapean con tabla exacta,
+   porque nombres como «DNI», «CP», «de» o «En» también existen en la zona del gestor (ya rellena) y las reglas genéricas los confundirían. */
+const MODELOS_GEST=[
+  {rol:"mandato",firma:["ASUNTO 1","Colegio Gestores","Dña_3"],mapa:{"Dña":"mandante_nombre","conDNI":"mandante_dni","de 1":"mandante_empresa","DNI/CIF":"mandante_empresa_cif","domicilio notificaciones":"comprador_municipio","calle":"comprador_via","nº":"comprador_numero","CP":"comprador_cp","ASUNTO 1":"asunto1","ASUNTO 2":"asunto2","En":"lugar","a1":"dia_hoy","de":"mes_hoy","de_2":"anio_hoy"}},
+  {rol:"certificado",firma:["Rtte. Entidad","Nombre Registro Mercantil","CERTIFICO"],mapa:{"Rtte. Entidad":"representante_nombre","DNI 1":"representante_dni","Cargo":"representante_cargo","Nombre Entidad":"comprador_nombre","Localidad":"comprador_municipio","Provincia":"comprador_provincia","Dirección Entidad":"comprador_domicilio","Numero Fiscal":"comprador_dni","Dia/Mes/Año":"escr_fecha","Nombre Colegio":"escr_colegio","Nombre Notario/a":"escr_notario","Numero protocolo":"escr_protocolo","Nombre Registro Mercantil":"escr_rm","Tomo":"escr_tomo","Folio":"escr_folio","Hoja":"escr_hoja","Fecha 1":"escr_fecha_insc","CERTIFICO":"x_poderes_amplios|Sí","Localidad Jefatura":"gestoria_jefatura","Lugar Certificado":"lugar","Dia 2":"dia_hoy","Mes 2":"mes_hoy","Año 2":"anio_hoy"}}];
+const tablaModelo=nombres=>MODELOS_GEST.find(t=>t.firma.every(n=>nombres.includes(n)));
 /* campos de un formulario PDF → posiciones sobre la página (para poder verlos y moverlos en «Colocar campos») */
 function formACampos(pd,formMap,campos){
   const out={...(campos||{})},pages=pd.getPages(),form=pd.getForm();
@@ -155,7 +187,8 @@ async function sugerir(doc){
   // 1) formulario rellenable
   try{await cargarPDFLib();const pd=await PDFLib.PDFDocument.load(m.bytes,{ignoreEncryption:true});
     const pages=pd.getPages();
-    for(const fl of pd.getForm().getFields()){const tp=fl.constructor.name;if(/Button|Signature/.test(tp))continue;const k0=reglaForm(fl.getName());if(!k0)continue;
+    const todosF=pd.getForm().getFields(),tabla=tablaModelo(todosF.map(x=>x.getName()));if(tabla)out.rol=tabla.rol;
+    for(const fl of todosF){const tp=fl.constructor.name;if(/Button|Signature/.test(tp))continue;const k0=tabla?tabla.mapa[fl.getName()]:reglaForm(fl.getName());if(!k0)continue;
       if(tp==="PDFRadioGroup"){ // los botones de opción se marcan con una «X» en su casilla (más fiable que rellenarlos)
         const[k,opc]=k0.split("|");let ok=false;
         for(const w of fl.acroField.getWidgets()){let ov="";try{ov=w.getOnValue().decodeText()}catch(e){}if(opc&&ov!==opc)continue;
@@ -207,9 +240,13 @@ async function rellenarMandato(tplBytes,esPdfTpl,campos,vals,formMap){
           quita(fl)}catch(e){}continue}
       if(!/PDFTextField|PDFDropdown|PDFButton|PDFOptionList/.test(tp))continue;
       try{const clave=formMap[nombre],txt=clave&&tp!=="PDFButton"?limpia(vals[String(clave).split("|")[0]]):"";
-        if(txt)for(const w of fl.acroField.getWidgets()){const r=w.getRectangle(),x0=Math.min(r.x,r.x+r.width),y0=Math.min(r.y,r.y+r.height),bw=Math.abs(r.width),bh=Math.abs(r.height);
-          const pi=Math.max(0,pages.findIndex(pg=>(pg.node.Annots()?pg.node.Annots().asArray():[]).some(a=>doc.context.lookup(a)===w.dict)));let z=9;while(z>5&&ancho(txt,z)>bw-6)z-=.5;
-          pages[pi].drawText(txt,{x:x0+3,y:y0+Math.max(2,(bh-z)/2),size:z,font,color:rgb(0,0,0)})}
+        // casilla sin dato nuestro pero ya rellena en el modelo (p. ej. datos de la gestoría): se conserva, salvo que encima se coloque un campo nuestro
+        let previo="";if(!txt&&tp==="PDFTextField"){try{previo=limpia(fl.getText()||"")}catch(e){}}
+        if(txt||previo)for(const w of fl.acroField.getWidgets()){const r=w.getRectangle(),x0=Math.min(r.x,r.x+r.width),y0=Math.min(r.y,r.y+r.height),bw=Math.abs(r.width),bh=Math.abs(r.height);
+          const pi=Math.max(0,pages.findIndex(pg=>(pg.node.Annots()?pg.node.Annots().asArray():[]).some(a=>doc.context.lookup(a)===w.dict)));
+          if(!txt){const{width:PW,height:PH}=pages[pi].getSize();if(Object.values(campos||{}).some(c=>c&&(c.p||0)===pi&&c.x*PW>=x0-2&&c.x*PW<=x0+bw&&PH-c.y*PH>=y0-3&&PH-c.y*PH<=y0+bh+3))continue}
+          const t2=txt||previo;let z=9;while(z>5&&ancho(t2,z)>bw-6)z-=.5;
+          pages[pi].drawText(t2,{x:x0+3,y:y0+Math.max(2,(bh-z)/2),size:z,font,color:rgb(0,0,0)})}
         quita(fl)}catch(e){}}
   }
   for(const [k,c] of Object.entries(campos||{})){if(!c)continue;const kb=k.split("#")[0],pg=pages[c.p||0];if(!pg)continue;const{width:W,height:H}=pg.getSize();
@@ -226,15 +263,20 @@ async function modeloBytes(doc,cx,tipo){const m=await bytesModelo(doc),v=valores
   return rellenarMandato(m.bytes,m.pdf,doc.campos||{},v,doc.form||{})}
 function abrirPDF(bytes,nombre){const b=new Blob([bytes],{type:"application/pdf"});const u=URL.createObjectURL(b);const w=window.open(u,"_blank");if(!w)descargarBlob(b,nombre);setTimeout(()=>URL.revokeObjectURL(u),120000)}
 async function cargarGestoria(){try{const sn=await S.db.doc("facturacion/gestoria").get();M.gestoria=sn&&sn.exists?sn.data():{}}catch(e){M.gestoria={}}}
+const ORDEN_ROL=x=>x.rol==="mandato"?0:x.rol==="certificado"?1:2;
+const NOMBRE_ROL={mandato:"Orden de mandato",certificado:"Certificado sustitutivo de escrituras y poderes"};
+const ETIQ_ESCR={representante_nombre:"nombre del administrador",representante_dni:"DNI del administrador",representante_cargo:"cargo",escr_fecha:"fecha de la escritura",escr_colegio:"Colegio Notarial",escr_notario:"notario",escr_protocolo:"nº de protocolo",escr_rm:"Registro Mercantil",escr_tomo:"tomo",escr_folio:"folio",escr_hoja:"hoja",escr_fecha_insc:"fecha de inscripción"};
+const faltanEscrituras=cx=>{const v=valores(cx,"empresa");return Object.keys(ETIQ_ESCR).filter(k=>!v[k]).map(k=>ETIQ_ESCR[k])}; // datos de la ficha de la empresa que quedarían en blanco en el certificado
 // genera todos los modelos (o solo uno) para una venta y los abre para imprimir
-async function abrirMandato(k,docId){
+async function abrirMandato(k,docId,rol){
   const G=GT(),cx=G.contexto(k);if(!cx)return;await cargarGestoria();
   try{toast("Preparando los documentos…",15000);await cargarPDFLib();await cargarModelo();
-    const lista=docId?M.cfg.docs.filter(x=>x.id===docId):M.cfg.docs;if(!lista.length)throw new Error("Falta subir los modelos en blanco (Datos fiscales → Solicitudes y mandatos)");
+    const lista=docId?M.cfg.docs.filter(x=>x.id===docId):rol?M.cfg.docs.filter(x=>x.rol===rol):M.cfg.docs;
+    if(!lista.length)throw new Error(rol?"No encuentro el modelo de «"+(NOMBRE_ROL[rol]||rol)+"»: súbelo en Datos fiscales → Solicitudes y mandatos":"Falta subir los modelos en blanco (Datos fiscales → Solicitudes y mandatos)");
     const reg=(await S.db.doc("gestoria/"+(cx.l?cx.l.id:cx.x.matricula)).get()).data()||{};cx.repId=reg.repVende||"";
     const tipo=reg.tipoComprador||G.tipoAuto(cx);
     const partes=[];for(const d of lista)partes.push({pdf:await modeloBytes(d,cx,tipo)});
-    abrirPDF(await unir(partes),`${docId?lista[0].nombre:"Solicitudes y mandatos"} ${cx.mat||""}.pdf`);toast("Listo")}catch(e){toast(e.message,7000)}
+    abrirPDF(await unir(partes),`${docId||rol?lista[0].nombre:"Solicitudes y mandatos"} ${cx.mat||""}.pdf`);toast("Listo")}catch(e){toast(e.message,7000)}
 }
 
 /* ---------- configuración de los modelos ---------- */
@@ -268,7 +310,7 @@ async function abrirConfig(){
     else{doc={id:nid(),nombre:nombreDeArchivo(fi.name),archivo,campos:{},form:{}};M.cfg.docs.push(doc)}
     await guardarCfg();
     if(!existente||!Object.keys(doc.campos||{}).length&&!Object.keys(doc.form||{}).length){
-      try{toast("Buscando los campos…",20000);const r=await sugerir(doc);doc.campos=r.campos;doc.form=r.form;doc.v=DET_V;await guardarCfg();
+      try{toast("Buscando los campos…",20000);const r=await sugerir(doc);doc.campos=r.campos;doc.form=r.form;doc.v=DET_V;if(r.rol)doc.rol=r.rol;await guardarCfg();
         toast(r.n?`${doc.nombre}: ${r.n} campos detectados. Revísalos en «Colocar campos».`:`${doc.nombre}: no he podido detectar campos (¿es una imagen?). Colócalos a mano.`,6000)}catch(e){toast("Modelo guardado; no se han podido detectar los campos: "+e.message,6000)}}
     else toast("Modelo cambiado: revisa la posición de los campos",5000)};
   f.onchange=async e=>{const t=e.target;
@@ -285,10 +327,10 @@ async function abrirConfig(){
       if((id=g("campos"))){e.preventDefault();await editor(id,pintarC);return}
       if((id=g("auto"))){e.preventDefault();const x=docModelo(id);toast("Buscando los campos…",20000);const r=await sugerir(x);
         if(Object.keys(x.campos||{}).length&&!confirm(`Hay ${Object.keys(x.campos).length} campos colocados. ¿Sustituirlos por los detectados (${r.n})?`))return;
-        x.campos=r.campos;x.form=r.form;x.v=DET_V;await guardarCfg();toast(r.n?`${r.n} campos detectados`:"No he detectado ningún campo",4000);pintarC();return}
+        x.campos=r.campos;x.form=r.form;x.v=DET_V;if(r.rol)x.rol=r.rol;await guardarCfg();toast(r.n?`${r.n} campos detectados`:"No he detectado ningún campo",4000);pintarC();return}
       if((id=g("probar"))){e.preventDefault();const k=f.querySelector("[data-m-coche]").value;if(k)await abrirMandato(k,id);return}
       if((id=g("quitar"))){e.preventDefault();const x=docModelo(id);if(!confirm(`¿Quitar el modelo «${x.nombre}»? Se borra el archivo y sus campos.`))return;
-        await HUELSAN.borrarArchivo("documentos",x.archivo.ruta).catch(()=>{});M.cfg.docs=M.cfg.docs.filter(y=>y.id!==id);await guardarCfg();pintarC();return}
+        await HUELSAN.borrarArchivo("documentos",x.archivo.ruta).catch(()=>{});M.cfg.docs=M.cfg.docs.filter(y=>y.id!==id);if(x.plantilla)M.cfg.quitadas=[...(M.cfg.quitadas||[]),x.plantilla];await guardarCfg();pintarC();return}
     }catch(err){toast(err.message||String(err),7000)}};
   pintarC();d.returnValue="";d.showModal();d.onclose=()=>{f.onclick=null;f.onchange=null;d.style.width="";d.style.maxWidth=""};
 }
@@ -375,7 +417,8 @@ async function abrirVenta(k){
       ["factura","Factura de venta",c.f?`Factura ${c.f.codigo}`:"",!!c.f,c.f?"":"Aún no hay factura de venta emitida."],
       ["contrato","Contrato de compraventa",c.c?"El contrato guardado, listo para firmar":"Se crea con los datos de la venta",true,""],
       ["listado","Listado de documentos necesarios","Lo que debe aportar el comprador y lo que se le entrega",true,""],
-      ...M.cfg.docs.map(x=>{const nc=Object.keys(x.campos||{}).length+Object.keys(x.form||{}).length;return["tpl:"+x.id,x.nombre,"Modelo rellenado con los datos de la venta",true,"",nc?"":"Sin campos colocados: saldrá en blanco."]}),
+      ...[...M.cfg.docs].filter(x=>!(x.rol==="certificado"&&tipo!=="empresa")).sort((a,b)=>ORDEN_ROL(a)-ORDEN_ROL(b)).map(x=>{const nc=Object.keys(x.campos||{}).length+Object.keys(x.form||{}).length,fe=x.rol==="certificado"?faltanEscrituras(c):[];
+        return["tpl:"+x.id,x.nombre,x.rol==="mandato"?"Rellena, para que "+(tipo==="empresa"?"el administrador de la empresa compradora":"el comprador")+" la firme (la gestoría la pide firmada)":x.rol==="certificado"?"Rellena, para que la firme el administrador de la empresa compradora (la gestoría la pide firmada)":"Modelo rellenado con los datos de la venta",true,"",nc?(fe.length?"Faltan en la ficha del cliente: "+fe.join(", ")+".":""):"Sin campos colocados: saldrá en blanco."]}),
       ...(M.cfg.docs.length?[]:[["tpl:","Solicitudes y mandatos","",false,"Falta subir los modelos en blanco (DGT, gestoría…)."]]),
       ["permiso","Permiso de circulación (copia)",perm.length?`${perm.length} archivo${perm.length>1?"s":""}`:"",perm.length>0,perm.length?"":"Sube una copia del permiso."],
       ["ficha","Ficha técnica (copia)",fic.length?`${fic.length} archivo${fic.length>1?"s":""}`:"",fic.length>0,fic.length?"":"Sube una copia de la ficha técnica."]]}};
@@ -425,5 +468,5 @@ async function abrirVenta(k){
 document.addEventListener("click",e=>{
   const v=e.target.closest("[data-venta]");if(v){e.preventDefault();e.stopPropagation();abrirVenta(v.dataset.venta).catch(err=>toast(err.message||String(err),6000));return}
   const c=e.target.closest("[data-mandato-cfg]");if(c){e.preventDefault();e.stopPropagation();abrirConfig().catch(err=>toast(err.message||String(err),6000))}},true);
-window.HuelsanVenta={abrirVenta,abrirMandato,abrirConfig,_t:{valores,rellenarMandato,unir,listadoPDF,limpia,TODOS}};
+window.HuelsanVenta={abrirVenta,abrirMandato,abrirConfig,faltanEscrituras,_t:{valores,rellenarMandato,unir,listadoPDF,limpia,TODOS,sugerir,tablaModelo,MODELOS_GEST}};
 })();
