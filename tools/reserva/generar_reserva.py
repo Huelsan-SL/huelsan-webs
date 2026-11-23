@@ -208,7 +208,7 @@ def build(d, out):
         if sin_peritaje: faltan = ' El vehículo <b>no dispone de informe de peritaje</b>.'
         if sin_mant: faltan = ' El vehículo <b>no dispone de historial de mantenimiento</b>.'
         estado = (f'<b>QUINTA. Estado del vehículo.</b> El estado del vehículo es el que reflejan {" y ".join(partes)} (Anexo I) y las fotografías (Anexo II), que forman parte de este contrato.{faltan} '
-                  'El peritaje es de un tercero y se entrega a título informativo; incluye la reserva habitual de golpes ocultos o reparaciones anteriores no visibles sin desmontajes. '
+                  'El peritaje es de un tercero y se entrega a título informativo. '
                   'HUELSAN SL entregará el vehículo en el estado en que consta en esta reserva, sin otros daños ni averías.')
     S.append(Paragraph(estado, ST['clau']))
 
