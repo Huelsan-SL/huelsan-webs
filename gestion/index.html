@@ -63,6 +63,10 @@ main{padding-block:20px 48px;padding-inline:16px;max-width:none;margin:0 auto}
 @media (min-width:1100px){main{padding-inline:28px}}
 .btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);padding:7px 12px;border-radius:6px;cursor:pointer;font-weight:500}
 .btn:hover{border-color:var(--muted)}
+.idia{margin:0 0 18px}
+.idia-h{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;justify-content:space-between;margin:18px 0 8px;padding:8px 12px;border-left:3px solid var(--line);background:var(--bg);font:650 16px var(--f-display);position:sticky;top:0;z-index:2}
+.idia-h.hoy{border-left-color:var(--accent)}
+.idia-s{font:500 12.5px var(--f-body,inherit);color:var(--muted,inherit)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .btn.sm{padding:4px 9px;font-size:12.5px}
 .btn.ghost{background:none;border-color:transparent}
@@ -791,15 +795,42 @@ function renderSubastas(){
 }
 
 /* ---------- vista: stock ---------- */
+/* Día en el que se juega cada lote: presencial → inicio de la subasta; online → cierre del lote (igual que «📅 Calendario») */
+function diaLote(l){const iso=lotOnline(l)?cierreOf(l):((l.subasta&&l.subasta.inicio)||cierreOf(l));const d=iso?new Date(iso):null;return d&&!isNaN(d)?d:null}
+const diaClave=d=>d?d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"):"sin-fecha";
+function diaTitulo(d){
+  if(!d)return"Sin fecha";
+  const hoy=new Date();hoy.setHours(0,0,0,0);const x=new Date(d);x.setHours(0,0,0,0);
+  const dif=Math.round((x-hoy)/864e5);
+  const txt=d.toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long"});
+  const t=txt.charAt(0).toUpperCase()+txt.slice(1);
+  return dif===0?"Hoy · "+t:dif===1?"Mañana · "+t:dif===-1?"Ayer · "+t:t;
+}
+function interesantesPorDias(abiertos){
+  const grupos=new Map();
+  abiertos.forEach(l=>{const d=diaLote(l),k=diaClave(d);if(!grupos.has(k))grupos.set(k,{d,ls:[]});grupos.get(k).ls.push(l)});
+  const orden=[...grupos.entries()].sort((a,b)=>(a[1].d?a[1].d.getTime():9e15)-(b[1].d?b[1].d.getTime():9e15));
+  return orden.map(([k,g])=>{
+    g.ls.sort((a,b)=>(diaLote(a)||9e15)-(diaLote(b)||9e15));
+    const pujas=g.ls.reduce((n,l)=>n+(pujaMaxEst(l)||0),0),pj=g.ls.filter(l=>l.estado==="pujar").length;
+    const hoy=g.d&&diaClave(g.d)===diaClave(new Date());
+    return`<section class="idia" data-dia="${k}"><h2 class="idia-h${hoy?" hoy":""}"><span>${esc(diaTitulo(g.d))}</span><span class="idia-s tnum">${g.ls.length} coche${g.ls.length===1?"":"s"}${pj?` · ${pj} para pujar`:""}${pujas?` · pujas máx. ${eur(pujas)}`:""}</span></h2><div class="lots">${g.ls.map(lotRow).join("")}</div></section>`;
+  }).join("");
+}
 function renderInteresantes(){
   const todos=[...S.lots.values()].filter(l=>!isOwned(l)&&["interesante","pujar"].includes(l.estado));
   const porCierre=(a,b)=>new Date(cierreOf(a)||"2999")-new Date(cierreOf(b)||"2999");
   const abiertos=todos.filter(l=>!isPast(l)).sort(porCierre),cerrados=todos.filter(l=>isPast(l)).sort((a,b)=>-porCierre(a,b));
   const pujar=abiertos.filter(l=>l.estado==="pujar").length;
   const sumaPuja=abiertos.reduce((s,l)=>s+(pujaMaxEst(l)||0),0);
-  $("#main").innerHTML=`<div class="pagehead"><div><h1>Interesantes</h1><p>Lotes marcados como «Interesante» o «Pujar», ordenados por cierre de subasta. Márcalos o desmárcalos desde la lista de Subastas con «★ Interesante» o desde la ficha.</p></div>
+  if(!S.intVista){try{S.intVista=localStorage.getItem("hs-int-vista")}catch(e){}if(S.intVista!=="lista")S.intVista="dias"}
+  const dias=S.intVista==="dias";
+  const cuerpo=!abiertos.length?`<div class="lots"><div class="empty"><strong>No hay lotes interesantes en subasta</strong>En la pestaña Subastas, pulsa «★ Interesante» en los coches que quieras seguir.</div></div>`
+    :dias?interesantesPorDias(abiertos):`<div class="lots">${abiertos.map(lotRow).join("")}</div>`;
+  $("#main").innerHTML=`<div class="pagehead"><div><h1>Interesantes</h1><p>Lotes marcados como «Interesante» o «Pujar», ${dias?"agrupados por el día de su subasta (presencial: inicio; online: cierre del lote)":"ordenados por cierre de subasta"}. Márcalos o desmárcalos desde la lista de Subastas con «★ Interesante» o desde la ficha.</p></div>
     <div class="row tnum"><span class="card"><h3>En subasta</h3><b style="font:700 20px var(--f-display)">${abiertos.length}</b></span><span class="card"><h3>Para pujar</h3><b style="font:700 20px var(--f-display)">${pujar}</b></span><span class="card"><h3>Suma de pujas máx. sugeridas</h3><b style="font:700 20px var(--f-display)">${eur(sumaPuja)}</b></span></div></div>
-    <div class="lots">${abiertos.length?abiertos.map(lotRow).join(""):`<div class="empty"><strong>No hay lotes interesantes en subasta</strong>En la pestaña Subastas, pulsa «★ Interesante» en los coches que quieras seguir.</div>`}</div>
+    <div class="listbar"><span class="vistabtn" role="group" aria-label="Vista de interesantes"><button data-intvista="dias" aria-pressed="${dias}">📅 Por días</button><button data-intvista="lista" aria-pressed="${!dias}">☰ Lista</button></span></div>
+    ${cuerpo}
     ${cerrados.length?`<h2 style="margin:22px 0 10px;font:650 16px var(--f-display)">Subastas ya cerradas (${cerrados.length})</h2><div class="lots">${cerrados.slice(0,100).map(lotRow).join("")}</div>`:""}`;
 }
 /* Descarga en un ZIP todas las fotos de los coches en stock: una carpeta por coche (fotos, daños y fotos de la web) */
@@ -1442,6 +1473,7 @@ document.addEventListener("click",async e=>{const t=e.target;
   const da=t.closest("[data-desarchivar]");if(da){await setArchivada(da.dataset.desarchivar,false);return}
   if(t.closest("#rec-login")){recLogin();return}
   if(t.closest("#rec-run")){recRun();return}
+  const ivb=t.closest("[data-intvista]");if(ivb){S.intVista=ivb.dataset.intvista;try{localStorage.setItem("hs-int-vista",S.intVista)}catch(e){}render();return}
   const vb=t.closest("[data-vista]");if(vb){S.vista=vb.dataset.vista;try{localStorage.setItem("hs-vista",S.vista)}catch(e){}render();return}
   const au=t.closest("[data-auc]");if(au){S.aucSel=au.dataset.auc||null;render();return}
   if(t.closest("[data-faplicar]")){aplicarYa();return}
