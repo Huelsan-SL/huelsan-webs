@@ -76,7 +76,12 @@ function efecto(f){
 const emitidas=()=>[...S.facturas.values()].filter(f=>f.estado&&f.estado!=="borrador");
 // Cobrado = efectivo anotado + lo cobrado por banco (lo mayor entre lo anotado a mano y lo enlazado con movimientos del extracto)
 const cobradoBanco=f=>{const B=window.HuelsanBanco;return B&&B.cubiertoFactura?B.cubiertoFactura(f.id):0};
-const cobrado=f=>{const cs=f.cobros||[],efe=cs.filter(c=>c.medio==="Efectivo").reduce((s,c)=>s+(+c.importe||0),0),otros=cs.reduce((s,c)=>s+(+c.importe||0),0)-efe;return r2(efe+Math.max(otros,cobradoBanco(f)))};
+// «Marcar como pagada» (sin pago enlazado): se guarda como un cobro con manual:true y vale para la factura y todas sus rectificativas
+const grupoFact=f=>{const raiz=(f.rectifica&&f.rectifica.id)||f.id;return emitidas().filter(x=>x.id===raiz||(x.rectifica&&x.rectifica.id===raiz))};
+const marcaManual=f=>(f.cobros||[]).some(c=>c.manual);
+const marcadaPagada=f=>grupoFact(f).some(marcaManual)||marcaManual(f);
+const cobrado=f=>{const t=(f.totales||{}).total||0;const c=cobradoReal(f);return t>0&&marcadaPagada(f)?Math.max(c,r2(t)):c};
+const cobradoReal=f=>{const cs=f.cobros||[],efe=cs.filter(c=>c.medio==="Efectivo").reduce((s,c)=>s+(+c.importe||0),0),otros=cs.reduce((s,c)=>s+(+c.importe||0),0)-efe;return r2(efe+Math.max(otros,cobradoBanco(f)))};
 function estadoCobro(f){if(f.estado==="borrador")return null;if(f.anulada)return null;const t=(f.totales||{}).total||0;if(t<=0)return null;const c=cobrado(f);
   return c>=t-0.005?["Cobrada","ok"]:c>0?["Cobro parcial","warn"]:["Pendiente de cobro","warn"]}
 function etiquetaEstado(f){
@@ -305,6 +310,7 @@ function vistaEditor(){
       ${bor?`${(f.vehiculo||{}).loteId&&f.tipo!=="rectificativa"?`<label class="row" style="flex-direction:row;color:var(--ink);font-weight:500"><input type="checkbox" data-e="marcarVendido" ${f.marcarVendido!==false?"checked":""} style="width:auto"> Marcar el coche como «Vendido» en la app</label>`:""}
         <p class="muted" style="margin:0">Se le asignará el número ${esc(fCodigo(rect?"R":"F",String(f.fechaExpedicion||hoyISO()).slice(0,4),(+contador(rect?"R":"F",String(f.fechaExpedicion||hoyISO()).slice(0,4)).ultimo||0)+1))} (si nadie emite otra antes). Revisa la vista previa: después no se puede cambiar.</p>`
       :`${(f.cobros||[]).length?`<div class="tw"><table><tbody>${f.cobros.map((x,i)=>`<tr><td>${fecha(x.fecha)}</td><td>${esc(x.medio||"")}</td><td class="num">${eur(x.importe)}</td><td><button class="btn sm" data-quitar-cobro="${i}" aria-label="Quitar cobro">✕</button></td></tr>`).join("")}</tbody></table></div>`:`<p class="muted" style="margin:0">Sin cobros apuntados.</p>`}
+        ${marcadaPagada(f)&&!marcaManual(f)?`<p class="muted" style="margin:6px 0 0">Pagada: ${esc((grupoFact(f).find(marcaManual)||{}).codigo||"otra factura vinculada")} está marcada como pagada y esta factura va con ella.</p>`:""}
         ${!f.anulada?`<button class="btn sm" data-acc="cobro">+ Apuntar cobro</button>`:""}`}
       ${(f.historial||[]).length?`<div class="hist"><b>Historial</b>${f.historial.map(h=>`<span>${new Date(h.fecha).toLocaleString("es-ES",{dateStyle:"short",timeStyle:"short"})} · ${esc(h.accion)}</span>`).join("")}</div>`:""}
       ${(f.rectificadaPor||[]).length?`<div class="hist"><b>Rectificaciones</b>${f.rectificadaPor.map(r=>`<a href="#" data-ir-factura="${esc(r.id)}">${esc(r.codigo)} (${esc(r.tipo)})</a>`).join("")}</div>`:""}
@@ -314,6 +320,7 @@ function vistaEditor(){
     ${bor?`<button class="btn" data-acc="guardar">Guardar borrador</button><button class="btn" data-acc="pdf">Vista previa PDF</button><button class="btn primary" data-acc="emitir">Emitir factura…</button>
       <span style="flex:1"></span>${S.facturas.has(f.id)?`<button class="btn peligro" data-acc="borrar">Borrar borrador</button>`:""}`
     :`<button class="btn primary" data-acc="pdf">Descargar PDF</button>
+      ${!f.anulada&&t.total>0?`<button class="btn" data-acc="pagada" title="Da la factura por pagada aunque no haya un pago enlazado. Vale también para su factura original y sus rectificativas.">${marcadaPagada(f)?"Quitar marca de pagada":"Marcar como pagada"}</button>`:""}
       ${!f.anulada?`<button class="btn" data-acc="entregada">${f.entregada?"Marcar como no entregada":"Marcar como entregada"}</button>`:""}
       ${!f.anulada&&f.estado==="emitida"?`<button class="btn" data-acc="rectificar">Rectificar…</button><button class="btn peligro" data-acc="anular">Anular…</button>`:""}
       ${!rect&&!f.anulada&&f.vehiculo&&f.vehiculo.matricula?`<button class="btn" data-venta="${esc(normMat(f.vehiculo.matricula))}" title="Factura, contrato, listado, solicitud y mandato y copias para imprimir">Documentos de venta</button><button class="btn" data-gest="${esc(normMat(f.vehiculo.matricula))}" title="Documentación y datos para el cambio de nombre">Cambio de nombre · gestoría</button>`:""}
@@ -388,6 +395,7 @@ document.addEventListener("click",async e=>{
     else if(a==="emitir")await emitir();
     else if(a==="entregada"){await guardarCampos({entregada:!S.ed.entregada,entregadaEn:!S.ed.entregada?new Date().toISOString():null},S.ed.entregada?"Marcada como no entregada":"Marcada como entregada")}
     else if(a==="cobro")abrirCobro();
+    else if(a==="pagada")await alternarPagada();
     else if(a==="rectificar")await rectificar("sustitucion");
     else if(a==="anular")await rectificar("anulacion");
     else if(a==="deshacer")await deshacer();
@@ -477,6 +485,23 @@ function abrirCobro(){
   d.onclose=async()=>{if(d.returnValue!=="ok")return;const fd=new FormData($("#f-cobro"));const imp=+String(fd.get("importe")).replace(",",".");if(!imp)return toast("Importe no válido");
     if(fd.get("medio")==="Efectivo"&&cobrado(f)+imp>=LIM_EFECTIVO)toast("Ojo: los pagos en efectivo con empresarios deben ser menores de 1.000 € (Ley 7/2012)",6000);
     await guardarCampos({cobros:[...(f.cobros||[]),{fecha:fd.get("fecha"),importe:r2(imp),medio:fd.get("medio"),nota:fd.get("nota")||""}]},"Cobro apuntado")};
+}
+
+async function alternarPagada(){
+  const f=S.ed,gr=grupoFact(f),otras=gr.filter(x=>x.id!==f.id);
+  const quien=otras.length?`\n\nSe aplicará también a: ${otras.map(x=>x.codigo).join(", ")}.`:"";
+  if(marcadaPagada(f)){
+    if(!await confirmar("¿Quitar la marca de pagada?",`Se quitará la marca manual de ${gr.filter(marcaManual).map(x=>x.codigo).join(", ")||f.codigo}. Los cobros reales y los pagos enlazados del banco no se tocan.`,"Quitar marca"))return;
+    for(const x of gr.filter(marcaManual)){
+      const cobros=(x.cobros||[]).filter(c=>!c.manual);
+      if(x.id===f.id){await guardarCampos({cobros},null);await S.db.doc("facturas/"+x.id).refrescar().catch(()=>{})}else{await S.db.doc("facturas/"+x.id).update({cobros,actualizadoPor:HUELSAN.email&&HUELSAN.email()});await S.db.doc("facturas/"+x.id).refrescar().catch(()=>{})}
+    }
+    toast("Marca de pagada quitada");return;
+  }
+  if(!await confirmar(`¿Marcar ${f.codigo} como pagada?`,`Se dará por pagada aunque no haya un pago enlazado con el banco.${quien}`,"Marcar como pagada"))return;
+  await guardarCampos({cobros:[...(f.cobros||[]),{fecha:hoyISO(),importe:r2((f.totales||{}).total||0),medio:"Marcada como pagada",nota:"Sin pago enlazado",manual:true}]},null);
+  await S.db.doc("facturas/"+f.id).refrescar().catch(()=>{});pintar();
+  toast("Marcada como pagada"+(otras.length?" (y sus facturas vinculadas)":""),4000);
 }
 
 /* ---------- diálogos ---------- */
