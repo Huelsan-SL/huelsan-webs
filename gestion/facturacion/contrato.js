@@ -50,7 +50,7 @@ const get=(o,r)=>r.split(".").reduce((x,k)=>x==null?x:x[k],o);
 /* ---------- carga ---------- */
 (async function esperar(){
   if(!S.db){setTimeout(esperar,150);return}
-  S.db.collection("contratos").onSnapshot(sn=>{CT.lista.clear();sn.docs.forEach(d=>CT.lista.set(d.id,{...d.data(),id:d.id}));if(S.tab==="contratos"&&!CT.ed)pintar()},e=>console.error(e));
+  S.db.collection("contratos").onSnapshot(sn=>{CT.lista.clear();sn.docs.forEach(d=>CT.lista.set(d.id,{...d.data(),id:d.id}));if((S.tab==="contratos"&&!CT.ed)||S.tab==="vehiculos")pintar()},e=>console.error(e));
   S.db.doc("contratoscfg/representantes").onSnapshot(sn=>{const d=sn&&sn.exists&&sn.data&&sn.data();CT.reps=d&&d.francisco?d:JSON.parse(JSON.stringify(REPS_DEF));if(S.tab==="contratos"&&!CT.ed)pintar()},()=>{CT.reps=JSON.parse(JSON.stringify(REPS_DEF))});
   S.db.doc("contratoscfg/plantillaDocs").onSnapshot(sn=>{const d=sn&&sn.exists&&sn.data&&sn.data();CT.plantilla=d&&Array.isArray(d.items)?d.items:null;if(S.tab==="contratos"&&!CT.ed)pintar()},()=>{});
   {const abrirLote=function abrirLote(){const id=new URLSearchParams(location.search).get("contratoLote");if(!id)return;const l=S.lotes.find(x=>x.id===id);if(!l){if(!abrirLote.n||abrirLote.n<40){abrirLote.n=(abrirLote.n||0)+1;setTimeout(abrirLote,250)}return}abrirDesdeLote(l)};setTimeout(abrirLote,0)}
@@ -545,5 +545,5 @@ async function descargarContrato(c){
   if(doc.__principal>2)toast("El contrato ocupa más de 2 páginas: acorta las observaciones o los defectos.",6000);
 }
 const desdeLote=l=>{const c=contratoVacio();cocheEnContrato(c,l);if(c.ubicacion)c.entrega.lugar=c.ubicacion;return c};
-window.HuelsanContratos={repintarLista:()=>{if(S.tab==="contratos"&&!CT.ed)pintar()},firmaRep,DOCS,desdeLote,generarContrato,desdeFactura,contratoVacio,enLetra,docsDelContrato,mensajeDocs,lista:()=>[...CT.lista.values()],reps:()=>CT.reps,abrir,abrirDesdeFactura,abrirDesdeLote};
+window.HuelsanContratos={repintarLista:()=>{if((S.tab==="contratos"&&!CT.ed)||S.tab==="vehiculos")pintar()},firmaRep,DOCS,desdeLote,generarContrato,desdeFactura,contratoVacio,enLetra,docsDelContrato,mensajeDocs,lista:()=>[...CT.lista.values()],reps:()=>CT.reps,abrir,abrirDesdeFactura,abrirDesdeLote};
 })();

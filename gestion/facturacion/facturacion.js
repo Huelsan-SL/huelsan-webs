@@ -158,7 +158,7 @@ window.HuelsanRepintar=()=>pintarSiProcede("banco");
 function pintarTabs(){$$("nav.tabs [data-tab]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===S.tab)))}
 $("nav.tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(!b)return;
   if(S.ed&&S.edSucio&&!confirm("Hay cambios sin guardar en la factura. ¿Salir sin guardarlos?"))return;
-  S.tab=b.dataset.tab;S.ed=null;S.edSucio=false;S.mat=null;history.replaceState(null,"","?tab="+S.tab);pintarTabs();pintar()});
+  S.tab=b.dataset.tab;S.ed=null;S.edSucio=false;S.mat=null;if(window.HuelsanVehiculos)HuelsanVehiculos.reset();history.replaceState(null,"","?tab="+S.tab);pintarTabs();pintar()});
 addEventListener("beforeunload",e=>{if(S.ed&&S.edSucio){e.preventDefault();e.returnValue=""}});
 function pintar(){
   const v=$("#vista");
@@ -166,6 +166,7 @@ function pintar(){
   else if(S.tab==="clientes")v.innerHTML=vistaClientes();
   else if(S.tab==="gastos")v.innerHTML=vistaGastos();
   else if(S.tab==="proveedores")v.innerHTML=vistaProveedores();
+  else if(S.tab==="vehiculos")v.innerHTML=window.HuelsanVehiculos?HuelsanVehiculos.vista():"";
   else if(S.tab==="matriculas")v.innerHTML=vistaMatriculas();
   else if(S.tab==="resumen")v.innerHTML=vistaResumen();
   else if(S.tab==="emisor")v.innerHTML=vistaEmisor();
@@ -879,7 +880,7 @@ async function verArchivo(ruta,nombre){
    registro en docscoche/<id>. Las pólizas de seguro subidas a una factura de «Seguro» salen aquí solas,
    y una póliza subida aquí se puede adjuntar (copia) a la factura de seguro del coche.
    ====================================================================== */
-const DOC_TIPOS=["Póliza de seguro","Permiso de circulación","Ficha técnica","ITV","Contrato de compra","Informe o peritaje","Garantía","Mandato / transferencia","Solicitud y mandato","DNI / NIE del comprador","CIF del comprador","Representación de persona jurídica","DNI del administrador","Otros"];
+const DOC_TIPOS=["Póliza de seguro","Permiso de circulación","Ficha técnica","ITV","Contrato de compra","Informe o peritaje","Garantía","Mandato / transferencia","Solicitud y mandato","Certificado sustitutivo de escrituras y poderes","DNI / NIE del comprador","CIF del comprador","Representación de persona jurídica","DNI del administrador","Otros"];
 const esPoliza=t=>t==="Póliza de seguro";
 const cocheDe=k=>porMatricula().find(y=>y.matricula===k);
 const gastosSeguro=x=>x.docs.filter(g=>g.categoria==="Seguro"&&!g.sinFactura).sort((a,b)=>String(b.fecha||"").localeCompare(String(a.fecha||"")));
@@ -989,7 +990,7 @@ function vistaMatriculas(){
 function detalleMatricula(x){
   const l=x.lote;
   return`<div class="row sp"><div class="row"><button class="btn sm" data-acc="mat-volver">← Todas</button><h1>${x.matricula.startsWith("lote:")?"Sin matrícula":`<span class="mat" style="font-size:18px">${esc(x.matricula)}</span>`} ${esc(x.titulo)}</h1></div>
-    <span class="row"><button class="btn" data-acc="mat-gasto">+ Subir factura de compra o gasto</button>${l&&l.estado!=="vendido"&&!x.facturas.length?`<button class="btn primary" data-acc="mat-facturar">Crear factura de venta</button>`:""}${l&&(l.estado==="vendido"||x.facturas.length)?`<button class="btn" data-venta="${esc(x.matricula)}" title="Factura, contrato, listado, solicitud y mandato y copias para imprimir">Documentos de venta</button><button class="btn ${x.facturas.length?"primary":""}" data-gest="${esc(x.matricula)}" title="Documentación y datos para el cambio de nombre">Cambio de nombre · gestoría</button>`:""}</span></div>
+    <span class="row"><button class="btn" data-veh-ir="${esc(x.matricula)}" title="Todos los documentos de este coche">Expediente del vehículo</button><button class="btn" data-acc="mat-gasto">+ Subir factura de compra o gasto</button>${l&&l.estado!=="vendido"&&!x.facturas.length?`<button class="btn primary" data-acc="mat-facturar">Crear factura de venta</button>`:""}${l&&(l.estado==="vendido"||x.facturas.length)?`<button class="btn" data-venta="${esc(x.matricula)}" title="Factura, contrato, listado, solicitud y mandato y copias para imprimir">Documentos de venta</button><button class="btn ${x.facturas.length?"primary":""}" data-gest="${esc(x.matricula)}" title="Documentación y datos para el cambio de nombre">Cambio de nombre · gestoría</button>`:""}</span></div>
   <div class="kpis"><div class="kpi"><b>${eur(x.compra)}</b><span>compra</span></div><div class="kpi"><b>${eur(x.gastos)}</b><span>gastos (sin IVA deducible)</span></div><div class="kpi"><b>${eur(x.iva)}</b><span>IVA soportado (se recupera)</span></div><div class="kpi"><b>${x.ventas?eur(x.ventas):"—"}</b><span>venta (sin IVA general)</span></div>
     <div class="kpi"><b>${x.ventas?eur(x.margen):"—"}</b><span>margen bruto</span></div><div class="kpi"><b>${x.ivaRebu?eur(x.ivaRebu):"—"}</b><span>IVA del REBU</span></div><div class="kpi"><b>${x.ventas?eur(x.margenNeto):"—"}</b><span>margen neto</span></div>
     <div class="kpi"><b>${x.ventas?eur(x.isEst):"—"}</b><span>IS estimado (${S.tipoIS} %)</span></div><div class="kpi"><b>${x.ventas?eur(x.netoIS):"—"}</b><span>neto tras IS</span></div></div>

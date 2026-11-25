@@ -380,6 +380,6 @@ if(typeof document!=="undefined")document.addEventListener("click",async e=>{con
   const id=new URLSearchParams(location.search).get("reservaLote");if(!id)return;
   (function intento(n){const l=S.lotes.find(x=>x.id===id);if(!l){if(n<40)setTimeout(()=>intento(n+1),250);return}abrir(l)})(0)})();
 
-root.HuelsanReserva={seccion,abrir,parsePeritaje,parseHistorial,pdfReserva};
+root.HuelsanReserva={lista:()=>[...RES.values()],seccion,abrir,parsePeritaje,parseHistorial,pdfReserva};
 if(typeof module!=="undefined")module.exports=root.HuelsanReserva;
 })(typeof window!=="undefined"?window:globalThis);
